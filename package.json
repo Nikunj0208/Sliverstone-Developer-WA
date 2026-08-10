@@ -7,9 +7,10 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "typecheck": "tsc --noEmit",
     "validate:env": "tsx src/config/validate.ts",
+    "whatsapp:test": "tsx scripts/send-test-message.ts",
     "test": "node --test"
   },
   "dependencies": {
