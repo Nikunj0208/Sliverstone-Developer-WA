@@ -1,0 +1,26 @@
+{
+  "name": "silverstone-whatsapp-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Silverstone real-estate WhatsApp Cloud API demo",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "validate:env": "tsx src/config/validate.ts",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}

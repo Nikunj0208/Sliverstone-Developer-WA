@@ -1,0 +1,62 @@
+[
+  {
+    "id": "spring-hill",
+    "name": "Spring Hill",
+    "description": "Ready & Live Campus\n21' Wide Width Opening in 84 Sq.Yd\n3-Side Open 124 Sq.Yd Anchor Plot\nOn 120' & 60' Four-Road Main Junction\nUniform Elevation\nPlots Starting from ₹47 Lakhs Onwards",
+    "locationUrl": "https://maps.app.goo.gl/Wi7TGhT5QZuHHZp99",
+    "imagePath": "client-assets/organized/projects/spring-hill/hero.jpg",
+    "brochurePath": "client-assets/organized/projects/spring-hill/brochure.pdf",
+    "active": true,
+    "sortOrder": 1
+  },
+  {
+    "id": "mahal",
+    "name": "Mahal",
+    "description": "3-Side Open Project on 120' & 60' Four-Road Main Junction\nOnly for 31 Exclusive Families\nArchitect Support for Planning Customisation\nInterconnected Campus Roads\nWide 28' Plot Width Starting",
+    "locationUrl": "https://maps.app.goo.gl/PSmCZBtAwyGoNeW57",
+    "imagePath": "client-assets/organized/projects/mahal/hero.jpg",
+    "brochurePath": "client-assets/organized/projects/mahal/brochure.pdf",
+    "active": true,
+    "sortOrder": 2
+  },
+  {
+    "id": "rajmahal",
+    "name": "Rajmahal",
+    "description": "On 120' & 60' Four-Road Main Junction\nTwo-Side Road Corner Project\n3-Side Open 2-Road Corner 200 Sq.Yd Anchor Plot & 2-Side Open 180 Sq.Yd Plot\nEast-West Facing Plots\n2-Side Open 125 Sq.Yd Plots with Wide Front Width from 28' to 35'\nOnly 52 Exclusive Families Project with Maximum Road Corner Plots and Interconnected Roads",
+    "locationUrl": "https://maps.app.goo.gl/CnkR8tcD2y3yU4fv9",
+    "imagePath": "client-assets/organized/projects/rajmahal/hero.jpg",
+    "brochurePath": "client-assets/organized/projects/rajmahal/brochure.pdf",
+    "active": true,
+    "sortOrder": 3
+  },
+  {
+    "id": "applewood",
+    "name": "Applewood",
+    "description": "Two-Road Corner Project\nInterconnected Roads\nEast-West Facing Plot\nSMC Road Facing 137 Sq.Yd Plot\nStarting from 89 Sq.Yd at ₹42.27 Lakhs Onwards\nReady Home 3BHK (2200 Sq.Ft) from ₹70 Lakhs\nReady & Live Campus",
+    "locationUrl": "",
+    "imagePath": "client-assets/organized/projects/applewood/hero.jpg",
+    "brochurePath": "",
+    "active": true,
+    "sortOrder": 4
+  },
+  {
+    "id": "elements",
+    "name": "Elements",
+    "description": "Ready & Live Campus\n21' Wide Width Opening in 84 Sq.Yd\n3-Side Open 124 Sq.Yd Anchor Plot\nOn 120' & 60' Four-Road Main Junction\nUniform Elevation\nPlots Starting from ₹47 Lakhs Onwards\nReady Home 3BHK (2000 Sq.Ft) from ₹75 Lakhs",
+    "locationUrl": "https://maps.app.goo.gl/ETf2Y8ZrJsFarUwGA",
+    "imagePath": "client-assets/organized/projects/elements/hero.jpg",
+    "brochurePath": "client-assets/organized/projects/elements/brochure.pdf",
+    "active": true,
+    "sortOrder": 5
+  },
+  {
+    "id": "villas",
+    "name": "Villas",
+    "description": "",
+    "locationUrl": "https://maps.app.goo.gl/6F8E29VZWTpkxnoS9",
+    "imagePath": "",
+    "brochurePath": "",
+    "active": true,
+    "sortOrder": 6
+  }
+]
