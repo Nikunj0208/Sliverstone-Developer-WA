@@ -28,6 +28,10 @@ function value(name: RequiredEnvironmentVariable): string {
   return process.env[name]?.trim() ?? "";
 }
 
+function optionalValue(name: string): string {
+  return process.env[name]?.trim() ?? "";
+}
+
 function parsePort(value: string): number {
   const port = Number.parseInt(value, 10);
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
@@ -48,7 +52,10 @@ export const env = {
   webhookVerifyToken: value("WEBHOOK_VERIFY_TOKEN"),
   demoRecipientNumber: value("DEMO_RECIPIENT_NUMBER"),
   clientPhoneNumber: value("CLIENT_PHONE_NUMBER"),
-  clientName: value("CLIENT_NAME")
+  clientName: value("CLIENT_NAME"),
+  welcomeTemplateName: optionalValue("WELCOME_TEMPLATE_NAME"),
+  projectTemplateName: optionalValue("PROJECT_TEMPLATE_NAME"),
+  callTemplateName: optionalValue("CALL_TEMPLATE_NAME")
 } as const;
 
 export function getEnvironmentValidation(): EnvironmentVariableStatus[] {

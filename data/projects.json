@@ -2,61 +2,312 @@
   {
     "id": "spring-hill",
     "name": "Spring Hill",
-    "description": "Ready & Live Campus\n21' Wide Width Opening in 84 Sq.Yd\n3-Side Open 124 Sq.Yd Anchor Plot\nOn 120' & 60' Four-Road Main Junction\nUniform Elevation\nPlots Starting from ₹47 Lakhs Onwards",
-    "locationUrl": "https://maps.app.goo.gl/Wi7TGhT5QZuHHZp99",
-    "imagePath": "client-assets/organized/projects/spring-hill/hero.jpg",
-    "brochurePath": "client-assets/organized/projects/spring-hill/brochure.pdf",
+    "icon": "🏡",
     "active": true,
-    "sortOrder": 1
+    "sortOrder": 1,
+    "mainImage": "client-assets/organized/projects/spring-hill/Springhill welcome image.jpeg",
+    "imagePath": "client-assets/organized/projects/spring-hill/Springhill welcome image.jpeg",
+    "description": "*⚜️ SPRINGHILL HOMES ⚜️*\n🏡 PREMIUM ROW HOUSE & PLOTS 🏡\n\n✅ 🔑 Ready & Live Campus: રહેવા માટે સંપૂર્ણ તૈયાર પ્રોજેક્ટ.\n\n✅ 📐 84 Sq.Yd Plots: 21 ફૂટ પહોળું ફ્રન્ટ ઓપનિંગ.\n\n✅ ⚜️ Anchor Plot: 3-સાઇડ ઓપન 124 Sq.Yd પ્લોટ.\n\n✅ 📍 Prime Location: 120 ft & 60 ft રોડના ચાર રોડ Junction ઉપર.\n\n✅ 🏛️ Uniform Elevation: આખા કેમ્પસનો એકસમાન અને આકર્ષક લુક.\n\n✅ 💰 Starting Price: પ્લોટ માત્ર ₹47 લાખથી શરૂ.\n\n✅ 🏡 Options: 3 / 4 / 5 BHK Row House & Bungalows.\n\n✅ 🌴 Resort-Type Living: Luxurious Campus With Strong _Interconnection._\n\n✅ ✨ With Maintenance Program",
+    "location": {
+      "name": "Spring Hill Location",
+      "address": "Spring Hill, 120 ft & 60 ft Junction, Surat",
+      "googleMapsUrl": "https://maps.app.goo.gl/Wi7TGhT5QZuHHZp99"
+    },
+    "locationUrl": "https://maps.app.goo.gl/Wi7TGhT5QZuHHZp99",
+    "video": {
+      "url": "https://youtu.be/z-s4KD0q2qk",
+      "shortUrl": "https://youtu.be/z-s4KD0q2qk",
+      "caption": "Spring Hill Walkthrough Video"
+    },
+    "videoUrl": "https://youtu.be/z-s4KD0q2qk",
+    "links": {
+      "location": "https://maps.app.goo.gl/Wi7TGhT5QZuHHZp99",
+      "video": "https://youtu.be/z-s4KD0q2qk"
+    },
+    "brochure": {
+      "file": "client-assets/organized/projects/spring-hill/brochure.pdf",
+      "filename": "Spring-Hill-Brochure.pdf",
+      "caption": "Spring Hill Brochure"
+    },
+    "brochurePath": "client-assets/organized/projects/spring-hill/brochure.pdf",
+    "buildPlans": [
+      {
+        "id": "3bhk",
+        "label": "3BHK",
+        "filePath": ""
+      },
+      {
+        "id": "4bhk",
+        "label": "4BHK",
+        "filePath": ""
+      },
+      {
+        "id": "5bhk",
+        "label": "5BHK",
+        "filePath": ""
+      }
+    ],
+    "plans": {
+      "squareFeetOptions": [
+        {
+          "id": "sqft-84",
+          "label": "84 Sq.Yd Plots",
+          "bhkOptions": [
+            {
+              "id": "3bhk",
+              "label": "3 BHK",
+              "file": "client-assets/organized/projects/spring-hill/plans/3bhk-84sqyd-Spring-Hills.jpg",
+              "filename": "Spring-Hill-84SqYd-3BHK-Plan.jpg"
+            },
+            {
+              "id": "4bhk",
+              "label": "4 BHK",
+              "file": "client-assets/organized/projects/spring-hill/plans/4bhk-84sqyd-Spring-Hills.jpg",
+              "filename": "Spring-Hill-84SqYd-4BHK-Plan.jpg"
+            },
+            {
+              "id": "5bhk",
+              "label": "5 BHK",
+              "file": "client-assets/organized/projects/spring-hill/plans/5bhk-84sqyd-Spring-Hills.jpg",
+              "filename": "Spring-Hill-84SqYd-5BHK-Plan.jpg"
+            }
+          ]
+        },
+        {
+          "id": "sqft-124",
+          "label": "124 Sq.Yd Anchor",
+          "bhkOptions": [
+            {
+              "id": "4bhk",
+              "label": "4 BHK",
+              "file": "client-assets/organized/projects/spring-hill/plans/124sqyd-Spring-Hills.jpg",
+              "filename": "Spring-Hill-124SqYd-Anchor-Plot-Plan.jpg"
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     "id": "mahal",
     "name": "Mahal",
-    "description": "3-Side Open Project on 120' & 60' Four-Road Main Junction\nOnly for 31 Exclusive Families\nArchitect Support for Planning Customisation\nInterconnected Campus Roads\nWide 28' Plot Width Starting",
-    "locationUrl": "https://maps.app.goo.gl/PSmCZBtAwyGoNeW57",
-    "imagePath": "client-assets/organized/projects/mahal/hero.jpg",
-    "brochurePath": "client-assets/organized/projects/mahal/brochure.pdf",
+    "icon": "🏰",
     "active": true,
-    "sortOrder": 2
+    "sortOrder": 2,
+    "mainImage": "client-assets/organized/projects/mahal/Mahel welcome image.jpeg",
+    "imagePath": "client-assets/organized/projects/mahal/Mahel welcome image.jpeg",
+    "description": "*🏰 MAHEL 🏰*\n⚜️ EXCLUSIVE BUNGALOW PLOT PROJECT ⚜️\n👑 THE REAL MAHEL 👑\n\n✅ 🛣️ 3-Side Open Project: 120 ફૂટ મેઈન રોડ અને 60 ફૂટ રોડના ચાર રોડ Junction પર.\n\n✅ 👨‍👩‍👧‍👦 Private Community: માત્ર 31 એક્સક્લુઝિવ પરિવારો માટે જ.\n\n✅ 📐 Architect & Interior Support: તમારા ઘરના પ્લાનિંગ અને કસ્ટમાઇઝેશન માટે ફુલ સપોર્ટ.\n\n✅ 🌐 Interconnected Roads: કેમ્પસની અંદરની ઇન્ટરકનેક્ટિવિટીથી દરેક બંગલા અને કોમન એમિનિટીઝનો સરળ એક્સેસ.\n\n✅ 📏 Plot Width: 28 ફૂટના પહોળા ફ્રન્ટ ઓપનિંગથી પ્લોટની શરૂઆત.\n\n✅ 💰 Starting Price: ₹72.80 લાખથી શરૂ.\n\n✅ ✨ Royal Theme: યુનિફોર્મ થીમ અને તમારી જરૂરિયાત મુજબના કસ્ટમાઇઝ્ડ પ્લાનિંગનું બેસ્ટ કોમ્બિનેશન ધરાવતો પ્રોજેક્ટ.",
+    "location": {
+      "name": "Mahal Location",
+      "address": "Mahal, 120 ft & 60 ft Junction, Surat",
+      "googleMapsUrl": "https://maps.app.goo.gl/PSmCZBtAwyGoNeW57"
+    },
+    "locationUrl": "https://maps.app.goo.gl/PSmCZBtAwyGoNeW57",
+    "video": null,
+    "videoUrl": "",
+    "links": {
+      "location": "https://maps.app.goo.gl/PSmCZBtAwyGoNeW57"
+    },
+    "brochure": {
+      "file": "client-assets/organized/projects/mahal/brochure.pdf",
+      "filename": "Mahal-Brochure.pdf",
+      "caption": "Mahal Brochure"
+    },
+    "brochurePath": "client-assets/organized/projects/mahal/brochure.pdf",
+    "buildPlans": [],
+    "plans": {
+      "squareFeetOptions": []
+    }
   },
   {
     "id": "rajmahal",
     "name": "Rajmahal",
-    "description": "On 120' & 60' Four-Road Main Junction\nTwo-Side Road Corner Project\n3-Side Open 2-Road Corner 200 Sq.Yd Anchor Plot & 2-Side Open 180 Sq.Yd Plot\nEast-West Facing Plots\n2-Side Open 125 Sq.Yd Plots with Wide Front Width from 28' to 35'\nOnly 52 Exclusive Families Project with Maximum Road Corner Plots and Interconnected Roads",
-    "locationUrl": "https://maps.app.goo.gl/CnkR8tcD2y3yU4fv9",
-    "imagePath": "client-assets/organized/projects/rajmahal/hero.jpg",
-    "brochurePath": "client-assets/organized/projects/rajmahal/brochure.pdf",
+    "icon": "👑",
     "active": true,
-    "sortOrder": 3
+    "sortOrder": 3,
+    "mainImage": "client-assets/organized/projects/rajmahal/Raj mahel welcome image.jpeg",
+    "imagePath": "client-assets/organized/projects/rajmahal/Raj mahel welcome image.jpeg",
+    "description": "*⚜️ RAJMAHEL ⚜️*\n🏰 ALL MAHEL TYPE BUNGALOWS 🏰\n👑 THE REAL MAHEL 👑\n\n✅ 🛣️ Prime Location: 120 ft & 60 ft Road Junction.\n\n✅ 📐 Corner Project: ટુ-સાઇડ રોડ (2-Side Road) ટચ કોર્નર પ્રોજેક્ટ.\n\n✅ ⚓ Anchor Plots: • 3-સાઇડ ઓપન, 2-રોડ કોર્નર (200 Sq.Yd) • 2-સાઇડ ઓપન (180 Sq.Yd) પ્લોટ્સ.\n\n✅ ☀️ East-West Facing Plot: વાસ્તુ પ્રમાણે પ્લોટની ઉત્તમ દિશા.\n\n✅ 📏 Wide Front Opening: 28 થી 35 ફૂટની પહોળાઈ વાળા 2-સાઇડ ઓપન (125 Sq.Yd) પ્લોટ્સ.\n\n✅ 👨‍👩‍👧‍👦 Exclusive Community: માત્ર 52 એક્સક્લુઝિવ પરિવારો માટેનો પ્રાઇવેટ પ્રોજેક્ટ.\n\n✅ ✨ Splendid Corner Plots: મેક્સિમમ રોડ કોર્નર પ્લોટ્સ સાથે ડિઝાઇન કરાયેલો એકદમ ખુલ્લો પ્રોજેક્ટ.\n\n✅ 🌐 Smart Connectivity: 1 મેઇન સિક્યુરિટી ગેટ અને 6 મેનેજેબલ એન્ટ્રી-એક્ઝિટ ગેટની સુવિધા સાથેના ઇન્ટરકનેક્ટેડ રોડ્સ.\n\n✅ 🏛️ _Architect & Interior Support:_ તમારા ઘરના પ્લાનિંગ અને કસ્ટમાઇઝેશન માટે ફુલ સપોર્ટ.\n\n✅ 💰 _Starting Price:_ પ્લોટની કિંમત ₹72.80 લાખથી શરૂ.\n\n✅ 🌟 _With the Best Layout Plan of the Area_",
+    "location": {
+      "name": "Rajmahal Location",
+      "address": "Rajmahal, 120 ft & 60 ft Junction, Surat",
+      "googleMapsUrl": "https://maps.app.goo.gl/CnkR8tcD2y3yU4fv9"
+    },
+    "locationUrl": "https://maps.app.goo.gl/CnkR8tcD2y3yU4fv9",
+    "video": null,
+    "videoUrl": "",
+    "links": {
+      "location": "https://maps.app.goo.gl/CnkR8tcD2y3yU4fv9"
+    },
+    "brochure": {
+      "file": "client-assets/organized/projects/rajmahal/brochure.pdf",
+      "filename": "Rajmahal-Brochure.pdf",
+      "caption": "Rajmahal Brochure"
+    },
+    "brochurePath": "client-assets/organized/projects/rajmahal/brochure.pdf",
+    "buildPlans": [
+      {
+        "id": "124-44-sqyd",
+        "label": "124.44 SQYD",
+        "filePath": ""
+      },
+      {
+        "id": "124-44-sqyd-with-lift",
+        "label": "124.44 SQYD WITH LIFT",
+        "filePath": ""
+      },
+      {
+        "id": "137-77-sqyd",
+        "label": "137.77 SQYD",
+        "filePath": ""
+      },
+      {
+        "id": "137-77-sqyd-with-shop",
+        "label": "137.77 SQYD WITH SHOP",
+        "filePath": ""
+      },
+      {
+        "id": "180-sqyd",
+        "label": "180 SQYD",
+        "filePath": ""
+      },
+      {
+        "id": "202-sqyd",
+        "label": "202 SQYD",
+        "filePath": ""
+      }
+    ],
+    "plans": {
+      "squareFeetOptions": []
+    }
   },
   {
     "id": "applewood",
     "name": "Applewood",
-    "description": "Two-Road Corner Project\nInterconnected Roads\nEast-West Facing Plot\nSMC Road Facing 137 Sq.Yd Plot\nStarting from 89 Sq.Yd at ₹42.27 Lakhs Onwards\nReady Home 3BHK (2200 Sq.Ft) from ₹70 Lakhs\nReady & Live Campus",
-    "locationUrl": "",
-    "imagePath": "client-assets/organized/projects/applewood/hero.jpg",
-    "brochurePath": "",
+    "icon": "🍎",
     "active": true,
-    "sortOrder": 4
+    "sortOrder": 4,
+    "mainImage": "client-assets/organized/projects/applewood/Applewood Welcome image.jpeg",
+    "imagePath": "client-assets/organized/projects/applewood/Applewood Welcome image.jpeg",
+    "description": "*⚜️* *_APPLEWOOD_* *⚜️*\n🏡 _PREMIUM ROW HOUSE PLOT PROJECT_ 🏡\n\n✅ 🛣️ _Corner Project:_ બંને બાજુ રોડ કોર્નર ટચ પ્રોજેક્ટ.\n\n✅ 🚪 _Smart Connectivity:_ સિંગલ સિક્યુરિટી ગેટની સુવિધા સાથેના ઇન્ટરકનેક્ટેડ રોડ્સ.\n\n✅ 🌅 _East-West Facing Plot:_ વાસ્તુ પ્રમાણે ઉત્તમ દિશા ધરાવતા પ્લોટ.\n\n✅ 🏪 _Anchor Plot:_ દુકાન (Shop) ના બેસ્ટ પ્લાનિંગ સાથે SMC રોડ ફેસિંગ 137 Sq.Yd નો પ્લોટ.\n\n✅ 📐 _Spacious Layout:_ 89 Sq.Yd ના પ્લોટમાં 21 ફૂટની પહોળાઈ અને 20 ફૂટનો પહોળો લિવિંગ હોલ.\n\n✅ 👑 _Exclusive Community:_ 53 પ્રીમિયમ પ્લોટ્સ ધરાવતી એકદમ લિમિટેડ અને પ્રાઇવેટ કોમ્યુનિટી.\n\n✅ 🔑 _Ready & Live Campus:_ રહેવા માટે સંપૂર્ણ તૈયાર અને લાઈવ કેમ્પસ.\n\n✅ 💰 _Starting Price:_ પ્લોટની કિંમત માત્ર ₹42.27 લાખથી શરૂ.",
+    "location": {
+      "name": "Applewood Location",
+      "address": "Applewood, Chichi, Gujarat 395005",
+      "googleMapsUrl": "https://www.google.com/maps?sca_esv=c22c990d6aa7f981&sxsrf=APpeQnszkHCB8lUoXv8ivcKRCTnN7v3ppQ:1786381461424&biw=1833&bih=841&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiFGFwcGxld29vZCBzaXZlcnN0b25lMgYQABgeGA1IsDdQuApYqjVwAXgAkAEAmAHNAaABviKqAQYwLjI1LjK4AQPIAQD4AQGYAg-gArQUwgIHECMYsAIYJ8ICBRAhGKABwgIEECMYJ8ICCxAAGIAEGIoFGJECwgIKEAAYgAQYFBiHAsICBRAAGIAEwgILEC4YgAQYxwEYrwHCAhAQLhiABBgUGIcCGMcBGK8BwgIREC4YgAQYigUYkQIYxwEYrwHCAgYQABgWGB7CAgcQIRgKGKABwgIKEAAYCBgeGA0YCsICCBAAGAgYHhgNwgILEAAYgAQYigUYhgOYAwDiAwUSATEgQIgGAZIHBjAuMTEuNKAH644BsgcGMC4xMS40uAe0FMIHBzAuNy43LjHIBzWACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KWXJMPwwS-A7MWNg_jkVmKx9&daddr=6PVX%2B5H,+Chichi,+Gujarat+395005"
+    },
+    "locationUrl": "https://www.google.com/maps?sca_esv=c22c990d6aa7f981&sxsrf=APpeQnszkHCB8lUoXv8ivcKRCTnN7v3ppQ:1786381461424&biw=1833&bih=841&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiFGFwcGxld29vZCBzaXZlcnN0b25lMgYQABgeGA1IsDdQuApYqjVwAXgAkAEAmAHNAaABviKqAQYwLjI1LjK4AQPIAQD4AQGYAg-gArQUwgIHECMYsAIYJ8ICBRAhGKABwgIEECMYJ8ICCxAAGIAEGIoFGJECwgIKEAAYgAQYFBiHAsICBRAAGIAEwgILEC4YgAQYxwEYrwHCAhAQLhiABBgUGIcCGMcBGK8BwgIREC4YgAQYigUYkQIYxwEYrwHCAgYQABgWGB7CAgcQIRgKGKABwgIKEAAYCBgeGA0YCsICCBAAGAgYHhgNwgILEAAYgAQYigUYhgOYAwDiAwUSATEgQIgGAZIHBjAuMTEuNKAH644BsgcGMC4xMS40uAe0FMIHBzAuNy43LjHIBzWACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KWXJMPwwS-A7MWNg_jkVmKx9&daddr=6PVX%2B5H,+Chichi,+Gujarat+395005",
+    "video": {
+      "url": "https://youtu.be/Fhi8EtCLFXA",
+      "shortUrl": "https://youtu.be/Fhi8EtCLFXA",
+      "caption": "Applewood Live Campus Video"
+    },
+    "videoUrl": "https://youtu.be/Fhi8EtCLFXA",
+    "links": {
+      "location": "https://www.google.com/maps?sca_esv=c22c990d6aa7f981&sxsrf=APpeQnszkHCB8lUoXv8ivcKRCTnN7v3ppQ:1786381461424&biw=1833&bih=841&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiFGFwcGxld29vZCBzaXZlcnN0b25lMgYQABgeGA1IsDdQuApYqjVwAXgAkAEAmAHNAaABviKqAQYwLjI1LjK4AQPIAQD4AQGYAg-gArQUwgIHECMYsAIYJ8ICBRAhGKABwgIEECMYJ8ICCxAAGIAEGIoFGJECwgIKEAAYgAQYFBiHAsICBRAAGIAEwgILEC4YgAQYxwEYrwHCAhAQLhiABBgUGIcCGMcBGK8BwgIREC4YgAQYigUYkQIYxwEYrwHCAgYQABgWGB7CAgcQIRgKGKABwgIKEAAYCBgeGA0YCsICCBAAGAgYHhgNwgILEAAYgAQYigUYhgOYAwDiAwUSATEgQIgGAZIHBjAuMTEuNKAH644BsgcGMC4xMS40uAe0FMIHBzAuNy43LjHIBzWACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KWXJMPwwS-A7MWNg_jkVmKx9&daddr=6PVX%2B5H,+Chichi,+Gujarat+395005",
+      "video": "https://youtu.be/Fhi8EtCLFXA"
+    },
+    "brochure": {
+      "file": "client-assets/organized/projects/applewood/Applewood.pdf",
+      "filename": "Applewood-Brochure.pdf",
+      "caption": "Applewood Brochure"
+    },
+    "brochurePath": "client-assets/organized/projects/applewood/Applewood.pdf",
+    "buildPlans": [],
+    "plans": {
+      "squareFeetOptions": [
+        {
+          "id": "sqft-89",
+          "label": "89 Sq.Yd Plots",
+          "bhkOptions": [
+            {
+              "id": "3bhk",
+              "label": "3 BHK",
+              "file": "client-assets/organized/projects/applewood/plans/3bhk-89sqyd-AppleWood.jpg",
+              "filename": "Applewood-89SqYd-3BHK-Plan.jpg"
+            },
+            {
+              "id": "4bhk",
+              "label": "4 BHK",
+              "file": "client-assets/organized/projects/applewood/plans/4bhk-89sqyd-AppleWood.jpg",
+              "filename": "Applewood-89SqYd-4BHK-Plan.jpg"
+            },
+            {
+              "id": "5bhk",
+              "label": "5 BHK",
+              "file": "client-assets/organized/projects/applewood/plans/5bhk-89sqyd-AppleWood.jpg",
+              "filename": "Applewood-89SqYd-5BHK-Plan.jpg"
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     "id": "elements",
     "name": "Elements",
-    "description": "Ready & Live Campus\n21' Wide Width Opening in 84 Sq.Yd\n3-Side Open 124 Sq.Yd Anchor Plot\nOn 120' & 60' Four-Road Main Junction\nUniform Elevation\nPlots Starting from ₹47 Lakhs Onwards\nReady Home 3BHK (2000 Sq.Ft) from ₹75 Lakhs",
-    "locationUrl": "https://maps.app.goo.gl/ETf2Y8ZrJsFarUwGA",
-    "imagePath": "client-assets/organized/projects/elements/hero.jpg",
-    "brochurePath": "client-assets/organized/projects/elements/brochure.pdf",
+    "icon": "🌿",
     "active": true,
-    "sortOrder": 5
+    "sortOrder": 5,
+    "mainImage": "client-assets/organized/projects/elements/ELEMNET.jpg",
+    "imagePath": "client-assets/organized/projects/elements/ELEMNET.jpg",
+    "description": "🌿 *ELEMENTS*\n\n• 🔑 Ready & Live Campus\n\n• 📐 21' Wide Width Opening in 84 Sq.Yd\n\n• 📐 3-Side Open 124 Sq.Yd Anchor Plot\n\n• 🛣️ On 120' & 60' Four-Road Main Junction\n\n• 🏛️ Uniform Elevation\n\n• 💰 Plots Starting from ₹47 Lakhs Onwards\n\n• 🏡 Ready Home 3BHK (2000 Sq.Ft) from ₹75 Lakhs",
+    "location": {
+      "name": "Elements Location",
+      "address": "Elements, 120 ft & 60 ft Junction, Surat",
+      "googleMapsUrl": "https://maps.app.goo.gl/ETf2Y8ZrJsFarUwGA"
+    },
+    "locationUrl": "https://maps.app.goo.gl/ETf2Y8ZrJsFarUwGA",
+    "video": null,
+    "videoUrl": "",
+    "links": {
+      "location": "https://maps.app.goo.gl/ETf2Y8ZrJsFarUwGA"
+    },
+    "brochure": {
+      "file": "client-assets/organized/projects/elements/brochure.pdf",
+      "filename": "Elements-Brochure.pdf",
+      "caption": "Elements Brochure"
+    },
+    "brochurePath": "client-assets/organized/projects/elements/brochure.pdf",
+    "buildPlans": [],
+    "plans": {
+      "squareFeetOptions": []
+    }
   },
   {
     "id": "villas",
     "name": "Villas",
-    "description": "",
-    "locationUrl": "https://maps.app.goo.gl/6F8E29VZWTpkxnoS9",
-    "imagePath": "",
-    "brochurePath": "",
+    "icon": "🏘️",
     "active": true,
-    "sortOrder": 6
+    "sortOrder": 6,
+    "mainImage": "client-assets/organized/projects/villas/Silverstone villa welcome image.jpeg",
+    "imagePath": "client-assets/organized/projects/villas/Silverstone villa welcome image.jpeg",
+    "description": "🏘️ *SILVERSTONE VILLAS*\n🏡 *LUXURY VILLA PROJECT*\n\n• 🔑 Ready & Live Campus\n\n• 🌴 Luxurious Resort-Type Living\n\n• 🛣️ Wide Interconnected Roads\n\n• 📍 Prime Location Near Pal & Gauravpath",
+    "location": {
+      "name": "Villas Location",
+      "address": "Silverstone Villas, Surat",
+      "googleMapsUrl": "https://maps.app.goo.gl/6F8E29VZWTpkxnoS9"
+    },
+    "locationUrl": "https://maps.app.goo.gl/6F8E29VZWTpkxnoS9",
+    "video": {
+      "url": "https://youtu.be/maggaNCbyNM",
+      "shortUrl": "https://youtu.be/maggaNCbyNM",
+      "caption": "Silverstone Villas Video"
+    },
+    "videoUrl": "https://youtu.be/maggaNCbyNM",
+    "links": {
+      "location": "https://maps.app.goo.gl/6F8E29VZWTpkxnoS9",
+      "video": "https://youtu.be/maggaNCbyNM",
+      "exclusiveVideo": "https://youtube.com/shorts/61lWVYkhYPM"
+    },
+    "brochure": {
+      "file": "client-assets/organized/projects/villas/SilverStone Villas.pdf",
+      "filename": "SilverStone-Villas-Brochure.pdf",
+      "caption": "Silverstone Villas Brochure"
+    },
+    "brochurePath": "client-assets/organized/projects/villas/SilverStone Villas.pdf",
+    "buildPlans": [],
+    "plans": {
+      "squareFeetOptions": []
+    }
   }
 ]

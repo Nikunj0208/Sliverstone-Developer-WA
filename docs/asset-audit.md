@@ -4,29 +4,40 @@ Audit date: 2026-08-10
 
 ## Source handling
 
-The supplied originals are present in `raw/` at the repository root, rather than in `client-assets/raw/`. This audit treats `raw/` as the protected original source directory. No file in that directory was changed, moved, renamed, or deleted. Files copied into `client-assets/organized/` are separate copies.
+The supplied original assets are currently stored in `raw/` at the repository root; `client-assets/raw/` does not exist. `raw/` is treated as protected and was not modified. This audit inspected `raw/Location and videos .txt`, the only raw text file found.
 
-## Project inventory
+## Project content status
 
-| Project | Image found | Brochure found | Description found | Location URL found | Original source filename(s) | Confidence in mapping | Missing content |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Spring Hill | Yes | Yes | Yes | Yes | `SPRINGHILL.jpg`; `Spring Hill.pdf`; `Silverstone_Developers_WhatsApp_Messages.docx`; `Location and videos .txt` | High | None in the requested fields |
-| Mahal | Yes | Yes | Yes | Yes | `MAHEL.jpg`; `MaHel By SilverStone Brochure.pdf`; `Silverstone_Developers_WhatsApp_Messages.docx`; `Location and videos .txt` | High - the supplied assets consistently spell the project “Mahel”; it is mapped to the requested project name “Mahal”. | None in the requested fields |
-| Rajmahal | Yes | Yes | Yes | Yes | `RAJ MAHEL.jpg`; `Raj Mahel.pdf`; `Silverstone_Developers_WhatsApp_Messages.docx`; `Location and videos .txt` | High - the supplied assets spell the project “Raj Mahel”. | None in the requested fields |
-| Applewood | Yes | No | Yes | No - **UNRESOLVED** | `APPLEWOOD - 1.jpg`; `Silverstone_Developers_WhatsApp_Messages.docx`; `Location and videos .txt` | High for image and description | Brochure; complete location URL |
-| Elements | Yes | Yes | Yes | Yes | `ELEMNET.jpg`; `Element.pdf`; `Silverstone_Developers_WhatsApp_Messages.docx`; `Location and videos .txt` | High - the image filename has a likely typo and the supplied project content uses “Element/Elements”; the requested project name is “Elements”. | None in the requested fields |
-| Villas | No | No | No | Yes | `Location and videos .txt` | High for the location URL only | Image; brochure; description |
+| Project | Image | Description | Location URL | Project video URL | Brochure |
+| --- | --- | --- | --- | --- | --- |
+| Spring Hill | FOUND | FOUND | FOUND | FOUND | FOUND |
+| Mahal | FOUND | FOUND | FOUND | MISSING | FOUND |
+| Rajmahal | FOUND | FOUND | FOUND | MISSING | FOUND |
+| Applewood | FOUND | FOUND | FOUND | FOUND | FOUND |
+| Elements | FOUND | FOUND | FOUND | MISSING | FOUND |
+| Villas | FOUND | MISSING | FOUND | FOUND | FOUND |
 
-## Welcome asset
+## URL mapping audit
 
-`welcome image.png` is a confidently identified welcome image and was copied to `client-assets/organized/welcome/welcome.png`.
+All mappings below are explicitly labelled in `raw/Location and videos .txt`; full client URLs are intentionally omitted from this report.
 
-## Unresolved assets and values
+| Source section | Purpose | Related project | Classification | Status |
+| --- | --- | --- | --- | --- |
+| Welcome message & office details | Office location | None | OTHER | FOUND |
+| Welcome message & office details | Welcome video | None | WELCOME_VIDEO | FOUND |
+| Springhill | Location | Spring Hill | LOCATION | FOUND |
+| Springhill | Video | Spring Hill | PROJECT_VIDEO | FOUND |
+| Mahel | Location | Mahal | LOCATION | FOUND |
+| Rajmahel | Location | Rajmahal | LOCATION | FOUND |
+| Applewood | Client-supplied location URL | Applewood | LOCATION | FOUND |
+| Applewood | Live campus video | Applewood | PROJECT_VIDEO | FOUND |
+| Elements | Location | Elements | LOCATION | FOUND |
+| Villas | Location | Villas | LOCATION | FOUND |
+| Villas | Live campus video | Villas | PROJECT_VIDEO | FOUND |
+| Villas | Exclusive garden villa video | Villas | PROJECT_VIDEO | FOUND |
 
-- Applewood’s location entry is **UNRESOLVED**: `https://maps.app.goo.gl/ [Note: Please paste complete code]`. It is not a usable, complete location URL and has not been added to `data/projects.json`.
-- No source file has an uncertain project mapping. `raw/.DS_Store` is macOS metadata, not project content, and was intentionally ignored.
+## Unresolved and multi-link handling
 
-## Other verified source information
-
-- `Location and videos .txt` also includes a welcome office location, a welcome video, and project video links. Video URLs are outside the requested JSON schema and were not added.
-- `Silverstone_Developers_WhatsApp_Messages.docx` contains project copy for Springhill, Mahel, Rajmahel, Applewood, and Elements, but no Villas copy.
+- The incomplete Applewood location fragment in the raw text was not used. A completed location URL was supplied directly by the client and is stored in project data.
+- Villas has two clearly identified project videos. The single `videoUrl` schema field stores the explicitly labelled live-campus video; the exclusive garden-villa video remains recorded in the source audit and is not discarded or reassigned.
+- The supplied project labels “Mahel” and “Rajmahel” map consistently to the known projects Mahal and Rajmahal.
