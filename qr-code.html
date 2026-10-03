@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Silverstone Developers — Official WhatsApp QR Code</title>
+  <style>
+    :root {
+      --primary: #0f382c;
+      --primary-dark: #0a261e;
+      --gold: #c5a059;
+      --gold-light: #e6c587;
+      --whatsapp: #25D366;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0a261e 0%, #0f382c 50%, #174d3d 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      color: var(--text-dark);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      text-align: center;
+      position: relative;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: #ffffff;
+      padding: 36px 24px 28px;
+      position: relative;
+      border-bottom: 3px solid var(--gold);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(197, 160, 89, 0.2);
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    .qr-section {
+      padding: 36px 28px 24px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .qr-frame {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px -5px rgba(15, 56, 44, 0.15), 0 0 0 2px rgba(197, 160, 89, 0.3);
+      position: relative;
+      margin-bottom: 24px;
+      transition: transform 0.2s ease;
+    }
+
+    .qr-frame:hover {
+      transform: scale(1.02);
+    }
+
+    .qr-image {
+      width: 260px;
+      height: 260px;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .instruction {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .sub-instruction {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 320px;
+      margin-bottom: 24px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .feature-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-icon {
+      font-size: 16px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: var(--whatsapp);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px 20px;
+      border-radius: 14px;
+      box-shadow: 0 10px 15px -3px rgba(37, 211, 102, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: #20bd5a;
+      transform: translateY(-2px);
+    }
+
+    .footer {
+      background: #f1f5f9;
+      padding: 16px 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .phone-number {
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.5px;
+    }
+
+    @media print {
+      body {
+        background: none;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        max-width: 100%;
+      }
+      .action-btn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="badge">
+        <span>✨</span> Official WhatsApp Automation
+      </div>
+      <h1>SILVERSTONE DEVELOPERS</h1>
+      <p>Luxury Living • Pal, Surat</p>
+    </div>
+
+    <div class="qr-section">
+      <div class="qr-frame">
+        <img class="qr-image" src="silverstone-whatsapp-qr.png" alt="Silverstone WhatsApp Automation QR Code">
+      </div>
+
+      <div class="instruction">Scan with your Phone Camera</div>
+      <div class="sub-instruction">
+        Instantly opens WhatsApp and launches the automated interactive welcome experience.
+      </div>
+
+      <div class="features">
+        <div class="feature-item">
+          <span class="feature-icon">🏡</span>
+          <span>Explore Projects</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📐</span>
+          <span>Download Floor Plans</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📑</span>
+          <span>Instant PDF Brochures</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📍</span>
+          <span>Location & Video Tour</span>
+        </div>
+      </div>
+
+      <a class="action-btn" href="https://wa.me/message/BXLQJCMWGVWKF1" target="_blank" rel="noopener">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.634.053-1.02-.072-.25-.082-.576-.197-1.01-.387-1.838-.804-3.033-2.658-3.125-2.779-.092-.122-.748-.995-.748-1.898 0-.903.473-1.347.641-1.53.169-.184.37-.23.493-.23.123 0 .247.002.354.007.113.005.263-.043.411.312.148.355.508 1.24.553 1.332.045.092.075.2.015.321-.06.121-.09.197-.18.303-.09.106-.188.237-.269.318-.09.09-.184.188-.079.369.105.18.468.772.998 1.246.685.611 1.263.8 1.443.89.18.09.285.075.39-.045.105-.121.45-.526.57-.706.12-.18.24-.15.405-.09.165.06 1.05.495 1.23.585.18.09.3.135.345.21.045.075.045.435-.099.84z"/>
+        </svg>
+        <span>Open Chat on WhatsApp</span>
+      </a>
+    </div>
+
+    <div class="footer">
+      Official WhatsApp Business: <span class="phone-number">+91 88667 52222</span>
+    </div>
+  </div>
+
+</body>
+</html>

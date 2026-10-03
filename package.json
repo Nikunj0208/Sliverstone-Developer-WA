@@ -16,6 +16,7 @@
     "meta:check-waba": "tsx scripts/check-waba-subscription.ts",
     "meta:subscribe-waba": "tsx scripts/subscribe-waba.ts",
     "meta:diagnose": "tsx scripts/meta-production-diagnostic.ts",
+    "qr": "tsx scripts/create-qr.ts",
     "test": "npm run build && node --test tests/*.test.mjs"
   },
   "dependencies": {

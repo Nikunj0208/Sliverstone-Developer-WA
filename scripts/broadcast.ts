@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, appendFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { basename } from "node:path";
 import axios from "axios";
@@ -96,16 +96,19 @@ async function main() {
     process.exit(1);
   }
 
-  // Safety check for Tier 1
-  if (contacts.length > 1000) {
-    console.warn(`⚠️ Warning: You have ${contacts.length} contacts. Meta Tier-1 daily limit is 1,000.`);
-  }
+  const limitArg = process.argv.find((arg) => arg.startsWith("--limit="));
+  const offsetArg = process.argv.find((arg) => arg.startsWith("--offset="));
+  const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 200;
+  const offset = offsetArg ? parseInt(offsetArg.split("=")[1], 10) : 0;
+
+  const targetContacts = contacts.slice(offset, offset + limit);
+  console.log(`Target batch: ${targetContacts.length} contacts (from #${offset + 1} to #${offset + targetContacts.length} of ${contacts.length} total).`);
 
   if (isDryRun) {
-    console.log("\n[DRY RUN MODE] Previewing first 5 contacts:");
-    console.table(contacts.slice(0, 5));
-    console.log(`\nTotal to be sent: ${contacts.length} messages.`);
-    console.log("To send for real, run: npm run broadcast");
+    console.log(`\n[DRY RUN MODE] Previewing batch of ${targetContacts.length} contacts (showing first 5):`);
+    console.table(targetContacts.slice(0, 5));
+    console.log(`\nTotal to be sent in this batch: ${targetContacts.length} messages.`);
+    console.log("To send for real, run: npm run broadcast -- --limit=200");
     return;
   }
 
@@ -121,13 +124,27 @@ async function main() {
     process.exit(1);
   }
 
+  // Load inactive numbers blacklist if exists
+  const inactivePath = "inactive-numbers.txt";
+  let inactiveSet = new Set<string>();
+  if (existsSync(inactivePath)) {
+    const inactiveRaw = await readFile(inactivePath, "utf-8");
+    inactiveSet = new Set(inactiveRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean));
+  }
+
   // 4. Dispatch Broadcast
-  console.log(`\n[4/4] Starting broadcast to ${contacts.length} recipients...`);
+  console.log(`\n[4/4] Starting broadcast to ${targetContacts.length} recipients...`);
   const results: Array<{ phone: string; name?: string; status: "SENT" | "FAILED"; messageId?: string; error?: string }> = [];
 
-  for (let i = 0; i < contacts.length; i++) {
-    const contact = contacts[i];
-    const progress = `[${i + 1}/${contacts.length}] ${contact.phone}`;
+  for (let i = 0; i < targetContacts.length; i++) {
+    const contact = targetContacts[i];
+    const progress = `[${i + 1}/${targetContacts.length}] ${contact.phone} (${contact.name || "No name"})`;
+
+    if (inactiveSet.has(contact.phone)) {
+      console.log(`${progress} -> SKIPPED (Inactive / Not on WhatsApp)`);
+      results.push({ phone: contact.phone, name: contact.name, status: "FAILED", error: "Previously identified as inactive" });
+      continue;
+    }
 
     try {
       const response = await axios.post(
@@ -168,6 +185,12 @@ async function main() {
       const errMsg = err.response?.data?.error?.message || err.message;
       console.error(`${progress} -> FAILED: ${errMsg}`);
       results.push({ phone: contact.phone, name: contact.name, status: "FAILED", error: errMsg });
+
+      // Automatically blacklist failed / non-existent numbers
+      try {
+        await appendFile(inactivePath, `${contact.phone}\n`);
+        inactiveSet.add(contact.phone);
+      } catch {}
     }
 
     // 50ms pause between sends (20 msg/sec)
