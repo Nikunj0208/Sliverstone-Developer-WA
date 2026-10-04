@@ -1,22 +1,40 @@
 import { env } from "../config/env.js";
-import { sendContact, sendText } from "../meta/messages.js";
+import { sendContact, sendCtaUrl, sendText } from "../meta/messages.js";
 import { sendTemplate } from "../meta/templates.js";
 
+export const CALL_PHONE_NUMBER = "918866751322";
+
 export async function sendCallFallback(to: string): Promise<void> {
-  if (env.callTemplateName) {
-    try {
-      // The native phone number is configured in Meta when the template is
-      // approved; it must never be passed or exposed in this payload.
-      await sendTemplate(to, env.callTemplateName, []);
-      console.info("[ACTION] NATIVE CALL TEMPLATE SENT");
-      return;
-    } catch {
-      console.info("[ACTION] NATIVE CALL TEMPLATE UNAVAILABLE — FALLBACK");
-    }
+  const callTemplate = env.callTemplateName || "silverstone_call";
+  try {
+    // The native phone number is configured in Meta when the template is
+    // approved; tapping it directly triggers the Android/iOS "Open with" dialer sheet.
+    await sendTemplate(to, callTemplate, []);
+    console.info("[ACTION] NATIVE CALL TEMPLATE SENT");
+    return;
+  } catch {
+    console.info("[ACTION] NATIVE CALL TEMPLATE UNAVAILABLE — FALLBACK");
   }
 
-  const rawNumber = env.clientPhoneNumber.trim();
+  const rawNumber = (env.clientPhoneNumber || CALL_PHONE_NUMBER).trim();
   const formattedNumber = rawNumber.startsWith("+") ? rawNumber : `+${rawNumber}`;
+
+  // Interactive Call Button: Redirects directly to tel: intent for "Open with" dialer
+  const callUrl = "https://sliverstone-developer-wa1.onrender.com/call";
+  try {
+    const ctaSent = await sendCtaUrl(
+      to,
+      `📞 *Silverstone Developers Sales Desk*\n\nTap *Call Now* below to connect directly with our sales team:`,
+      "Call Now",
+      callUrl
+    );
+    if (ctaSent) {
+      console.info("[ACTION] CALL CTA URL BUTTON SENT");
+      return;
+    }
+  } catch {
+    // Graceful fallback if CTA URL message fails
+  }
 
   try {
     await sendContact(

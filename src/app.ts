@@ -3,6 +3,7 @@ import type { Request } from "express";
 
 import { healthRouter } from "./routes/health.js";
 import { webhookRouter } from "./routes/webhook.js";
+import { callRouter } from "./routes/call.js";
 
 export function createApp() {
   const app = express();
@@ -16,6 +17,7 @@ export function createApp() {
   );
   app.use(healthRouter);
   app.use(webhookRouter);
+  app.use(callRouter);
 
   return app;
 }
