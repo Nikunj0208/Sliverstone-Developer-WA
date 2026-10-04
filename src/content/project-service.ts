@@ -81,7 +81,30 @@ export function getBhkOptions(projectId: string, sqftId: string): BhkOption[] {
   const cleanSqft = sqftId.toLowerCase();
   const matchedSqft = sqftOptions.find((sq) => sq.id.toLowerCase() === cleanSqft)
     || (cleanSqft === "sqft-bhk" ? sqftOptions[0] : undefined);
-  return matchedSqft ? matchedSqft.bhkOptions : [];
+  if (matchedSqft) return matchedSqft.bhkOptions;
+
+  if (cleanSqft.includes("125") && cleanSqft.includes("lift")) {
+    const opt = sqftOptions.find((sq) => sq.id.includes("125") && sq.id.includes("lift"));
+    if (opt) return opt.bhkOptions;
+  }
+  if (cleanSqft.includes("125")) {
+    const opt = sqftOptions.find((sq) => sq.id.includes("125") && !sq.id.includes("lift"));
+    if (opt) return opt.bhkOptions;
+  }
+  if (cleanSqft.includes("140")) {
+    const opt = sqftOptions.find((sq) => sq.id.includes("140"));
+    if (opt) return opt.bhkOptions;
+  }
+  if (cleanSqft.includes("137")) {
+    const opt = sqftOptions.find((sq) => sq.id.includes("137"));
+    if (opt) return opt.bhkOptions;
+  }
+  if (cleanSqft.includes("200")) {
+    const opt = sqftOptions.find((sq) => sq.id.includes("200"));
+    if (opt) return opt.bhkOptions;
+  }
+
+  return [];
 }
 
 export function getBrochure(projectId: string): { file: string; filename: string; caption?: string } | undefined {
@@ -103,6 +126,16 @@ export function getBrochure(projectId: string): { file: string; filename: string
 export function getPlan(projectId: string, sqftId: string, bhk: string): BhkOption | undefined {
   const bhkOptions = getBhkOptions(projectId, sqftId);
   const normalizedBhk = bhk.replace(/[\s-_]+/g, "").toLowerCase();
+
+  if (normalizedBhk.includes("lift")) {
+    const allSqft = getSquareFeetOptions(projectId);
+    for (const sq of allSqft) {
+      if (sq.id.includes("lift")) return sq.bhkOptions[0];
+      const found = sq.bhkOptions.find((b) => b.id.includes("lift") || b.label.includes("lift"));
+      if (found) return found;
+    }
+  }
+
   const match = bhkOptions.find(
     (item) =>
       item.id.replace(/[\s-_]+/g, "").toLowerCase() === normalizedBhk ||

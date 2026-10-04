@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import {
   type ProjectContent,
   getProject,
+  getActiveProjects,
   getBrochure,
   getSquareFeetOptions,
   hasProjectPlans,
@@ -261,6 +262,8 @@ export async function sendProjectLinks(
   }
 }
 
+const lastViewedProject = new Map<string, string>();
+
 /**
  * MESSAGE 6: Send Project Action Buttons (Download Brochure, View Plans)
  */
@@ -279,6 +282,7 @@ export async function sendProjectActionButtons(
 
   try {
     await sendButtons(to, `Explore options for ${project.name}:`, buttons);
+    lastViewedProject.set(to, project.id);
     setConversationState(to, "PROJECT_ACTIONS", { projectId: project.id });
     return true;
   } catch (error: unknown) {
@@ -295,6 +299,7 @@ export async function sendProjectInfoSequence(
   project: ProjectContent,
   dependencies: ProjectFlowDependencies = defaultProjectFlowDependencies
 ): Promise<boolean> {
+  lastViewedProject.set(to, project.id);
   setConversationState(to, "PROJECT_INFO", { projectId: project.id });
 
   // MESSAGE 1: Send Image with Description attached as caption (Single standalone card in one go)
@@ -344,6 +349,7 @@ export async function handleProjectSelection(
     return false;
   }
 
+  lastViewedProject.set(to, project.id);
   console.info(`[PROJECT] Selected: ${project.name} (${project.id})`);
   return sendProjectInfoSequence(to, project, dependencies);
 }
@@ -356,7 +362,7 @@ export async function handleProjectBrochure(
   projectId?: string,
   dependencies: ProjectFlowDependencies = defaultProjectFlowDependencies
 ): Promise<boolean> {
-  const targetProjectId = projectId || getConversationState(to)?.projectId;
+  const targetProjectId = projectId || getConversationState(to)?.projectId || lastViewedProject.get(to);
   if (!targetProjectId) {
     console.info("[BROCHURE] No project selected in state");
     await dependencies.sendText(to, "Brochure is currently unavailable. Please contact our sales team.");
@@ -410,6 +416,7 @@ export async function sendSquareFeetOptions(
     return false;
   }
 
+  lastViewedProject.set(to, project.id);
   setConversationState(to, "SELECT_SQFT", { projectId: project.id });
 
   if (options.length <= 3) {
@@ -417,7 +424,7 @@ export async function sendSquareFeetOptions(
       id: `PLAN_SQFT:${project.id}:${opt.id}`,
       title: opt.label.slice(0, 20)
     }));
-    await dependencies.sendReplyButtons(to, `Choose Square Feet for ${project.name}:`, buttons);
+    await dependencies.sendReplyButtons(to, `Choose a plan for ${project.name}:`, buttons);
     return true;
   }
 
@@ -427,10 +434,10 @@ export async function sendSquareFeetOptions(
   }));
   await dependencies.sendList(
     to,
-    "Choose Square Feet",
-    `Select a square-foot option for ${project.name}:`,
-    "Select Sq Ft",
-    "Square Feet",
+    "Choose Plan",
+    `Select a plan for ${project.name}:`,
+    "View Plans",
+    "Floor Plans",
     rows
   );
   return true;
@@ -444,9 +451,21 @@ export async function handleProjectPlans(
   projectId?: string,
   dependencies: ProjectFlowDependencies = defaultProjectFlowDependencies
 ): Promise<boolean> {
-  const targetProjectId = projectId || getConversationState(to)?.projectId;
+  const targetProjectId = projectId || getConversationState(to)?.projectId || lastViewedProject.get(to);
   if (!targetProjectId) {
-    console.info("[PLANS] No project selected in state");
+    console.info("[PLANS] No project selected in state, prompting choice");
+    const activeWithPlans = getActiveProjects().filter((p) => hasProjectPlans(p.id));
+    if (activeWithPlans.length > 0) {
+      await dependencies.sendReplyButtons(
+        to,
+        "Select a project to view its plans:",
+        activeWithPlans.slice(0, 3).map((p) => ({
+          id: `PROJECT_PLANS:${p.id}`,
+          title: p.name.slice(0, 20)
+        }))
+      );
+      return true;
+    }
     await dependencies.showMainWelcomeMenu(to);
     return false;
   }
@@ -458,6 +477,7 @@ export async function handleProjectPlans(
     return false;
   }
 
+  lastViewedProject.set(to, project.id);
   console.info(`[PLANS] Requested for ${project.name}`);
   return sendSquareFeetOptions(to, project, dependencies);
 }
@@ -512,6 +532,16 @@ export async function handleSquareFeetSelection(
     return false;
   }
 
+  lastViewedProject.set(to, project.id);
+
+  // Direct delivery for Mahal and Rajmahal (bungalow plots with given plan files)
+  if (projectId === "mahal" || projectId === "rajmahal") {
+    const bhkOptions = getBhkOptions(projectId, sqftId);
+    if (bhkOptions.length === 1) {
+      return handleBhkSelection(to, projectId, sqftId, bhkOptions[0].id, dependencies);
+    }
+  }
+
   console.info(`[PLANS] SqFt selected: ${sqftId} for ${project.name}`);
   return sendBhkOptions(to, project, sqftId, dependencies);
 }
@@ -546,7 +576,12 @@ export async function handleBhkSelection(
 
   console.info(`[PLANS] SENDING FLOOR PLAN: ${plan.filename}`);
   try {
-    await dependencies.sendDocument(to, plan.file, plan.filename);
+    try {
+      await dependencies.sendDocument(to, plan.file, plan.filename);
+    } catch (docErr) {
+      console.warn(`[PLANS] sendDocument failed for ${plan.filename}, falling back to sendImage:`, docErr);
+      await dependencies.sendImage(to, plan.file, plan.filename);
+    }
     console.info(`[PLANS] SEND SUCCESS: ${plan.filename}`);
     setConversationState(to, "PLAN_SENT", { projectId: project.id, squareFeetId: sqftId, bhk });
     await dependencies.showMainWelcomeMenu(to);

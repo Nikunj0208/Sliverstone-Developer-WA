@@ -177,7 +177,7 @@ test("Applewood plans: Yard -> BHK -> Downloadable Plan", async () => {
   assert.ok(existsSync(messages[0].documentPath));
 });
 
-test("Mahal plans: Yard -> BHK -> Downloadable Plan", async () => {
+test("Mahal plans: Direct buttons with given names -> Downloadable Plan", async () => {
   const sim = new WhatsAppConversationSimulator();
   const user = "customer-mahal";
 
@@ -198,57 +198,37 @@ test("Mahal plans: Yard -> BHK -> Downloadable Plan", async () => {
   assert.equal(messages.length, 1);
   assert.equal(messages[0].type, "buttons");
   assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_SQFT:mahal:sqft-125", title: "125 Sq.Yd Plots" },
-    { id: "PLAN_SQFT:mahal:sqft-140", title: "140 Sq.Yd Plots" }
+    { id: "PLAN_SQFT:mahal:125-sqyd", title: "125 sqyd" },
+    { id: "PLAN_SQFT:mahal:125-sqyd-with-lift", title: "125 sqyd with lift" },
+    { id: "PLAN_SQFT:mahal:140-sqyd", title: "140 sqyd" }
   ]);
 
-  // Click 125 Sq.Yd Plots
+  // Click 125 sqyd -> directly delivers plan
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:sqft-125");
-  messages = sim.getSentMessages(user);
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "buttons");
-  assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_BHK:mahal:sqft-125:STANDARD", title: "Standard Plan" },
-    { id: "PLAN_BHK:mahal:sqft-125:LIFT", title: "With Lift Plan" }
-  ]);
-
-  // Click Standard Plan
-  sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:mahal:sqft-125:STANDARD");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:125-sqyd");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Mahal-125SqYd-Plan.jpg");
+  assert.equal(messages[0].filename, "125 sqyd.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 
-  // Click With Lift Plan
+  // Click 125 sqyd with lift -> directly delivers plan
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:mahal:sqft-125:LIFT");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:125-sqyd-with-lift");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Mahal-125SqYd-With-Lift-Plan.jpg");
+  assert.equal(messages[0].filename, "125 sqyd with lift.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 
-  // Click 140 Sq.Yd Plots
+  // Click 140 sqyd -> directly delivers plan
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:sqft-140");
-  messages = sim.getSentMessages(user);
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "buttons");
-  assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_BHK:mahal:sqft-140:STANDARD", title: "140 Sq.Yd Plan" }
-  ]);
-
-  // Click 140 Sq.Yd Plan
-  sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:mahal:sqft-140:STANDARD");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:140-sqyd");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Mahal-140SqYd-Plan.jpg");
+  assert.equal(messages[0].filename, "140 sqyd.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 });
 
-test("Rajmahal plans: Yard -> BHK -> Downloadable Plan", async () => {
+test("Rajmahal plans: Given names list -> Downloadable Plan", async () => {
   const sim = new WhatsAppConversationSimulator();
   const user = "customer-rajmahal";
 
@@ -267,74 +247,44 @@ test("Rajmahal plans: Yard -> BHK -> Downloadable Plan", async () => {
   await sim.simulateButtonClick(user, "PROJECT_PLANS");
   messages = sim.getSentMessages(user);
   assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "buttons");
-  assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_SQFT:rajmahal:sqft-125", title: "125 Sq.Yd Plots" },
-    { id: "PLAN_SQFT:rajmahal:sqft-137", title: "137 Sq.Yd Plots" },
-    { id: "PLAN_SQFT:rajmahal:sqft-200", title: "200 Sq.Yd Anchor" }
+  assert.equal(messages[0].type, "list");
+  assert.deepEqual(messages[0].rows, [
+    { id: "PLAN_SQFT:rajmahal:125-sqyd", title: "125 sqyd" },
+    { id: "PLAN_SQFT:rajmahal:125sqyd-with-lift", title: "125sqyd with lift" },
+    { id: "PLAN_SQFT:rajmahal:137sqyd", title: "137sqyd" },
+    { id: "PLAN_SQFT:rajmahal:200sqyrd", title: "200sqyrd" }
   ]);
 
-  // Click 125 Sq.Yd Plots
+  // Click 125 sqyd
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:sqft-125");
-  messages = sim.getSentMessages(user);
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "buttons");
-  assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_BHK:rajmahal:sqft-125:STANDARD", title: "Standard Plan" },
-    { id: "PLAN_BHK:rajmahal:sqft-125:LIFT", title: "With Lift Plan" }
-  ]);
-
-  // Click Standard Plan
-  sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-125:STANDARD");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:125-sqyd");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Rajmahal-125SqYd-Plan.jpg");
+  assert.equal(messages[0].filename, "125 sqyd.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 
-  // Click With Lift Plan
+  // Click 125sqyd with lift
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-125:LIFT");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:125sqyd-with-lift");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Rajmahal-125SqYd-With-Lift-Plan.jpg");
+  assert.equal(messages[0].filename, "125sqyd with lift.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 
-  // Click 137 Sq.Yd Plots
+  // Click 137sqyd
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:sqft-137");
-  messages = sim.getSentMessages(user);
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "buttons");
-  assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_BHK:rajmahal:sqft-137:STANDARD", title: "137 Sq.Yd Plan" }
-  ]);
-
-  // Click 137 Sq.Yd Plan
-  sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-137:STANDARD");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:137sqyd");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Rajmahal-137SqYd-Plan.jpg");
+  assert.equal(messages[0].filename, "137sqyd.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 
-  // Click 200 Sq.Yd Anchor
+  // Click 200sqyrd
   sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:sqft-200");
-  messages = sim.getSentMessages(user);
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "buttons");
-  assert.deepEqual(messages[0].buttons, [
-    { id: "PLAN_BHK:rajmahal:sqft-200:ANCHOR", title: "Anchor Plot Plan" }
-  ]);
-
-  // Click Anchor Plot Plan
-  sim.clearSentMessages(user);
-  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-200:ANCHOR");
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:200sqyrd");
   messages = sim.getSentMessages(user);
   assert.equal(messages[0].type, "document");
-  assert.equal(messages[0].filename, "Rajmahal-200SqYd-Anchor-Plan.jpg");
+  assert.equal(messages[0].filename, "200sqyrd.jpg");
   assert.ok(existsSync(messages[0].documentPath));
 });
 
