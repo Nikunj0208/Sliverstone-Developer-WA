@@ -16,7 +16,9 @@ export async function sendCallFallback(to: string): Promise<void> {
     console.info("[ACTION] NATIVE CALL TEMPLATE UNAVAILABLE — FALLBACK");
   }
 
-  const rawNumber = (env.clientPhoneNumber || CALL_PHONE_NUMBER).trim();
+  const rawNumber = env.clientPhoneNumber && env.clientPhoneNumber !== "918866752222"
+    ? env.clientPhoneNumber.trim()
+    : CALL_PHONE_NUMBER;
   const formattedNumber = rawNumber.startsWith("+") ? rawNumber : `+${rawNumber}`;
 
   // Interactive Call Button: Redirects directly to tel: intent for "Open with" dialer

@@ -4,7 +4,9 @@ import { env } from "../config/env.js";
 export const callRouter = Router();
 
 callRouter.get("/call", (_request, response) => {
-  const number = (env.clientPhoneNumber || "918866751322").trim();
+  const number = env.clientPhoneNumber && env.clientPhoneNumber !== "918866752222"
+    ? env.clientPhoneNumber.trim()
+    : "918866751322";
   const formatted = number.startsWith("+") ? number : `+${number}`;
   const html = `<!DOCTYPE html>
 <html>
