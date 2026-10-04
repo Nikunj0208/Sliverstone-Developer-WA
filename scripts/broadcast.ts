@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, appendFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir, appendFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { basename } from "node:path";
 import axios from "axios";
@@ -104,11 +104,38 @@ async function main() {
   const targetContacts = contacts.slice(offset, offset + limit);
   console.log(`Target batch: ${targetContacts.length} contacts (from #${offset + 1} to #${offset + targetContacts.length} of ${contacts.length} total).`);
 
+  // Meta Rolling 24-Hour Safeguard Check
+  if (existsSync("logs")) {
+    const logFiles = (await readdir("logs")).filter((f) => f.startsWith("broadcast-") && f.endsWith(".json")).sort();
+    if (logFiles.length > 0) {
+      const lastFile = logFiles[logFiles.length - 1];
+      const match = /broadcast-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.json/.exec(lastFile);
+      if (match) {
+        const iso = match[1].replace(/-/g, (m, offset) => (offset > 10 ? ":" : "-")).replace(/:(\d{3}Z)$/, ".$1");
+        const lastRunTime = new Date(iso).getTime();
+        if (!isNaN(lastRunTime)) {
+          const diffMs = (lastRunTime + 24 * 60 * 60 * 1000) - Date.now();
+          if (diffMs > 0) {
+            const minutesLeft = Math.ceil(diffMs / 60000);
+            console.log(`\n⚠️  [META TIER_250 SAFEGUARD NOTICE]`);
+            console.log(`Last broadcast finished at: ${new Date(lastRunTime).toLocaleString()}`);
+            console.log(`Meta rolling 24-hour conversation window clears in: ~${minutesLeft} minute(s).`);
+            console.log(`To ensure Meta does not flag your account or hit rate limits, wait ${minutesLeft} minute(s).`);
+            if (!isDryRun && !process.argv.includes("--force")) {
+              console.log(`\nStopping safely to protect account health. Run again in ${minutesLeft} minute(s) or pass --force to override.`);
+              process.exit(0);
+            }
+          }
+        }
+      }
+    }
+  }
+
   if (isDryRun) {
     console.log(`\n[DRY RUN MODE] Previewing batch of ${targetContacts.length} contacts (showing first 5):`);
     console.table(targetContacts.slice(0, 5));
     console.log(`\nTotal to be sent in this batch: ${targetContacts.length} messages.`);
-    console.log("To send for real, run: npm run broadcast -- --limit=200");
+    console.log(`To send for real, run: npm run broadcast -- --offset=${offset} --limit=${limit}`);
     return;
   }
 
@@ -134,6 +161,7 @@ async function main() {
 
   // 4. Dispatch Broadcast
   console.log(`\n[4/4] Starting broadcast to ${targetContacts.length} recipients...`);
+  console.log("Applying Meta anti-ban pacing: 1.5s - 2.5s randomized interval per message.\n");
   const results: Array<{ phone: string; name?: string; status: "SENT" | "FAILED"; messageId?: string; error?: string }> = [];
 
   for (let i = 0; i < targetContacts.length; i++) {
@@ -183,6 +211,7 @@ async function main() {
       results.push({ phone: contact.phone, name: contact.name, status: "SENT", messageId: msgId });
     } catch (err: any) {
       const errMsg = err.response?.data?.error?.message || err.message;
+      const errCode = err.response?.data?.error?.code;
       console.error(`${progress} -> FAILED: ${errMsg}`);
       results.push({ phone: contact.phone, name: contact.name, status: "FAILED", error: errMsg });
 
@@ -191,10 +220,18 @@ async function main() {
         await appendFile(inactivePath, `${contact.phone}\n`);
         inactiveSet.add(contact.phone);
       } catch {}
+
+      // Circuit breaker: halt immediately if rate limit or tier limit is hit
+      if (errCode === 131056 || errCode === 131048 || errCode === 130429) {
+        console.error("\n🚨 [SAFETY HALT] Meta 24-hour tier limit reached!");
+        console.error("Stopping broadcast immediately to protect phone number health.");
+        break;
+      }
     }
 
-    // 50ms pause between sends (20 msg/sec)
-    await sleep(50);
+    // Pacing delay (1.5s - 2.5s) to comply with Meta anti-ban safety guidelines
+    const delay = 1500 + Math.floor(Math.random() * 1000);
+    await sleep(delay);
   }
 
   // Save results log
