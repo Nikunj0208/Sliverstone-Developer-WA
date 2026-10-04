@@ -114,9 +114,39 @@
       "caption": "Mahal Brochure"
     },
     "brochurePath": "client-assets/organized/projects/mahal/brochure.pdf",
-    "buildPlans": [],
     "plans": {
-      "squareFeetOptions": []
+      "squareFeetOptions": [
+        {
+          "id": "sqft-125",
+          "label": "125 Sq.Yd Plots",
+          "bhkOptions": [
+            {
+              "id": "standard",
+              "label": "Standard Plan",
+              "file": "client-assets/organized/projects/mahal/125 sqyd.jpg",
+              "filename": "Mahal-125SqYd-Plan.jpg"
+            },
+            {
+              "id": "lift",
+              "label": "With Lift Plan",
+              "file": "client-assets/organized/projects/mahal/125 sqyd with lift.jpg",
+              "filename": "Mahal-125SqYd-With-Lift-Plan.jpg"
+            }
+          ]
+        },
+        {
+          "id": "sqft-140",
+          "label": "140 Sq.Yd Plots",
+          "bhkOptions": [
+            {
+              "id": "standard",
+              "label": "140 Sq.Yd Plan",
+              "file": "client-assets/organized/projects/mahal/140 sqyd.jpg",
+              "filename": "Mahal-140SqYd-Plan.jpg"
+            }
+          ]
+        }
+      ]
     }
   },
   {
@@ -178,7 +208,50 @@
       }
     ],
     "plans": {
-      "squareFeetOptions": []
+      "squareFeetOptions": [
+        {
+          "id": "sqft-125",
+          "label": "125 Sq.Yd Plots",
+          "bhkOptions": [
+            {
+              "id": "standard",
+              "label": "Standard Plan",
+              "file": "client-assets/organized/projects/rajmahal/125 sqyd.jpg",
+              "filename": "Rajmahal-125SqYd-Plan.jpg"
+            },
+            {
+              "id": "lift",
+              "label": "With Lift Plan",
+              "file": "client-assets/organized/projects/rajmahal/125sqyd with lift.jpg",
+              "filename": "Rajmahal-125SqYd-With-Lift-Plan.jpg"
+            }
+          ]
+        },
+        {
+          "id": "sqft-137",
+          "label": "137 Sq.Yd Plots",
+          "bhkOptions": [
+            {
+              "id": "standard",
+              "label": "137 Sq.Yd Plan",
+              "file": "client-assets/organized/projects/rajmahal/137sqyd.jpg",
+              "filename": "Rajmahal-137SqYd-Plan.jpg"
+            }
+          ]
+        },
+        {
+          "id": "sqft-200",
+          "label": "200 Sq.Yd Anchor",
+          "bhkOptions": [
+            {
+              "id": "anchor",
+              "label": "Anchor Plot Plan",
+              "file": "client-assets/organized/projects/rajmahal/200sqyrd.jpg",
+              "filename": "Rajmahal-200SqYd-Anchor-Plan.jpg"
+            }
+          ]
+        }
+      ]
     }
   },
   {

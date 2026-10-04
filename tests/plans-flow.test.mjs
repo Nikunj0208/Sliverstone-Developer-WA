@@ -6,11 +6,11 @@ import { WhatsAppConversationSimulator } from "../dist/src/simulator/simulator.j
 import { getProject, getSquareFeetOptions, getBhkOptions, getPlan, hasProjectPlans } from "../dist/src/content/project-service.js";
 import { sendProjectActionButtons } from "../dist/src/flows/project-flow.js";
 
-test("Plan button visibility: Only Spring Hill and Applewood show View Plans button", async () => {
+test("Plan button visibility: Spring Hill, Applewood, Mahal, and Rajmahal show View Plans button", async () => {
   assert.equal(hasProjectPlans("spring-hill"), true);
   assert.equal(hasProjectPlans("applewood"), true);
-  assert.equal(hasProjectPlans("mahal"), false);
-  assert.equal(hasProjectPlans("rajmahal"), false);
+  assert.equal(hasProjectPlans("mahal"), true);
+  assert.equal(hasProjectPlans("rajmahal"), true);
   assert.equal(hasProjectPlans("elements"), false);
   assert.equal(hasProjectPlans("villas"), false);
 
@@ -25,7 +25,7 @@ test("Plan button visibility: Only Spring Hill and Applewood show View Plans but
 
     assert.ok(sentButtons);
     const hasPlansButton = sentButtons.some((b) => b.id === "PROJECT_PLANS");
-    if (pid === "spring-hill" || pid === "applewood") {
+    if (["spring-hill", "applewood", "mahal", "rajmahal"].includes(pid)) {
       assert.equal(hasPlansButton, true, `${pid} should show View Plans`);
       assert.deepEqual(sentButtons, [
         { id: "PROJECT_BROCHURE", title: "Download Brochure" },
@@ -177,7 +177,168 @@ test("Applewood plans: Yard -> BHK -> Downloadable Plan", async () => {
   assert.ok(existsSync(messages[0].documentPath));
 });
 
-test("Missing items handling: Mahal has no video and no plans -> no unavailable text and no plan button", async () => {
+test("Mahal plans: Yard -> BHK -> Downloadable Plan", async () => {
+  const sim = new WhatsAppConversationSimulator();
+  const user = "customer-mahal";
+
+  // Select Mahal
+  await sim.simulateListSelect(user, "PROJECT:mahal");
+  let messages = sim.getSentMessages(user);
+  const actionMsg = messages.at(-1);
+  assert.equal(actionMsg.type, "buttons");
+  assert.deepEqual(actionMsg.buttons, [
+    { id: "PROJECT_BROCHURE", title: "Download Brochure" },
+    { id: "PROJECT_PLANS", title: "View Plans" }
+  ]);
+
+  // Click View Plans
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PROJECT_PLANS");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_SQFT:mahal:sqft-125", title: "125 Sq.Yd Plots" },
+    { id: "PLAN_SQFT:mahal:sqft-140", title: "140 Sq.Yd Plots" }
+  ]);
+
+  // Click 125 Sq.Yd Plots
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:sqft-125");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_BHK:mahal:sqft-125:STANDARD", title: "Standard Plan" },
+    { id: "PLAN_BHK:mahal:sqft-125:LIFT", title: "With Lift Plan" }
+  ]);
+
+  // Click Standard Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:mahal:sqft-125:STANDARD");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Mahal-125SqYd-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+
+  // Click With Lift Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:mahal:sqft-125:LIFT");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Mahal-125SqYd-With-Lift-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+
+  // Click 140 Sq.Yd Plots
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_SQFT:mahal:sqft-140");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_BHK:mahal:sqft-140:STANDARD", title: "140 Sq.Yd Plan" }
+  ]);
+
+  // Click 140 Sq.Yd Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:mahal:sqft-140:STANDARD");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Mahal-140SqYd-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+});
+
+test("Rajmahal plans: Yard -> BHK -> Downloadable Plan", async () => {
+  const sim = new WhatsAppConversationSimulator();
+  const user = "customer-rajmahal";
+
+  // Select Rajmahal
+  await sim.simulateListSelect(user, "PROJECT:rajmahal");
+  let messages = sim.getSentMessages(user);
+  const actionMsg = messages.at(-1);
+  assert.equal(actionMsg.type, "buttons");
+  assert.deepEqual(actionMsg.buttons, [
+    { id: "PROJECT_BROCHURE", title: "Download Brochure" },
+    { id: "PROJECT_PLANS", title: "View Plans" }
+  ]);
+
+  // Click View Plans
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PROJECT_PLANS");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_SQFT:rajmahal:sqft-125", title: "125 Sq.Yd Plots" },
+    { id: "PLAN_SQFT:rajmahal:sqft-137", title: "137 Sq.Yd Plots" },
+    { id: "PLAN_SQFT:rajmahal:sqft-200", title: "200 Sq.Yd Anchor" }
+  ]);
+
+  // Click 125 Sq.Yd Plots
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:sqft-125");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_BHK:rajmahal:sqft-125:STANDARD", title: "Standard Plan" },
+    { id: "PLAN_BHK:rajmahal:sqft-125:LIFT", title: "With Lift Plan" }
+  ]);
+
+  // Click Standard Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-125:STANDARD");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Rajmahal-125SqYd-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+
+  // Click With Lift Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-125:LIFT");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Rajmahal-125SqYd-With-Lift-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+
+  // Click 137 Sq.Yd Plots
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:sqft-137");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_BHK:rajmahal:sqft-137:STANDARD", title: "137 Sq.Yd Plan" }
+  ]);
+
+  // Click 137 Sq.Yd Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-137:STANDARD");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Rajmahal-137SqYd-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+
+  // Click 200 Sq.Yd Anchor
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_SQFT:rajmahal:sqft-200");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].type, "buttons");
+  assert.deepEqual(messages[0].buttons, [
+    { id: "PLAN_BHK:rajmahal:sqft-200:ANCHOR", title: "Anchor Plot Plan" }
+  ]);
+
+  // Click Anchor Plot Plan
+  sim.clearSentMessages(user);
+  await sim.simulateButtonClick(user, "PLAN_BHK:rajmahal:sqft-200:ANCHOR");
+  messages = sim.getSentMessages(user);
+  assert.equal(messages[0].type, "document");
+  assert.equal(messages[0].filename, "Rajmahal-200SqYd-Anchor-Plan.jpg");
+  assert.ok(existsSync(messages[0].documentPath));
+});
+
+test("Missing items handling: Mahal has no video -> no unavailable text", async () => {
   const sim = new WhatsAppConversationSimulator();
   const user = "customer-mahal";
 
@@ -189,12 +350,5 @@ test("Missing items handling: Mahal has no video and no plans -> no unavailable 
     (m) => m.type === "text" && m.text?.toLowerCase().includes("video is currently unavailable")
   );
   assert.equal(hasVideoUnavailableNotice, false, "Should not send video unavailable notice");
-
-  // Assert action buttons ONLY contain Download Brochure and NOT View Plans
-  const actionMsg = messages.find((m) => m.type === "buttons");
-  assert.ok(actionMsg);
-  assert.deepEqual(actionMsg.buttons, [
-    { id: "PROJECT_BROCHURE", title: "Download Brochure" }
-  ]);
 });
 

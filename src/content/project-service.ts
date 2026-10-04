@@ -109,6 +109,7 @@ export function getPlan(projectId: string, sqftId: string, bhk: string): BhkOpti
       item.label.replace(/[\s-_]+/g, "").toLowerCase() === normalizedBhk
   );
   if (match) return match;
+  if (bhkOptions.length === 1) return bhkOptions[0];
 
   const allSqft = getSquareFeetOptions(projectId);
   for (const sq of allSqft) {
