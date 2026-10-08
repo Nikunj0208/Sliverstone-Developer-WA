@@ -50,7 +50,11 @@ async function main() {
   const validMsgIds = new Set(cleanMessages.map((m: any) => m.id));
   const cleanStatusEvents = data.statusEvents.filter((se: any) => {
     if (!validMsgIds.has(se.message_id)) return false;
-    // Keep real Meta webhooks (e.g. error 131049, or real timestamped events)
+    const sLower = (se.status || "").toLowerCase();
+    // Synthetic delivery and read events created by sync-logs had no recipient_id
+    if ((sLower === "delivered" || sLower === "read") && !se.recipient_id) {
+      return false;
+    }
     return true;
   });
   data.statusEvents = cleanStatusEvents;

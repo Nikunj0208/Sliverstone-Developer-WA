@@ -228,6 +228,10 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     if (Array.isArray(state.statusEvents)) {
       for (const st of state.statusEvents) {
         if (this.messages.has(st.message_id)) {
+          const sLower = (st.status || "").toLowerCase();
+          if ((sLower === "delivered" || sLower === "read") && !st.recipient_id) {
+            continue;
+          }
           this.statusEvents.set(st.id, {
             ...st,
             event_timestamp: st.event_timestamp ? new Date(st.event_timestamp) : new Date(),
