@@ -68,6 +68,8 @@ export async function runPostgresMigrations(pool: Pool): Promise<void> {
       DELETE FROM messages WHERE wa_message_id LIKE 'wamid.reply_%' OR wa_message_id LIKE 'wamid.btn_%';
       -- Clean synthetic conversation events
       DELETE FROM conversation_events WHERE (event_type = 'CUSTOMER_REPLIED' OR event_type = 'BUTTON_CLICKED') AND contact_id NOT IN (SELECT contact_id FROM messages WHERE direction = 'inbound');
+      -- Clean synthetic delivery/read status events on broadcast placeholders
+      DELETE FROM message_status_events WHERE status IN ('delivered', 'read') AND message_id IN (SELECT id FROM messages WHERE wa_message_id LIKE 'wamid.out_%');
     `);
     console.info("[POSTGRES] Database migrations applied successfully");
   } catch (error) {
@@ -355,13 +357,15 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound') as inbound_count,
         (SELECT COALESCE(m.body_text, CASE WHEN m.button_id IS NOT NULL THEN 'Clicked button: ' || m.button_id WHEN m.list_row_id IS NOT NULL THEN 'Selected: ' || m.list_row_id ELSE '[' || m.message_type || ']' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_text,
         (SELECT m.created_at FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_at,
-        (SELECT CASE 
-          WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read') THEN 'read' 
-          WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'delivered') THEN 'delivered' 
-          WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed') THEN 'failed'
-          WHEN EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound') THEN 'sent'
-          ELSE 'not_sent' 
-        END) as latest_delivery_status,
+        COALESCE(
+          (SELECT LOWER(mse.status) 
+           FROM message_status_events mse 
+           JOIN messages m ON mse.message_id = m.id 
+           WHERE m.contact_id = c.id 
+           ORDER BY mse.event_timestamp DESC, mse.received_at DESC 
+           LIMIT 1),
+          CASE WHEN EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound') THEN 'sent' ELSE 'not_sent' END
+        ) as latest_delivery_status,
         (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at,
         (SELECT mse.error_code FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed' ORDER BY mse.event_timestamp DESC LIMIT 1) as error_code,
         (SELECT mse.error_message FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed' ORDER BY mse.event_timestamp DESC LIMIT 1) as error_message,
