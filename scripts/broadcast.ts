@@ -4,6 +4,7 @@ import { basename } from "node:path";
 import axios from "axios";
 import { env } from "../src/config/env.js";
 import { uploadMedia } from "../src/meta/media.js";
+import { analyticsService } from "../src/services/analytics-service.js";
 
 type Contact = {
   phone: string;
@@ -266,6 +267,18 @@ async function main() {
       const msgId = response.data.messages?.[0]?.id;
       console.log(`${progress} -> SUCCESS (ID: ${msgId})`);
       results.push({ phone: contact.phone, name: contact.name, status: "SENT", messageId: msgId });
+
+      if (msgId) {
+        try {
+          await analyticsService.trackOutboundMessage({
+            to: contact.phone,
+            waMessageId: msgId,
+            messageType: "template",
+            templateName: "silverstone_invitation",
+            bodyText: `Invitation to ${contact.name || "Customer"}`
+          });
+        } catch {}
+      }
     } catch (err: any) {
       const errMsg = err.response?.data?.error?.message || err.message;
       const errCode = err.response?.data?.error?.code;
