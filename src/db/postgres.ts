@@ -273,13 +273,22 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     }
 
     if (query.deliveryStatus) {
-      conditions.push(`EXISTS (
-        SELECT 1 FROM message_status_events mse
-        JOIN messages m ON mse.message_id = m.id
-        WHERE m.contact_id = c.id AND LOWER(mse.status) = $${idx}
-      )`);
-      values.push(query.deliveryStatus.toLowerCase());
-      idx++;
+      const dTarget = query.deliveryStatus.toLowerCase();
+      if (dTarget === "delivered") {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM message_status_events mse
+          JOIN messages m ON mse.message_id = m.id
+          WHERE m.contact_id = c.id AND (LOWER(mse.status) = 'delivered' OR LOWER(mse.status) = 'read')
+        )`);
+      } else {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM message_status_events mse
+          JOIN messages m ON mse.message_id = m.id
+          WHERE m.contact_id = c.id AND LOWER(mse.status) = $${idx}
+        )`);
+        values.push(dTarget);
+        idx++;
+      }
     }
 
     if (typeof query.replied === "boolean") {
@@ -287,6 +296,20 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         conditions.push(`EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound')`);
       } else {
         conditions.push(`NOT EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound')`);
+      }
+    }
+
+    if (typeof query.buttonClicks === "boolean") {
+      if (query.buttonClicks) {
+        conditions.push(`(
+          EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%'))
+          OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND (ce.event_type = 'BUTTON_CLICKED' OR ce.event_type = 'MAIN_MENU_VIEWED'))
+        )`);
+      } else {
+        conditions.push(`(
+          NOT EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%'))
+          AND NOT EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND (ce.event_type = 'BUTTON_CLICKED' OR ce.event_type = 'MAIN_MENU_VIEWED'))
+        )`);
       }
     }
 
@@ -328,7 +351,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         (SELECT COALESCE(m.body_text, CASE WHEN m.button_id IS NOT NULL THEN 'Clicked button: ' || m.button_id WHEN m.list_row_id IS NOT NULL THEN 'Selected: ' || m.list_row_id ELSE '[' || m.message_type || ']' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_text,
         (SELECT m.created_at FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_at,
         (SELECT CASE WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read') THEN 'read' WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'delivered') THEN 'delivered' ELSE 'sent' END) as latest_delivery_status,
-        (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at
+        (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at,
+        (EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%')) OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND (ce.event_type = 'BUTTON_CLICKED' OR ce.event_type = 'MAIN_MENU_VIEWED'))) as button_clicked,
+        (SELECT COALESCE(m.button_id, CASE WHEN m.body_text LIKE 'Clicked button:%' THEN REPLACE(m.body_text, 'Clicked button: ', '') ELSE 'More Details' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%') ORDER BY m.created_at DESC LIMIT 1) as last_button_clicked
       FROM contacts c
       LEFT JOIN conversations conv ON conv.contact_id = c.id AND conv.status = 'OPEN'
       WHERE ${whereClause}
@@ -394,6 +419,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         assignedAgentId: row.assigned_agent_id || null,
         totalMessages,
         hasReplied,
+        buttonClicked: !!row.button_clicked,
+        lastButtonClicked: row.last_button_clicked || (row.button_clicked ? "More Details" : null),
         brochureRequested: false,
         planRequested: false,
         siteVisitRequested: false

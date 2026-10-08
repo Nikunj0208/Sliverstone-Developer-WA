@@ -185,6 +185,7 @@ analyticsRouter.get("/api/contacts", async (req: Request, res: Response) => {
       deliveryStatus: typeof req.query.deliveryStatus === "string" ? req.query.deliveryStatus : undefined,
       unread: req.query.unread === "true" ? true : req.query.unread === "false" ? false : undefined,
       replied: req.query.replied === "true" ? true : req.query.replied === "false" ? false : undefined,
+      buttonClicks: req.query.buttonClicks === "true" ? true : req.query.buttonClicks === "false" ? false : undefined,
       brochureRequested: req.query.brochureRequested === "true" ? true : undefined,
       planRequested: req.query.planRequested === "true" ? true : undefined,
       siteVisitRequested: req.query.siteVisitRequested === "true" ? true : undefined,

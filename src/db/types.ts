@@ -77,6 +77,7 @@ export interface MessageStatusEvent {
 
 export type ConversationEventType =
   | "CUSTOMER_REPLIED"
+  | "BUTTON_CLICKED"
   | "MAIN_MENU_VIEWED"
   | "VIEW_PROJECTS_CLICKED"
   | "PROJECT_SELECTED"
@@ -235,6 +236,7 @@ export interface ContactListQuery {
   brochureRequested?: boolean;
   planRequested?: boolean;
   siteVisitRequested?: boolean;
+  buttonClicks?: boolean;
   sortBy?:
     | "newest"
     | "oldest"
@@ -278,6 +280,8 @@ export interface ContactListItem {
   assignedAgentId: string | null;
   totalMessages: number;
   hasReplied: boolean;
+  buttonClicked: boolean;
+  lastButtonClicked?: string | null;
   brochureRequested: boolean;
   planRequested: boolean;
   siteVisitRequested: boolean;

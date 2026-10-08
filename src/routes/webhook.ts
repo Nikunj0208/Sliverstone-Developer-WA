@@ -146,6 +146,15 @@ webhookRouter.post("/webhook", async (request, response) => {
     if (event.type === "BUTTON_REPLY") {
       console.info("[WEBHOOK] BUTTON_REPLY RECEIVED");
       console.info(`[LIVE] BUTTON ID: ${event.buttonId}`);
+      if (inboundData) {
+        await analyticsService.recordConversationEvent(
+          inboundData.conversation.id,
+          inboundData.contact.id,
+          "BUTTON_CLICKED",
+          event.buttonId,
+          inboundData.conversation.project_id || undefined
+        );
+      }
       try {
         await enqueueConversationAction(event.waId, () => routeButtonAction(event.waId, event.buttonId));
       } catch {

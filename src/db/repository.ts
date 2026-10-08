@@ -23,7 +23,7 @@ import type {
   MetaCampaignOverview
 } from "./types.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
-import { writeFile, readFile, mkdir } from "node:fs/promises";
+import { writeFile, readFile, mkdir, rename } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 
@@ -266,7 +266,9 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       await mkdir(parentDir, { recursive: true });
     }
     const serialized = JSON.stringify(this.exportState(), null, 2);
-    await writeFile(target, serialized, "utf-8");
+    const tempFile = `${target}.tmp.${Date.now()}`;
+    await writeFile(tempFile, serialized, "utf-8");
+    await rename(tempFile, target);
   }
 
   async loadFromFile(filePath?: string): Promise<boolean> {
@@ -419,6 +421,19 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         : null;
       const lastReplyType = lastInboundMsg ? (lastInboundMsg.button_id ? "button" : (lastInboundMsg.list_row_id ? "list" : "text")) : null;
 
+      // Button clicks detection
+      const buttonClickMsgs = inboundMsgs.filter(
+        (m) => !!m.button_id || m.message_type === "button_reply" || (m.body_text && m.body_text.startsWith("Clicked button:"))
+      );
+      const buttonClickEvents = contactEvents.filter(
+        (e) => e.event_type === "BUTTON_CLICKED" || e.event_type === "MAIN_MENU_VIEWED"
+      );
+      const hasButtonClicked = buttonClickMsgs.length > 0 || buttonClickEvents.length > 0;
+      const lastButtonMsg = buttonClickMsgs.length > 0 ? buttonClickMsgs[buttonClickMsgs.length - 1] : null;
+      const lastButtonClicked = lastButtonMsg
+        ? (lastButtonMsg.button_id || (lastButtonMsg.body_text?.replace("Clicked button: ", "")) || "More Details")
+        : (buttonClickEvents.length > 0 ? (buttonClickEvents[buttonClickEvents.length - 1].event_value || "More Details") : null);
+
       // Event flags
       const brochureRequested = contactEvents.some((e) => e.event_type === "BROCHURE_REQUESTED");
       const brochureSent = contactEvents.some((e) => e.event_type === "BROCHURE_SENT");
@@ -520,6 +535,10 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         continue;
       }
 
+      if (typeof query.buttonClicks === "boolean" && hasButtonClicked !== query.buttonClicks) {
+        continue;
+      }
+
       if (typeof query.brochureRequested === "boolean" && brochureRequested !== query.brochureRequested) {
         continue;
       }
@@ -593,8 +612,15 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         }
       }
 
-      if (query.deliveryStatus && latestDeliveryStatus.toLowerCase() !== query.deliveryStatus.toLowerCase()) {
-        continue;
+      if (query.deliveryStatus) {
+        const dTarget = query.deliveryStatus.toLowerCase();
+        if (dTarget === "delivered") {
+          if (latestDeliveryStatus.toLowerCase() !== "delivered" && latestDeliveryStatus.toLowerCase() !== "read") {
+            continue;
+          }
+        } else if (latestDeliveryStatus.toLowerCase() !== dTarget) {
+          continue;
+        }
       }
 
       let batchName = "Batch 1";
@@ -674,6 +700,8 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         assignedAgentId: activeConv?.assigned_agent_id || null,
         totalMessages: contactMsgs.length,
         hasReplied,
+        buttonClicked: hasButtonClicked,
+        lastButtonClicked,
         brochureRequested,
         planRequested,
         siteVisitRequested,

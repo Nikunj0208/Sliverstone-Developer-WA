@@ -886,43 +886,45 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px;" id="metaBannerTitle">Total Campaign (03 - 08 Oct)</h3>
       </div>
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;" id="metaBannerMetrics">
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">META SENT</div>
+        <div id="bannerCardSent" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('sent')" title="Click to view all Sent leads with Name and Phone">
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">📨 META SENT</div>
           <div style="font-size: 16px; font-weight: 700; color: #fff; font-family: monospace;" id="bannerSent">705</div>
         </div>
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">DELIVERED</div>
+        <div id="bannerCardDelivered" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('delivered')" title="Click to view all Delivered leads with Name and Phone">
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">📬 DELIVERED</div>
           <div style="font-size: 16px; font-weight: 700; color: #38bdf8; font-family: monospace;" id="bannerDelivered">628 (89.1%)</div>
         </div>
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">READ (BLUE TICKS)</div>
+        <div id="bannerCardRead" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('read')" title="Click to view all Read leads (Blue Ticks) with Name and Phone">
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">👁️ READ (BLUE TICKS)</div>
           <div style="font-size: 16px; font-weight: 700; color: #60a5fa; font-family: monospace;" id="bannerRead">443 (70.5%)</div>
         </div>
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">BUTTON CLICKS</div>
+        <div id="bannerCardClicks" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('button_clicks')" title="Click to view all Button Click leads (More Details) with Name and Phone">
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">🔘 BUTTON CLICKS</div>
           <div style="font-size: 16px; font-weight: 700; color: #fbbf24; font-family: monospace;" id="bannerClicks">58</div>
         </div>
-        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">REPLIED</div>
+        <div id="bannerCardReplied" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('replied')" title="Click to view all Replied leads with Name, Phone and Reply message">
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">💬 REPLIED</div>
           <div style="font-size: 16px; font-weight: 700; color: #34d399; font-family: monospace;" id="bannerReplied">76</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">CAMPAIGN SPEND</div>
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">💰 CAMPAIGN SPEND</div>
           <div style="font-size: 16px; font-weight: 700; color: #c084fc; font-family: monospace;" id="bannerSpend">₹553.98</div>
         </div>
       </div>
     </div>
 
-    <!-- Quick Filter Tabs (Replied, Seen/Read, Delivered, etc.) -->
-    <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+    <!-- Quick Filter Tabs (Sent, Delivered, Read, Button Clicks, Replied, etc.) -->
+    <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
       <button class="filter-tab active" id="tab-all" onclick="setEngagementTab('')">📋 All Prospects</button>
-      <button class="filter-tab" id="tab-replied" onclick="setEngagementTab('replied')">💬 Replied to Automation</button>
-      <button class="filter-tab" id="tab-read" onclick="setEngagementTab('read')">👁️ Read / Seen (Blue Ticks)</button>
-      <button class="filter-tab" id="tab-delivered" onclick="setEngagementTab('delivered')">📬 Delivered</button>
-      <button class="filter-tab" id="tab-unread" onclick="setEngagementTab('unread')">🟡 Needs Reply / Pending</button>
-      <button class="filter-tab" id="tab-plans" onclick="setEngagementTab('plan')">📄 Floor Plans Requested</button>
-      <button class="filter-tab" id="tab-brochure" onclick="setEngagementTab('brochure')">📑 Brochure Downloaded</button>
-      <button class="filter-tab" id="tab-site" onclick="setEngagementTab('site_visit')">🏡 Site Visit / Call</button>
+      <button class="filter-tab" id="tab-sent" onclick="setEngagementTab('sent')">📨 META SENT</button>
+      <button class="filter-tab" id="tab-delivered" onclick="setEngagementTab('delivered')">📬 DELIVERED</button>
+      <button class="filter-tab" id="tab-read" onclick="setEngagementTab('read')">👁️ READ (BLUE TICKS)</button>
+      <button class="filter-tab" id="tab-button_clicks" onclick="setEngagementTab('button_clicks')">🔘 BUTTON CLICKS</button>
+      <button class="filter-tab" id="tab-replied" onclick="setEngagementTab('replied')">💬 REPLIED</button>
+      <button class="filter-tab" id="tab-unread" onclick="setEngagementTab('unread')">🟡 Needs Reply</button>
+      <button class="filter-tab" id="tab-plans" onclick="setEngagementTab('plan')">📄 Floor Plans</button>
+      <button class="filter-tab" id="tab-brochure" onclick="setEngagementTab('brochure')">📑 Brochure</button>
+      <button class="filter-tab" id="tab-site" onclick="setEngagementTab('site_visit')">🏡 Site Visit</button>
     </div>
 
     <!-- Filter Bar -->
@@ -979,7 +981,7 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             <th>Phone Number</th>
             <th>Batch</th>
             <th>Seen / Delivery</th>
-            <th>Latest Inbound Reply</th>
+            <th>Buttons &amp; Replies</th>
             <th>Automation Flow Step</th>
             <th>Project Interest</th>
             <th>Broadcast Date</th>
@@ -1209,11 +1211,37 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         const tabEl = document.getElementById("tab-" + (tab || "all"));
         if (tabEl) tabEl.classList.add("active");
 
-        // Sync delivery status dropdown if clicking read or delivered tab
+        // Highlight corresponding card in Meta stats banner
+        const cardIds = ["bannerCardSent", "bannerCardDelivered", "bannerCardRead", "bannerCardClicks", "bannerCardReplied"];
+        cardIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.style.borderColor = "var(--border-subtle)";
+            el.style.boxShadow = "none";
+          }
+        });
+        const activeCardMap = {
+          "sent": "bannerCardSent",
+          "delivered": "bannerCardDelivered",
+          "read": "bannerCardRead",
+          "button_clicks": "bannerCardClicks",
+          "replied": "bannerCardReplied"
+        };
+        const activeCardId = activeCardMap[tab];
+        if (activeCardId) {
+          const activeCardEl = document.getElementById(activeCardId);
+          if (activeCardEl) {
+            activeCardEl.style.borderColor = "#818cf8";
+            activeCardEl.style.boxShadow = "0 0 14px rgba(129, 140, 248, 0.45)";
+          }
+        }
+
+        // Sync delivery status dropdown if clicking read, delivered, or sent tab
         const dSelect = document.getElementById("deliveryStatusFilter");
         if (tab === "read" && dSelect) dSelect.value = "read";
         else if (tab === "delivered" && dSelect) dSelect.value = "delivered";
-        else if ((tab === "" || tab === "replied") && dSelect && (dSelect.value === "read" || dSelect.value === "delivered")) dSelect.value = "";
+        else if (tab === "sent" && dSelect) dSelect.value = "sent";
+        else if ((tab === "" || tab === "replied" || tab === "button_clicks") && dSelect) dSelect.value = "";
 
         syncUrlParams();
         fetchContacts();
@@ -1224,8 +1252,10 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         if (selectedBatch) params.set("batch", selectedBatch);
         else if (selectedDate) params.set("date", selectedDate);
         if (activeEngagementTab === "replied") params.set("replied", "true");
-        else if (activeEngagementTab === "read") params.set("status", "read");
-        else if (activeEngagementTab === "delivered") params.set("status", "delivered");
+        else if (activeEngagementTab === "button_clicks") params.set("buttonClicks", "true");
+        else if (activeEngagementTab === "read") params.set("deliveryStatus", "read");
+        else if (activeEngagementTab === "delivered") params.set("deliveryStatus", "delivered");
+        else if (activeEngagementTab === "sent") params.set("deliveryStatus", "sent");
         else if (activeEngagementTab === "unread") params.set("unread", "true");
         const query = params.toString();
         const newUrl = window.location.pathname + (query ? "?" + query : "");
@@ -1253,9 +1283,13 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           params.append("deliveryStatus", "read");
         } else if (activeEngagementTab === "delivered") {
           params.append("deliveryStatus", "delivered");
+        } else if (activeEngagementTab === "sent") {
+          params.append("deliveryStatus", "sent");
         }
 
-        if (activeEngagementTab === "replied") {
+        if (activeEngagementTab === "button_clicks") {
+          params.append("buttonClicks", "true");
+        } else if (activeEngagementTab === "replied") {
           params.append("replied", "true");
         } else if (activeEngagementTab === "unread") {
           params.append("unread", "true");
@@ -1314,13 +1348,14 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
 
       function formatFullPhone(phone) {
         if (!phone) return '<span style="color: var(--text-dim);">—</span>';
-        const clean = phone.replace(/\\D/g, '');
+        const clean = phone.replace(/\D/g, '');
         const display = clean.startsWith('91') && clean.length === 12
           ? '+91 ' + clean.slice(2, 7) + ' ' + clean.slice(7)
           : '+' + clean;
         return '<div style="display: inline-flex; align-items: center; gap: 6px;">' +
-          '<span class="code-text" style="font-weight: 600; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px;">' + display + '</span>' +
+          '<span class="code-text" style="font-weight: 700; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px;">' + display + '</span>' +
           '<a href="https://wa.me/' + clean + '" target="_blank" onclick="event.stopPropagation();" title="Open WhatsApp Chat directly" style="text-decoration: none; font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; color: #34d399; font-weight: 700;">💬 WA</a>' +
+          '<a href="tel:+' + clean + '" onclick="event.stopPropagation();" title="Call directly" style="text-decoration: none; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 7px; color: #60a5fa; font-weight: 700;">📞 Call</a>' +
         '</div>';
       }
 
@@ -1377,12 +1412,22 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             deliveryBadge = '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;" title="Sent / Dispatched by Meta">📨 Sent ✓</span>';
           }
 
-          // Latest Inbound Reply pill
+          // Latest Inbound Reply & Button Click pill
           let replyHtml = '<span style="color: var(--text-dim); font-size: 11px;">No reply yet</span>';
+          const items = [];
+          if (c.buttonClicked || c.lastButtonClicked) {
+            const btnName = c.lastButtonClicked || 'More Details';
+            items.push('<div style="font-size: 11px; font-weight: 700; color: #fbbf24; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 4px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px;" title="Customer tapped button: ' + escapeHtml(btnName) + '">🔘 Button: ' + escapeHtml(btnName) + '</div>');
+          }
           if (c.hasReplied || c.lastReplyText) {
             const replyText = c.lastReplyText || 'Inbound reply';
-            replyHtml = '<div style="display: flex; flex-direction: column; gap: 3px;">' +
-              '<div style="font-size: 12px; font-weight: 700; color: #34d399; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 4px; padding: 2px 6px;" title="' + escapeHtml(replyText) + '">💬 ' + escapeHtml(replyText) + '</div>' +
+            if (!c.buttonClicked || !replyText.includes(c.lastButtonClicked || 'More Details')) {
+              items.push('<div style="font-size: 11px; font-weight: 600; color: #34d399; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + escapeHtml(replyText) + '">💬 "' + escapeHtml(replyText) + '"</div>');
+            }
+          }
+          if (items.length > 0) {
+            replyHtml = '<div style="display: flex; flex-direction: column; gap: 4px;">' +
+              items.join('') +
               (c.lastReplyAt ? '<div style="font-size: 10px; color: var(--text-dim);">' + formatTimeAgo(c.lastReplyAt) + '</div>' : '') +
             '</div>';
           }
