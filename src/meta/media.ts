@@ -90,6 +90,8 @@ export const uploadImage = uploadMedia;
 export const uploadDocument = uploadMedia;
 export const uploadVideo = uploadMedia;
 
+import { analyticsService } from "../services/analytics-service.js";
+
 async function sendMediaMessage(
   to: string,
   type: "image" | "document",
@@ -108,9 +110,20 @@ async function sendMediaMessage(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: type,
+        bodyText: media.filename || media.caption,
+        mediaId: media.id
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);

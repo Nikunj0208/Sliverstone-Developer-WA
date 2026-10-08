@@ -12,6 +12,8 @@ type TemplateResponse = {
   messages?: Array<{ id?: string }>;
 };
 
+import { analyticsService } from "../services/analytics-service.js";
+
 export type TemplateComponent = Record<string, unknown>;
 
 export async function sendTemplate(
@@ -36,7 +38,18 @@ export async function sendTemplate(
       }
     );
 
-    return { httpStatus: response.status, metaMessageId: response.data.messages?.[0]?.id };
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "template",
+        templateName: name,
+        templateLanguage: "en_US"
+      });
+    }
+
+    return { httpStatus: response.status, metaMessageId };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
   }

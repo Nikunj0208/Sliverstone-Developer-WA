@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { env } from "../config/env.js";
 import { createMetaClient } from "./client.js";
+import { analyticsService } from "../services/analytics-service.js";
 
 type MetaClient = Pick<ReturnType<typeof createMetaClient>, "post">;
 
@@ -65,9 +66,19 @@ export async function sendText(to: string, text: string): Promise<SendTextResult
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "text",
+        bodyText: text
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
@@ -107,9 +118,19 @@ export async function sendReplyButtons(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "button",
+        bodyText
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
@@ -149,9 +170,19 @@ export async function sendList(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "list",
+        bodyText
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
@@ -197,9 +228,19 @@ export async function sendCtaUrl(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "cta_url",
+        bodyText
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
@@ -231,9 +272,19 @@ export async function sendLocation(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "location",
+        bodyText: name || address
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
@@ -261,9 +312,19 @@ export async function sendVideo(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "video",
+        bodyText: caption
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);
@@ -303,9 +364,19 @@ export async function sendContact(
       }
     );
 
+    const metaMessageId = response.data.messages?.[0]?.id;
+    if (metaMessageId) {
+      await analyticsService.trackOutboundMessage({
+        to,
+        waMessageId: metaMessageId,
+        messageType: "contacts",
+        bodyText: formattedName
+      });
+    }
+
     return {
       httpStatus: response.status,
-      metaMessageId: response.data.messages?.[0]?.id
+      metaMessageId
     };
   } catch (error: unknown) {
     throw toSafeMetaError(error);

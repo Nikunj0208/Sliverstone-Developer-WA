@@ -19,6 +19,7 @@ import {
 } from "./projects.js";
 import { startSiteVisitBooking } from "./site-visit.js";
 import { setConversationState } from "./conversation-state.js";
+import { analyticsService } from "../services/analytics-service.js";
 
 export {
   handleMainMenuAction,
@@ -101,6 +102,7 @@ export async function routeButtonAction(
     normalizedId === "START"
   ) {
     console.info("[ACTION] MORE_DETAILS -> SEND WELCOME FLOW");
+    analyticsService.recordEventByWaId(to, "MAIN_MENU_VIEWED").catch(() => {});
     return runAction(async () => {
       const fn = dependencies.sendWelcomeFlow ?? defaultDependencies.sendWelcomeFlow;
       if (fn) {
@@ -138,10 +140,12 @@ export async function routeButtonAction(
   const brochureProjectId = actionProjectId(buttonId, "DOWNLOAD_BROCHURE:");
   if (brochureProjectId) {
     console.info("[ACTION] DOWNLOAD_BROCHURE");
+    analyticsService.recordEventByWaId(to, "BROCHURE_REQUESTED", brochureProjectId, brochureProjectId).catch(() => {});
     try {
       const sent = await dependencies.sendProjectBrochure(to, brochureProjectId);
       if (sent) {
         console.info("[BROCHURE] SEND SUCCESS");
+        analyticsService.recordEventByWaId(to, "BROCHURE_SENT", brochureProjectId, brochureProjectId).catch(() => {});
       } else {
         console.error("[BROCHURE] SEND FAILED");
       }
@@ -179,6 +183,7 @@ export async function routeButtonAction(
   const siteVisitProjectId = actionProjectId(buttonId, "BOOK_SITE_VISIT:");
   if (siteVisitProjectId) {
     console.info("[ACTION] BOOK_SITE_VISIT");
+    analyticsService.recordEventByWaId(to, "SITE_VISIT_REQUESTED", siteVisitProjectId, siteVisitProjectId).catch(() => {});
     return runAction(() => dependencies.handleSiteVisit(to, siteVisitProjectId));
   }
 

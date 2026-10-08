@@ -12,6 +12,7 @@ import { env } from "../config/env.js";
 import { buildProjectCard } from "../layouts/project-card.js";
 import { buildProjectList } from "../layouts/project-list.js";
 import { sendProjectTemplate } from "../meta/templates.js";
+import { analyticsService } from "../services/analytics-service.js";
 
 function nextActions(projectId: string): ReplyButton[] {
   return [
@@ -436,6 +437,7 @@ export async function sendSpringHillBuildPlan(to: string, planId: string): Promi
   try {
     await sendDocument(to, plan.filePath, `Spring-Hill-${plan.label}.pdf`);
     console.info("[SPRING_HILL] PLAN_SEND_SUCCESS");
+    analyticsService.recordEventByWaId(to, "PLAN_SENT", plan.label, "spring-hill").catch(() => {});
     await sendSpringHillFollowUp(to);
     return true;
   } catch (error: unknown) {
@@ -486,6 +488,7 @@ export async function sendRajmahalBuildPlan(to: string, planId: string): Promise
   try {
     await sendDocument(to, plan.filePath, `${project.name}-${plan.label}.pdf`);
     console.info("[PLAN] SEND SUCCESS");
+    analyticsService.recordEventByWaId(to, "PLAN_SENT", plan.label, "rajmahal").catch(() => {});
     await sendRajmahalFollowUp(to);
     return true;
   } catch (error: unknown) {

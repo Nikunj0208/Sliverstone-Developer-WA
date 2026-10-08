@@ -27,6 +27,7 @@ import { showMainWelcomeMenu } from "./main-menu.js";
 import { sendChat } from "./chat.js";
 import { sendCallFallback } from "./call.js";
 import { sendProjectList } from "./projects.js";
+import { analyticsService } from "../services/analytics-service.js";
 
 export type ProjectFlowDependencies = {
   sendImage: typeof sendImage;
@@ -351,6 +352,7 @@ export async function handleProjectSelection(
 
   lastViewedProject.set(to, project.id);
   console.info(`[PROJECT] Selected: ${project.name} (${project.id})`);
+  analyticsService.recordEventByWaId(to, "PROJECT_SELECTED", project.id, project.id).catch(() => {});
   return sendProjectInfoSequence(to, project, dependencies);
 }
 
@@ -369,6 +371,8 @@ export async function handleProjectBrochure(
     await dependencies.showMainWelcomeMenu(to);
     return false;
   }
+
+  analyticsService.recordEventByWaId(to, "BROCHURE_REQUESTED", targetProjectId, targetProjectId).catch(() => {});
 
   if (isDuplicateAction(to, `BROCHURE:${targetProjectId}`)) {
     console.info(`[BROCHURE] Duplicate request ignored for ${targetProjectId}`);
@@ -389,6 +393,7 @@ export async function handleProjectBrochure(
   try {
     await dependencies.sendDocument(to, brochure.file, brochure.filename);
     console.info(`[BROCHURE] SEND SUCCESS for ${project.name}`);
+    analyticsService.recordEventByWaId(to, "BROCHURE_SENT", brochure.filename, project.id).catch(() => {});
     setConversationState(to, "BROCHURE_SENT", { projectId: project.id });
     await dependencies.sendText(to, "Here are the main options again.");
     await dependencies.showMainWelcomeMenu(to);
@@ -479,6 +484,7 @@ export async function handleProjectPlans(
 
   lastViewedProject.set(to, project.id);
   console.info(`[PLANS] Requested for ${project.name}`);
+  analyticsService.recordEventByWaId(to, "PLANS_REQUESTED", targetProjectId, targetProjectId).catch(() => {});
   return sendSquareFeetOptions(to, project, dependencies);
 }
 
@@ -521,11 +527,6 @@ export async function handleSquareFeetSelection(
   sqftId: string,
   dependencies: ProjectFlowDependencies = defaultProjectFlowDependencies
 ): Promise<boolean> {
-  if (isDuplicateAction(to, `PLAN_SQFT:${projectId}:${sqftId}`)) {
-    console.info(`[PLANS] Duplicate sqft selection ignored for ${projectId}:${sqftId}`);
-    return true;
-  }
-
   const project = getProject(projectId);
   if (!project) {
     await dependencies.showMainWelcomeMenu(to);
@@ -533,6 +534,12 @@ export async function handleSquareFeetSelection(
   }
 
   lastViewedProject.set(to, project.id);
+  analyticsService.recordEventByWaId(to, "SQFT_SELECTED", sqftId, project.id).catch(() => {});
+
+  if (isDuplicateAction(to, `PLAN_SQFT:${projectId}:${sqftId}`)) {
+    console.info(`[PLANS] Duplicate sqft selection ignored for ${projectId}:${sqftId}`);
+    return true;
+  }
 
   // Direct delivery for Mahal and Rajmahal (bungalow plots with given plan files)
   if (projectId === "mahal" || projectId === "rajmahal") {
@@ -556,6 +563,8 @@ export async function handleBhkSelection(
   bhk: string,
   dependencies: ProjectFlowDependencies = defaultProjectFlowDependencies
 ): Promise<boolean> {
+  analyticsService.recordEventByWaId(to, "BHK_SELECTED", bhk, projectId).catch(() => {});
+
   if (isDuplicateAction(to, `PLAN_BHK:${projectId}:${sqftId}:${bhk}`)) {
     console.info(`[PLANS] Duplicate BHK selection ignored for ${projectId}:${sqftId}:${bhk}`);
     return true;
@@ -583,6 +592,7 @@ export async function handleBhkSelection(
       await dependencies.sendImage(to, plan.file, plan.filename);
     }
     console.info(`[PLANS] SEND SUCCESS: ${plan.filename}`);
+    analyticsService.recordEventByWaId(to, "PLAN_SENT", plan.filename, project.id).catch(() => {});
     setConversationState(to, "PLAN_SENT", { projectId: project.id, squareFeetId: sqftId, bhk });
     await dependencies.showMainWelcomeMenu(to);
     return true;
@@ -605,16 +615,19 @@ export async function handleMainMenuAction(
     case "MAIN_VIEW_PROJECTS":
       console.info("[ACTION] MAIN_VIEW_PROJECTS");
       setConversationState(to, "PROJECT_LIST");
+      analyticsService.recordEventByWaId(to, "VIEW_PROJECTS_CLICKED").catch(() => {});
       await dependencies.sendProjectList(to);
       return true;
     case "MAIN_CHAT":
       console.info("[ACTION] MAIN_CHAT");
       setConversationState(to, "CHAT");
+      analyticsService.recordEventByWaId(to, "CHAT_REQUESTED").catch(() => {});
       await dependencies.handleChat(to);
       return true;
     case "MAIN_CALL":
       console.info("[ACTION] MAIN_CALL");
       setConversationState(to, "CALL");
+      analyticsService.recordEventByWaId(to, "CALL_REQUESTED").catch(() => {});
       await dependencies.handleCall(to);
       return true;
     default:

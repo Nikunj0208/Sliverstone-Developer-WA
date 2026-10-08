@@ -9,6 +9,7 @@ import { acceptIncomingMessage } from "../webhooks/dedupe.js";
 import { sendWelcomeFlow } from "../flows/welcome.js";
 import { parseWebhookEvents } from "../webhooks/parser.js";
 import { isValidWebhookSignature } from "../webhooks/signature.js";
+import { analyticsService } from "../services/analytics-service.js";
 
 export const webhookRouter = Router();
 
@@ -50,7 +51,39 @@ webhookRouter.post("/webhook", async (request, response) => {
 
   for (const event of events) {
     console.info(`WHATSAPP EVENT TYPE: ${event.type}`);
-    if (event.type !== "STATUS" && !acceptIncomingMessage(event.messageId)) {
+
+    if (event.type === "STATUS") {
+      try {
+        await analyticsService.recordStatusEvent(event);
+      } catch (err) {
+        console.error("Failed to record status event", err);
+      }
+      continue;
+    }
+
+    if (!acceptIncomingMessage(event.messageId)) {
+      console.info("[WEBHOOK] DUPLICATE MESSAGE IGNORED");
+      continue;
+    }
+
+    let inboundData: Awaited<ReturnType<typeof analyticsService.recordInboundMessage>> | undefined;
+    try {
+      inboundData = await analyticsService.recordInboundMessage({
+        waId: event.waId,
+        from: event.from || event.waId,
+        messageId: event.messageId,
+        type: event.type,
+        text: event.type === "TEXT" ? event.text : undefined,
+        buttonId: event.type === "BUTTON_REPLY" ? event.buttonId : undefined,
+        rowId: event.type === "LIST_REPLY" ? event.rowId : undefined,
+        timestamp: event.timestamp,
+        profileName: event.profileName
+      });
+    } catch (err) {
+      console.error("Failed to record inbound message", err);
+    }
+
+    if (inboundData?.isDuplicate) {
       console.info("[WEBHOOK] DUPLICATE MESSAGE IGNORED");
       continue;
     }
@@ -58,6 +91,14 @@ webhookRouter.post("/webhook", async (request, response) => {
     if (event.type === "TEXT") {
       console.info("[WEBHOOK] TEXT EVENT RECEIVED");
       console.info("[FLOW] TEXT ROUTED");
+
+      const trimmedText = event.text.trim().toUpperCase();
+      if (trimmedText === "STOP" || trimmedText === "UNSUBSCRIBE" || trimmedText === "OPT OUT") {
+        if (inboundData) {
+          await analyticsService.recordOptOut(inboundData.contact.id, inboundData.conversation.id);
+        }
+      }
+
       try {
         if (await enqueueConversationAction(event.waId, () => continueSiteVisitBooking(event.waId, event.text))) {
           continue;
@@ -70,6 +111,15 @@ webhookRouter.post("/webhook", async (request, response) => {
       if (projectId) {
         console.info("[ACTION] PROJECT SELECTED");
         console.info(`[ACTION] PROJECT:${projectId}`);
+        if (inboundData) {
+          await analyticsService.recordConversationEvent(
+            inboundData.conversation.id,
+            inboundData.contact.id,
+            "PROJECT_SELECTED",
+            projectId,
+            projectId
+          );
+        }
         try {
           await enqueueConversationAction(event.waId, () => sendProjectDetails(event.waId, projectId));
         } catch (error: unknown) {
@@ -77,6 +127,13 @@ webhookRouter.post("/webhook", async (request, response) => {
           console.error("Project details flow failed", message);
         }
       } else {
+        if (inboundData) {
+          await analyticsService.recordConversationEvent(
+            inboundData.conversation.id,
+            inboundData.contact.id,
+            "MAIN_MENU_VIEWED"
+          );
+        }
         try {
           await enqueueConversationAction(event.waId, () => sendWelcomeFlow(event.waId));
         } catch {
@@ -104,6 +161,15 @@ webhookRouter.post("/webhook", async (request, response) => {
       if (projectId) {
         console.info("[ACTION] PROJECT SELECTED");
         console.info(`[ACTION] PROJECT:${projectId}`);
+        if (inboundData) {
+          await analyticsService.recordConversationEvent(
+            inboundData.conversation.id,
+            inboundData.contact.id,
+            "PROJECT_SELECTED",
+            projectId,
+            projectId
+          );
+        }
         try {
           await enqueueConversationAction(event.waId, () => sendProjectDetails(event.waId, projectId));
         } catch {
