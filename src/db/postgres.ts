@@ -539,20 +539,21 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     );
 
     // Update conversation & contact activity
+    const messageTime = data.created_at || new Date();
     if (data.direction === "inbound") {
       await this.pool.query(
-        "UPDATE conversations SET last_message_at = NOW(), last_inbound_at = NOW(), last_customer_message_id = $1, last_customer_message_at = NOW(), unread_count = unread_count + 1 WHERE id = $2",
-        [id, data.conversation_id]
+        "UPDATE conversations SET last_message_at = $1, last_inbound_at = $1, last_customer_message_id = $2, last_customer_message_at = $1, unread_count = unread_count + 1 WHERE id = $3",
+        [messageTime, id, data.conversation_id]
       );
     } else {
       await this.pool.query(
-        "UPDATE conversations SET last_message_at = NOW(), last_outbound_at = NOW() WHERE id = $1",
-        [data.conversation_id]
+        "UPDATE conversations SET last_message_at = $1, last_outbound_at = $1 WHERE id = $2",
+        [messageTime, data.conversation_id]
       );
     }
     await this.pool.query(
-      "UPDATE contacts SET last_seen_at = NOW(), last_activity_at = NOW() WHERE id = $1",
-      [data.contact_id]
+      "UPDATE contacts SET last_seen_at = $1, last_activity_at = $1 WHERE id = $2",
+      [messageTime, data.contact_id]
     );
 
     return res.rows[0];

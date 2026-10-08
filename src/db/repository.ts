@@ -639,18 +639,19 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.messages.set(id, message);
 
     // Update conversation and contact last activity
+    const messageTime = data.created_at || now;
     const conv = this.conversations.get(data.conversation_id);
     if (conv) {
       const convUpdates: Partial<Conversation> = {
-        last_message_at: now
+        last_message_at: messageTime
       };
       if (data.direction === "inbound") {
-        convUpdates.last_inbound_at = now;
+        convUpdates.last_inbound_at = messageTime;
         convUpdates.last_customer_message_id = id;
-        convUpdates.last_customer_message_at = now;
+        convUpdates.last_customer_message_at = messageTime;
         convUpdates.unread_count = (conv.unread_count || 0) + 1;
       } else {
-        convUpdates.last_outbound_at = now;
+        convUpdates.last_outbound_at = messageTime;
       }
       await this.updateConversation(conv.id, convUpdates);
     }
@@ -658,8 +659,8 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     const contact = this.contacts.get(data.contact_id);
     if (contact) {
       await this.updateContact(contact.id, {
-        last_seen_at: now,
-        last_activity_at: now
+        last_seen_at: messageTime,
+        last_activity_at: messageTime
       });
     }
 
