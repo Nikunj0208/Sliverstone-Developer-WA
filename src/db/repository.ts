@@ -633,6 +633,10 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         }
       }
 
+      if (latestDeliveryStatus !== "read") {
+        seenAt = null;
+      }
+
       if (query.deliveryStatus) {
         const dTarget = query.deliveryStatus.toLowerCase();
         if (dTarget === "delivered") {

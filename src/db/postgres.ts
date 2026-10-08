@@ -68,8 +68,8 @@ export async function runPostgresMigrations(pool: Pool): Promise<void> {
       DELETE FROM messages WHERE wa_message_id LIKE 'wamid.reply_%' OR wa_message_id LIKE 'wamid.btn_%';
       -- Clean synthetic conversation events
       DELETE FROM conversation_events WHERE (event_type = 'CUSTOMER_REPLIED' OR event_type = 'BUTTON_CLICKED') AND contact_id NOT IN (SELECT contact_id FROM messages WHERE direction = 'inbound');
-      -- Clean synthetic delivery/read status events on broadcast placeholders
-      DELETE FROM message_status_events WHERE status IN ('delivered', 'read') AND message_id IN (SELECT id FROM messages WHERE wa_message_id LIKE 'wamid.out_%');
+      -- Clean synthetic delivery/read status events on broadcast placeholders or missing recipient_id
+      DELETE FROM message_status_events WHERE status IN ('delivered', 'read') AND (recipient_id IS NULL OR message_id IN (SELECT id FROM messages WHERE wa_message_id LIKE 'wamid.out_%'));
     `);
     console.info("[POSTGRES] Database migrations applied successfully");
   } catch (error) {
@@ -366,7 +366,11 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
            LIMIT 1),
           CASE WHEN EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound') THEN 'sent' ELSE 'not_sent' END
         ) as latest_delivery_status,
-        (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at,
+        (SELECT CASE 
+          WHEN (SELECT LOWER(mse2.status) FROM message_status_events mse2 JOIN messages m2 ON mse2.message_id = m2.id WHERE m2.contact_id = c.id ORDER BY mse2.event_timestamp DESC, mse2.received_at DESC LIMIT 1) = 'read'
+          THEN mse.event_timestamp 
+          ELSE NULL 
+        END FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at,
         (SELECT mse.error_code FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed' ORDER BY mse.event_timestamp DESC LIMIT 1) as error_code,
         (SELECT mse.error_message FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed' ORDER BY mse.event_timestamp DESC LIMIT 1) as error_message,
         (SELECT m.wa_message_id FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound' ORDER BY m.created_at DESC LIMIT 1) as last_wa_message_id,
