@@ -323,9 +323,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         conv.status as conv_status, conv.state as conv_state, conv.unread_count, conv.assigned_agent_id,
         (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id) as total_messages,
         (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound') as inbound_count,
-        (SELECT m.body_text FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_text,
+        (SELECT COALESCE(m.body_text, CASE WHEN m.button_id IS NOT NULL THEN 'Clicked button: ' || m.button_id WHEN m.list_row_id IS NOT NULL THEN 'Selected: ' || m.list_row_id ELSE '[' || m.message_type || ']' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_text,
         (SELECT m.created_at FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_at,
-        (SELECT mse.status FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id ORDER BY mse.event_timestamp DESC LIMIT 1) as latest_delivery_status,
+        (SELECT CASE WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read') THEN 'read' WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'delivered') THEN 'delivered' ELSE 'sent' END) as latest_delivery_status,
         (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at
       FROM contacts c
       LEFT JOIN conversations conv ON conv.contact_id = c.id AND conv.status = 'OPEN'
