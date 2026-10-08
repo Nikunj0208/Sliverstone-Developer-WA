@@ -1458,10 +1458,37 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             '<td>' +
               '<div style="display: flex; gap: 6px;" onclick="event.stopPropagation();">' +
                 '<a href="/contacts/' + c.id + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
+                '<button class="btn" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" onclick="sendMetaInvitation(\'' + c.id + '\', \'' + escapeHtml(c.name || 'Lead') + '\', this)" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
               '</div>' +
             '</td>' +
           '</tr>';
         }).join('');
+      }
+
+      async function sendMetaInvitation(contactId, name, btn) {
+        if (!confirm('Send official Meta WhatsApp invitation template to ' + name + '?')) return;
+        const origText = btn ? btn.textContent : '';
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = '⏳ Sending...';
+        }
+        try {
+          const res = await fetch('/api/contacts/' + contactId + '/send-invitation', { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to send');
+          alert('✅ Official Meta WhatsApp invitation sent successfully to ' + (data.name || name) + ' (+' + data.phone + ')!\nMeta Message ID: ' + data.waMessageId);
+          fetchContacts();
+          if (document.getElementById("journeyModalBackdrop").classList.contains("active")) {
+            openJourneyModal(contactId);
+          }
+        } catch (e) {
+          alert('❌ Failed to send WhatsApp message via Meta API:\n' + e.message);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = origText;
+          }
+        }
       }
 
       async function openJourneyModal(contactId) {
@@ -1491,13 +1518,13 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         const statuses = data.statuses || [];
 
         const displayName = c.name || "Unnamed Prospect";
-        const cleanPhone = c.phone.replace(/\\D/g, '');
+        const cleanPhone = c.phone.replace(/\D/g, '');
         const phoneFormatted = cleanPhone.startsWith('91') && cleanPhone.length === 12
           ? '+91 ' + cleanPhone.slice(2, 7) + ' ' + cleanPhone.slice(7)
           : '+' + cleanPhone;
 
         document.getElementById("journeyModalName").textContent = displayName + " — Automation Journey Flow";
-        document.getElementById("journeyModalSub").innerHTML = 'Full Phone: <strong class="code-text" style="color: #38bdf8;">' + phoneFormatted + '</strong> | <a href="https://wa.me/' + cleanPhone + '" target="_blank" style="color: #34d399; font-weight: 600; text-decoration: none;">💬 Chat on WhatsApp</a>';
+        document.getElementById("journeyModalSub").innerHTML = 'Full Phone: <strong class="code-text" style="color: #38bdf8;">' + phoneFormatted + '</strong> | <a href="https://wa.me/' + cleanPhone + '" target="_blank" style="color: #34d399; font-weight: 600; text-decoration: none;">💬 Chat on WhatsApp</a> | <button class="btn" style="padding: 2px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; margin-left: 8px;" onclick="sendMetaInvitation(\'' + c.id + '\', \'' + escapeHtml(displayName) + '\', this)">🚀 Resend WhatsApp</button>';
 
         // Evaluate Steps
         const outboundMsg = msgs.find(m => m.direction === 'outbound');

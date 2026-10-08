@@ -276,6 +276,111 @@ analyticsRouter.get("/api/contacts/:id", async (req: Request, res: Response) => 
 });
 
 /**
+ * POST /api/contacts/:id/send-invitation
+ * Sends official Meta WhatsApp marketing invitation template to a contact.
+ */
+analyticsRouter.post("/api/contacts/:id/send-invitation", async (req: Request, res: Response) => {
+  try {
+    const rawId = req.params.id;
+    const contactId = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!contactId || typeof contactId !== "string") {
+      res.status(400).json({ error: "Contact ID is required" });
+      return;
+    }
+
+    const { getAnalyticsRepository } = await import("../db/index.js");
+    const repo = getAnalyticsRepository();
+    const contact = await repo.findContactById(contactId);
+    if (!contact) {
+      res.status(404).json({ error: "Contact not found" });
+      return;
+    }
+
+    const cleanPhone = (contact.phone || contact.wa_id).replace(/\D/g, "");
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+    // Send official template via Meta API
+    const { uploadMedia } = await import("../meta/media.js");
+    let headerMediaId = "2128096154765337";
+    try {
+      headerMediaId = await uploadMedia("client-assets/organized/welcome/Welcome image.jpeg");
+    } catch {}
+
+    const axios = (await import("axios")).default;
+    const { env } = await import("../config/env.js");
+
+    const metaRes = await axios.post(
+      `https://graph.facebook.com/v20.0/${env.whatsappPhoneNumberId}/messages`,
+      {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: formattedPhone,
+        type: "template",
+        template: {
+          name: "silverstone_invitation",
+          language: { code: "en" },
+          components: [
+            {
+              type: "header",
+              parameters: [
+                {
+                  type: "image",
+                  image: { id: headerMediaId }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${env.metaAccessToken}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const waMessageId = metaRes.data.messages?.[0]?.id || `wamid.inv_${Date.now()}`;
+
+    // Track outbound message in CRM
+    await analyticsService.trackOutboundMessage({
+      to: formattedPhone,
+      waMessageId,
+      messageType: "template",
+      templateName: "silverstone_invitation",
+      bodyText: `Silverstone Invitation sent to ${contact.name || "Lead"}`
+    });
+
+    const msg = await repo.findMessageByWaMessageId(waMessageId);
+    if (msg) {
+      await repo.createStatusEvent({
+        message_id: msg.id,
+        status: "sent",
+        event_timestamp: new Date()
+      });
+    }
+
+    await repo.updateContact(contact.id, {
+      last_activity_at: new Date()
+    });
+
+    res.json({
+      success: true,
+      contactId: contact.id,
+      name: contact.name,
+      phone: formattedPhone,
+      waMessageId,
+      metaResponse: metaRes.data
+    });
+  } catch (error: any) {
+    console.error("[API] Failed to send invitation:", error.response?.data || error.message);
+    res.status(500).json({
+      error: error.response?.data?.error?.message || error.message || "Failed to send invitation"
+    });
+  }
+});
+
+/**
  * GET /api/contacts/:id/conversations
  * List conversation sessions for a specific contact.
  */

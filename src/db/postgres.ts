@@ -303,12 +303,12 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       if (query.buttonClicks) {
         conditions.push(`(
           EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%'))
-          OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND (ce.event_type = 'BUTTON_CLICKED' OR ce.event_type = 'MAIN_MENU_VIEWED'))
+          OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND ce.event_type = 'BUTTON_CLICKED')
         )`);
       } else {
         conditions.push(`(
           NOT EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%'))
-          AND NOT EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND (ce.event_type = 'BUTTON_CLICKED' OR ce.event_type = 'MAIN_MENU_VIEWED'))
+          AND NOT EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND ce.event_type = 'BUTTON_CLICKED')
         )`);
       }
     }
@@ -352,7 +352,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         (SELECT m.created_at FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_at,
         (SELECT CASE WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read') THEN 'read' WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'delivered') THEN 'delivered' ELSE 'sent' END) as latest_delivery_status,
         (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at,
-        (EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%')) OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND (ce.event_type = 'BUTTON_CLICKED' OR ce.event_type = 'MAIN_MENU_VIEWED'))) as button_clicked,
+        (EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%')) OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND ce.event_type = 'BUTTON_CLICKED')) as button_clicked,
         (SELECT COALESCE(m.button_id, CASE WHEN m.body_text LIKE 'Clicked button:%' THEN REPLACE(m.body_text, 'Clicked button: ', '') ELSE 'More Details' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%') ORDER BY m.created_at DESC LIMIT 1) as last_button_clicked
       FROM contacts c
       LEFT JOIN conversations conv ON conv.contact_id = c.id AND conv.status = 'OPEN'

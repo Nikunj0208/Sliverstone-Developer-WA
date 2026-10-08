@@ -426,7 +426,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         (m) => !!m.button_id || m.message_type === "button_reply" || (m.body_text && m.body_text.startsWith("Clicked button:"))
       );
       const buttonClickEvents = contactEvents.filter(
-        (e) => e.event_type === "BUTTON_CLICKED" || e.event_type === "MAIN_MENU_VIEWED"
+        (e) => e.event_type === "BUTTON_CLICKED"
       );
       const hasButtonClicked = buttonClickMsgs.length > 0 || buttonClickEvents.length > 0;
       const lastButtonMsg = buttonClickMsgs.length > 0 ? buttonClickMsgs[buttonClickMsgs.length - 1] : null;
