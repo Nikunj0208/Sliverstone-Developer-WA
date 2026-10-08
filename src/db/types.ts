@@ -226,6 +226,8 @@ export interface ContactListQuery {
   currentState?: string;
   lastActivityRange?: string; // 'today' | 'yesterday' | '7d' | '30d' | 'custom'
   date?: string; // Specific single-day filter YYYY-MM-DD
+  batch?: string; // Specific batch filter: '1' | '2' | '3' | '4' | '5'
+  deliveryStatus?: string; // 'read' | 'delivered' | 'sent' | 'failed'
   startDate?: Date;
   endDate?: Date;
   unread?: boolean;
@@ -259,6 +261,9 @@ export interface ContactListItem {
   leadSource: string | null;
   firstSeenAt: Date | null;
   lastActivityAt: Date | null;
+  batchName?: string;
+  latestDeliveryStatus?: string;
+  seenAt?: Date | null;
   lastMessageDirection: MessageDirection | null;
   lastReplyAt?: Date | null;
   lastReplyText?: string | null;

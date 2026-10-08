@@ -128,6 +128,8 @@ analyticsRouter.get("/api/contacts", async (req: Request, res: Response) => {
       currentState: typeof req.query.currentState === "string" ? req.query.currentState : undefined,
       lastActivityRange: typeof req.query.lastActivityRange === "string" ? req.query.lastActivityRange : undefined,
       date: typeof req.query.date === "string" ? req.query.date : undefined,
+      batch: typeof req.query.batch === "string" ? req.query.batch : undefined,
+      deliveryStatus: typeof req.query.deliveryStatus === "string" ? req.query.deliveryStatus : undefined,
       unread: req.query.unread === "true" ? true : req.query.unread === "false" ? false : undefined,
       replied: req.query.replied === "true" ? true : req.query.replied === "false" ? false : undefined,
       brochureRequested: req.query.brochureRequested === "true" ? true : undefined,

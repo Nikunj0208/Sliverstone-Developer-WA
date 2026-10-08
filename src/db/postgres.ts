@@ -225,13 +225,43 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     if (query.date) {
       conditions.push(`(
         (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
-        (c.created_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
-        (c.last_activity_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
         c.first_seen_at::date = $${idx}::date OR
-        c.created_at::date = $${idx}::date OR
-        c.last_activity_at::date = $${idx}::date
+        (c.created_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
+        c.created_at::date = $${idx}::date
       )`);
       values.push(query.date.trim());
+      idx++;
+    }
+
+    if (query.batch) {
+      const batchNum = query.batch.trim();
+      const batchDateMap: Record<string, string> = {
+        "5": "2026-10-08",
+        "4": "2026-10-06",
+        "3": "2026-10-05",
+        "2": "2026-10-04",
+        "1": "2026-10-03"
+      };
+      const targetDate = batchDateMap[batchNum];
+      if (targetDate) {
+        conditions.push(`(
+          (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
+          c.first_seen_at::date = $${idx}::date OR
+          c.source_detail LIKE $${idx + 1}
+        )`);
+        values.push(targetDate);
+        values.push(`%${targetDate}%`);
+        idx += 2;
+      }
+    }
+
+    if (query.deliveryStatus) {
+      conditions.push(`EXISTS (
+        SELECT 1 FROM message_status_events mse
+        JOIN messages m ON mse.message_id = m.id
+        WHERE m.contact_id = c.id AND LOWER(mse.status) = $${idx}
+      )`);
+      values.push(query.deliveryStatus.toLowerCase());
       idx++;
     }
 
@@ -273,11 +303,15 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
 
     const selectQuery = `
       SELECT 
-        c.id, c.wa_id, c.phone, c.name, c.email, c.project_id, c.lead_source,
+        c.id, c.wa_id, c.phone, c.name, c.email, c.project_id, c.lead_source, c.source_detail,
         c.first_seen_at, c.last_activity_at, c.created_at,
         conv.status as conv_status, conv.state as conv_state, conv.unread_count, conv.assigned_agent_id,
         (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id) as total_messages,
-        (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound') as inbound_count
+        (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound') as inbound_count,
+        (SELECT m.body_text FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_text,
+        (SELECT m.created_at FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_at,
+        (SELECT mse.status FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id ORDER BY mse.event_timestamp DESC LIMIT 1) as latest_delivery_status,
+        (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at
       FROM contacts c
       LEFT JOIN conversations conv ON conv.contact_id = c.id AND conv.status = 'OPEN'
       WHERE ${whereClause}
@@ -291,6 +325,22 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       const inboundCount = parseInt(row.inbound_count || "0", 10);
       const totalMessages = parseInt(row.total_messages || "0", 10);
       const hasReplied = inboundCount > 0;
+
+      let batchName = "Batch 1";
+      const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
+      const sourceStr = row.source_detail || "";
+      if (sourceStr.includes("2026-10-08") || firstSeenStr.startsWith("2026-10-08")) {
+        batchName = "Batch 5";
+      } else if (sourceStr.includes("2026-10-06") || firstSeenStr.startsWith("2026-10-06")) {
+        batchName = "Batch 4";
+      } else if (sourceStr.includes("2026-10-05") || firstSeenStr.startsWith("2026-10-05")) {
+        batchName = "Batch 3";
+      } else if (sourceStr.includes("2026-10-04") || firstSeenStr.startsWith("2026-10-04")) {
+        batchName = "Batch 2";
+      } else if (sourceStr.includes("2026-10-03") || firstSeenStr.startsWith("2026-10-03")) {
+        batchName = "Batch 1";
+      }
+
       return {
         id: row.id,
         wa_id: row.wa_id,
@@ -300,9 +350,15 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         email: row.email,
         project: row.project_id,
         leadSource: row.lead_source,
+        batchName,
+        latestDeliveryStatus: row.latest_delivery_status || "sent",
+        seenAt: row.seen_at ? new Date(row.seen_at) : null,
         firstSeenAt: row.first_seen_at ? new Date(row.first_seen_at) : (row.created_at ? new Date(row.created_at) : null),
         lastActivityAt: row.last_activity_at ? new Date(row.last_activity_at) : null,
         lastMessageDirection: null,
+        lastReplyAt: row.last_reply_at ? new Date(row.last_reply_at) : null,
+        lastReplyText: row.last_reply_text || null,
+        lastReplyType: row.last_reply_text ? "text" : null,
         currentJourneyStep: hasReplied ? "Step 2: Replied to Bot" : (totalMessages > 0 ? "Step 1: Broadcast Sent" : "Step 0: Lead Registered"),
         conversationStatus: row.conv_status || null,
         currentState: row.conv_state || null,

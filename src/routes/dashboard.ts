@@ -583,7 +583,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
                 <td><strong style="font-family: 'JetBrains Mono', monospace;">200</strong></td>
                 <td><span class="badge badge-active">🟢 Complete</span></td>
                 <td><span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700;">1 Replied</span></td>
-                <td><a href="/contacts?date=2026-10-08" class="btn" style="padding: 4px 10px; font-size: 12px;">View 200 Leads &rarr;</a></td>
+                <td><a href="/contacts?batch=5" class="btn" style="padding: 4px 10px; font-size: 12px;">View Batch 5 Leads &rarr;</a></td>
               </tr>
               <tr>
                 <td style="font-weight: 600; color: #fff;">Batch 4</td>
@@ -591,7 +591,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
                 <td><strong style="font-family: 'JetBrains Mono', monospace;">200</strong></td>
                 <td><span class="badge badge-active">🟢 Complete</span></td>
                 <td><span style="color: var(--text-dim); font-size: 12px;">0</span></td>
-                <td><a href="/contacts?date=2026-10-06" class="btn" style="padding: 4px 10px; font-size: 12px;">View 200 Leads &rarr;</a></td>
+                <td><a href="/contacts?batch=4" class="btn" style="padding: 4px 10px; font-size: 12px;">View Batch 4 Leads &rarr;</a></td>
               </tr>
               <tr>
                 <td style="font-weight: 600; color: #fff;">Batch 3</td>
@@ -599,7 +599,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
                 <td><strong style="font-family: 'JetBrains Mono', monospace;">200</strong></td>
                 <td><span class="badge badge-active">🟢 Complete</span></td>
                 <td><span style="color: var(--text-dim); font-size: 12px;">0</span></td>
-                <td><a href="/contacts?date=2026-10-05" class="btn" style="padding: 4px 10px; font-size: 12px;">View 200 Leads &rarr;</a></td>
+                <td><a href="/contacts?batch=3" class="btn" style="padding: 4px 10px; font-size: 12px;">View Batch 3 Leads &rarr;</a></td>
               </tr>
               <tr>
                 <td style="font-weight: 600; color: #fff;">Batch 2</td>
@@ -607,7 +607,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
                 <td><strong style="font-family: 'JetBrains Mono', monospace;">200</strong></td>
                 <td><span class="badge badge-active">🟢 Complete</span></td>
                 <td><span style="color: var(--text-dim); font-size: 12px;">0</span></td>
-                <td><a href="/contacts?date=2026-10-04" class="btn" style="padding: 4px 10px; font-size: 12px;">View 200 Leads &rarr;</a></td>
+                <td><a href="/contacts?batch=2" class="btn" style="padding: 4px 10px; font-size: 12px;">View Batch 2 Leads &rarr;</a></td>
               </tr>
               <tr>
                 <td style="font-weight: 600; color: #fff;">Batch 1</td>
@@ -615,7 +615,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
                 <td><strong style="font-family: 'JetBrains Mono', monospace;">200</strong></td>
                 <td><span class="badge badge-active">🟢 Complete</span></td>
                 <td><span style="color: var(--text-dim); font-size: 12px;">0</span></td>
-                <td><a href="/contacts?date=2026-10-03" class="btn" style="padding: 4px 10px; font-size: 12px;">View 200 Leads &rarr;</a></td>
+                <td><a href="/contacts?batch=1" class="btn" style="padding: 4px 10px; font-size: 12px;">View Batch 1 Leads &rarr;</a></td>
               </tr>
             </tbody>
           </table>
@@ -713,34 +713,45 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       </div>
     </div>
 
-    <!-- Single Day Date Filter Bar -->
-    <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
+    <!-- Single Day Date & Batch Filter Bar -->
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">📅 Date Filter (Single Day View):</span>
+          <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">📦 Filter by Batch:</span>
+          <select id="batchFilter" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-subtle); font-weight: 600;" onchange="onBatchSelect(this.value)">
+            <option value="">All Batches (1,000 Contacts)</option>
+            <option value="5">Batch 5 — 08 Oct 2026 (200 Leads)</option>
+            <option value="4">Batch 4 — 06 Oct 2026 (200 Leads)</option>
+            <option value="3">Batch 3 — 05 Oct 2026 (200 Leads)</option>
+            <option value="2">Batch 2 — 04 Oct 2026 (200 Leads)</option>
+            <option value="1">Batch 1 — 03 Oct 2026 (200 Leads)</option>
+          </select>
+          <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 8px;">📅 Single Date:</span>
           <input type="date" id="dateFilterInput" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-subtle);" onchange="onCustomDateSelect(this.value)" />
-          <button class="btn" style="padding: 5px 12px; font-size: 11px;" onclick="clearDateFilter()">Show All Dates</button>
+          <button class="btn" style="padding: 5px 12px; font-size: 11px;" onclick="clearDateFilter()">Show All Leads</button>
         </div>
-        <div id="activeDateBanner" style="font-size: 12px; font-weight: 600; color: #818cf8; display: none; background: rgba(99, 102, 241, 0.12); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(99, 102, 241, 0.3);">
-          ● Showing ONLY data for: <strong id="activeDateLabel" style="color: #fff;"></strong>
-          <a href="javascript:void(0)" onclick="clearDateFilter()" style="color: #f87171; margin-left: 8px; text-decoration: none;">[✕ Clear]</a>
+        <div id="activeDateBanner" style="font-size: 12px; font-weight: 600; color: #818cf8; display: none; background: rgba(99, 102, 241, 0.12); padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(99, 102, 241, 0.3);">
+          ● Showing ONLY: <strong id="activeDateLabel" style="color: #fff;"></strong>
+          <a href="javascript:void(0)" onclick="clearDateFilter()" style="color: #f87171; margin-left: 8px; text-decoration: none;">[✕ Reset Filter]</a>
         </div>
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-        <span style="font-size: 11px; color: var(--text-dim);">Quick Batch Dates:</span>
-        <button class="date-chip active" id="chip-all" onclick="selectDateChip('')">All Dates (1,000)</button>
-        <button class="date-chip" id="chip-2026-10-08" onclick="selectDateChip('2026-10-08')">08 Oct 2026 (Batch 5 - 200)</button>
-        <button class="date-chip" id="chip-2026-10-06" onclick="selectDateChip('2026-10-06')">06 Oct 2026 (Batch 4 - 200)</button>
-        <button class="date-chip" id="chip-2026-10-05" onclick="selectDateChip('2026-10-05')">05 Oct 2026 (Batch 3 - 200)</button>
-        <button class="date-chip" id="chip-2026-10-04" onclick="selectDateChip('2026-10-04')">04 Oct 2026 (Batch 2 - 200)</button>
-        <button class="date-chip" id="chip-2026-10-03" onclick="selectDateChip('2026-10-03')">03 Oct 2026 (Batch 1 - 200)</button>
+        <span style="font-size: 11px; color: var(--text-dim); font-weight: 600;">Quick Batches:</span>
+        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (1,000)</button>
+        <button class="date-chip" id="chip-batch-5" onclick="selectBatchChip('5')">Batch 5 (08 Oct • 200)</button>
+        <button class="date-chip" id="chip-batch-4" onclick="selectBatchChip('4')">Batch 4 (06 Oct • 200)</button>
+        <button class="date-chip" id="chip-batch-3" onclick="selectBatchChip('3')">Batch 3 (05 Oct • 200)</button>
+        <button class="date-chip" id="chip-batch-2" onclick="selectBatchChip('2')">Batch 2 (04 Oct • 200)</button>
+        <button class="date-chip" id="chip-batch-1" onclick="selectBatchChip('1')">Batch 1 (03 Oct • 200)</button>
       </div>
     </div>
 
-    <!-- Quick Filter Tabs (Replied to Automation, Needs Reply, etc.) -->
+    <!-- Quick Filter Tabs (Replied, Seen/Read, Delivered, etc.) -->
     <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
       <button class="filter-tab active" id="tab-all" onclick="setEngagementTab('')">📋 All Prospects</button>
       <button class="filter-tab" id="tab-replied" onclick="setEngagementTab('replied')">💬 Replied to Automation</button>
+      <button class="filter-tab" id="tab-read" onclick="setEngagementTab('read')">👁️ Read / Seen (Blue Ticks)</button>
+      <button class="filter-tab" id="tab-delivered" onclick="setEngagementTab('delivered')">📬 Delivered</button>
       <button class="filter-tab" id="tab-unread" onclick="setEngagementTab('unread')">🟡 Needs Reply / Pending</button>
       <button class="filter-tab" id="tab-plans" onclick="setEngagementTab('plan')">📄 Floor Plans Requested</button>
       <button class="filter-tab" id="tab-brochure" onclick="setEngagementTab('brochure')">📑 Brochure Downloaded</button>
@@ -751,6 +762,12 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
     <div class="filter-bar">
       <div class="filter-group">
         <input type="text" id="searchInput" placeholder="Search name, full phone number, wa_id..." oninput="debounceFetchContacts()" />
+        <select id="deliveryStatusFilter" onchange="fetchContacts()">
+          <option value="">All Delivery States</option>
+          <option value="read">👁️ Read / Seen (Blue Ticks)</option>
+          <option value="delivered">📬 Delivered</option>
+          <option value="sent">📨 Dispatched</option>
+        </select>
         <select id="projectFilter" onchange="fetchContacts()">
           <option value="">All Projects</option>
           <option value="spring-hill">Spring Hill</option>
@@ -767,11 +784,6 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           <option value="inbound_qr">Inbound QR</option>
           <option value="direct">Direct WhatsApp</option>
         </select>
-        <select id="unreadFilter" onchange="fetchContacts()">
-          <option value="">All Read States</option>
-          <option value="true">Unread (CRM)</option>
-          <option value="false">Read / Acknowledged</option>
-        </select>
       </div>
       <div class="filter-group">
         <select id="limitFilter" onchange="fetchContacts()">
@@ -787,7 +799,6 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           <option value="newest">Sort: Newest Lead</option>
           <option value="oldest">Sort: Oldest Lead</option>
           <option value="most_messages">Sort: Most Messages</option>
-          <option value="most_engagement">Sort: Most Engagement</option>
         </select>
       </div>
     </div>
@@ -799,17 +810,18 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           <tr>
             <th>Lead Name</th>
             <th>Phone Number</th>
-            <th>Project Interest</th>
-            <th>Broadcast Date</th>
-            <th>Last Activity / Reply</th>
+            <th>Batch</th>
+            <th>Seen / Delivery</th>
             <th>Latest Inbound Reply</th>
             <th>Automation Flow Step</th>
+            <th>Project Interest</th>
+            <th>Broadcast Date</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="contactsTableBody">
-          <tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">Loading contacts...</td></tr>
+          <tr><td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">Loading contacts...</td></tr>
         </tbody>
       </table>
     </div>
@@ -836,53 +848,117 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
     <script>
       let debounceTimer;
       let selectedDate = "";
+      let selectedBatch = "";
       let activeEngagementTab = "";
+      let selectedDeliveryStatus = "";
+
+      const BATCH_DATE_MAP = {
+        "5": "2026-10-08",
+        "4": "2026-10-06",
+        "3": "2026-10-05",
+        "2": "2026-10-04",
+        "1": "2026-10-03"
+      };
 
       function debounceFetchContacts() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(fetchContacts, 300);
       }
 
-      function selectDateChip(dateVal) {
-        selectedDate = dateVal;
-        document.getElementById("dateFilterInput").value = dateVal;
+      function selectBatchChip(batchVal) {
+        selectedBatch = batchVal;
+        const bSelect = document.getElementById("batchFilter");
+        if (bSelect) bSelect.value = batchVal;
         
-        // Update chip active classes
+        selectedDate = BATCH_DATE_MAP[batchVal] || "";
+        const dInput = document.getElementById("dateFilterInput");
+        if (dInput) dInput.value = selectedDate;
+
         document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
-        const targetChip = dateVal ? document.getElementById("chip-" + dateVal) : document.getElementById("chip-all");
+        const targetChip = batchVal ? document.getElementById("chip-batch-" + batchVal) : document.getElementById("chip-all");
         if (targetChip) targetChip.classList.add("active");
 
         updateDateBanner();
+        syncUrlParams();
+        fetchContacts();
+      }
+
+      function onBatchSelect(batchVal) {
+        selectedBatch = batchVal;
+        selectedDate = BATCH_DATE_MAP[batchVal] || "";
+        const dInput = document.getElementById("dateFilterInput");
+        if (dInput) dInput.value = selectedDate;
+
+        document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
+        const targetChip = batchVal ? document.getElementById("chip-batch-" + batchVal) : document.getElementById("chip-all");
+        if (targetChip) targetChip.classList.add("active");
+
+        updateDateBanner();
+        syncUrlParams();
         fetchContacts();
       }
 
       function onCustomDateSelect(dateVal) {
         selectedDate = dateVal;
+        // Check if date corresponds to a known batch
+        selectedBatch = "";
+        for (const [b, d] of Object.entries(BATCH_DATE_MAP)) {
+          if (d === dateVal) {
+            selectedBatch = b;
+            break;
+          }
+        }
+        const bSelect = document.getElementById("batchFilter");
+        if (bSelect) bSelect.value = selectedBatch;
+
         document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
-        const targetChip = document.getElementById("chip-" + dateVal);
+        const targetChip = selectedBatch ? document.getElementById("chip-batch-" + selectedBatch) : null;
         if (targetChip) targetChip.classList.add("active");
-        
+
         updateDateBanner();
+        syncUrlParams();
         fetchContacts();
       }
 
       function clearDateFilter() {
         selectedDate = "";
-        document.getElementById("dateFilterInput").value = "";
+        selectedBatch = "";
+        activeEngagementTab = "";
+        selectedDeliveryStatus = "";
+
+        const dInput = document.getElementById("dateFilterInput");
+        if (dInput) dInput.value = "";
+        const bSelect = document.getElementById("batchFilter");
+        if (bSelect) bSelect.value = "";
+        const sSelect = document.getElementById("deliveryStatusFilter");
+        if (sSelect) sSelect.value = "";
+
         document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
-        document.getElementById("chip-all").classList.add("active");
+        const chipAll = document.getElementById("chip-all");
+        if (chipAll) chipAll.classList.add("active");
+
+        document.querySelectorAll(".filter-tab").forEach(el => el.classList.remove("active"));
+        const tabAll = document.getElementById("tab-all");
+        if (tabAll) tabAll.classList.add("active");
+
         updateDateBanner();
+        syncUrlParams();
         fetchContacts();
       }
 
       function updateDateBanner() {
         const banner = document.getElementById("activeDateBanner");
         const label = document.getElementById("activeDateLabel");
-        if (selectedDate) {
+        if (selectedBatch || selectedDate) {
           banner.style.display = "inline-flex";
-          const d = new Date(selectedDate);
-          const readable = isNaN(d.getTime()) ? selectedDate : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-          label.textContent = readable;
+          let labelText = "";
+          if (selectedBatch) {
+            labelText += "Batch " + selectedBatch + " (200 Leads)";
+          }
+          if (selectedDate) {
+            labelText += (selectedBatch ? " • Date: " : "Date: ") + selectedDate;
+          }
+          label.textContent = labelText;
         } else {
           banner.style.display = "none";
         }
@@ -893,14 +969,35 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         document.querySelectorAll(".filter-tab").forEach(el => el.classList.remove("active"));
         const tabEl = document.getElementById("tab-" + (tab || "all"));
         if (tabEl) tabEl.classList.add("active");
+
+        // Sync delivery status dropdown if clicking read or delivered tab
+        const dSelect = document.getElementById("deliveryStatusFilter");
+        if (tab === "read" && dSelect) dSelect.value = "read";
+        else if (tab === "delivered" && dSelect) dSelect.value = "delivered";
+        else if ((tab === "" || tab === "replied") && dSelect && (dSelect.value === "read" || dSelect.value === "delivered")) dSelect.value = "";
+
+        syncUrlParams();
         fetchContacts();
+      }
+
+      function syncUrlParams() {
+        const params = new URLSearchParams();
+        if (selectedBatch) params.set("batch", selectedBatch);
+        else if (selectedDate) params.set("date", selectedDate);
+        if (activeEngagementTab === "replied") params.set("replied", "true");
+        else if (activeEngagementTab === "read") params.set("status", "read");
+        else if (activeEngagementTab === "delivered") params.set("status", "delivered");
+        else if (activeEngagementTab === "unread") params.set("unread", "true");
+        const query = params.toString();
+        const newUrl = window.location.pathname + (query ? "?" + query : "");
+        window.history.replaceState({}, "", newUrl);
       }
 
       async function fetchContacts() {
         const search = document.getElementById("searchInput").value;
         const project = document.getElementById("projectFilter").value;
         const leadSource = document.getElementById("leadSourceFilter").value;
-        const unread = document.getElementById("unreadFilter").value;
+        const deliveryStatus = document.getElementById("deliveryStatusFilter").value;
         const limit = document.getElementById("limitFilter").value || "200";
         const sortBy = document.getElementById("sortFilter").value;
 
@@ -908,12 +1005,17 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         if (search) params.append("search", search);
         if (project) params.append("project", project);
         if (leadSource) params.append("leadSource", leadSource);
-        if (unread) params.append("unread", unread);
-        if (selectedDate) params.append("date", selectedDate);
-        params.append("limit", limit);
-        params.append("sortBy", sortBy);
+        if (selectedBatch) params.append("batch", selectedBatch);
+        else if (selectedDate) params.append("date", selectedDate);
 
-        // Engagement tab mapping
+        if (deliveryStatus) {
+          params.append("deliveryStatus", deliveryStatus);
+        } else if (activeEngagementTab === "read") {
+          params.append("deliveryStatus", "read");
+        } else if (activeEngagementTab === "delivered") {
+          params.append("deliveryStatus", "delivered");
+        }
+
         if (activeEngagementTab === "replied") {
           params.append("replied", "true");
         } else if (activeEngagementTab === "unread") {
@@ -926,13 +1028,18 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           params.append("siteVisitRequested", "true");
         }
 
+        params.append("limit", limit);
+        params.append("sortBy", sortBy);
+
         try {
           const res = await fetch('/api/contacts?' + params.toString());
           const data = await res.json();
           renderContacts(data.contacts || []);
           
           let countBadgeText = (data.total || 0) + ' Leads';
-          if (selectedDate) {
+          if (selectedBatch) {
+            countBadgeText += ' (Batch ' + selectedBatch + ' Only)';
+          } else if (selectedDate) {
             countBadgeText += ' (' + selectedDate + ' Only)';
           }
           document.getElementById("contactCountBadge").textContent = countBadgeText;
@@ -949,14 +1056,15 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         const dateFormatted = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         const timeFormatted = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         
-        return '<div style="font-weight: 600; color: #f8fafc; font-size: 12.5px;">' + dateFormatted + '</div>' +
+        return '<div style="font-weight: 600; color: #f8fafc; font-size: 12px;">' + dateFormatted + '</div>' +
                '<div style="font-size: 11px; color: #94a3b8;">' + timeFormatted + '</div>';
       }
 
       function formatTimeAgo(dateStr) {
         if (!dateStr) return '—';
-        const date = new Date(dateStr);
-        const sec = Math.floor((Date.now() - date.getTime()) / 1000);
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '—';
+        const sec = Math.floor((Date.now() - d.getTime()) / 1000);
         if (sec < 60) return sec + 's ago';
         const min = Math.floor(sec / 60);
         if (min < 60) return min + 'm ago';
@@ -973,23 +1081,31 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           : '+' + clean;
         return '<div style="display: inline-flex; align-items: center; gap: 6px;">' +
           '<span class="code-text" style="font-weight: 600; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px;">' + display + '</span>' +
-          '<a href="https://wa.me/' + clean + '" target="_blank" onclick="event.stopPropagation();" title="Open WhatsApp Chat directly" style="text-decoration: none; font-size: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 1px 6px; color: #34d399; font-weight: 600;">💬 WA</a>' +
+          '<a href="https://wa.me/' + clean + '" target="_blank" onclick="event.stopPropagation();" title="Open WhatsApp Chat directly" style="text-decoration: none; font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; color: #34d399; font-weight: 700;">💬 WA</a>' +
         '</div>';
       }
 
       function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       }
 
       function renderContacts(contacts) {
         const tbody = document.getElementById("contactsTableBody");
         if (contacts.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">' +
-            (selectedDate ? 'No contacts found for date: ' + selectedDate : 'No contacts found matching criteria.') +
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">' +
+            (selectedBatch ? 'No contacts found for Batch ' + selectedBatch : (selectedDate ? 'No contacts found for date: ' + selectedDate : 'No contacts found matching criteria.')) +
           '</td></tr>';
           return;
         }
+
+        const batchColorMap = {
+          'Batch 5': { bg: 'rgba(168, 85, 247, 0.2)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' },
+          'Batch 4': { bg: 'rgba(59, 130, 246, 0.2)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.4)' },
+          'Batch 3': { bg: 'rgba(16, 185, 129, 0.2)', text: '#34d399', border: 'rgba(16, 185, 129, 0.4)' },
+          'Batch 2': { bg: 'rgba(245, 158, 11, 0.2)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' },
+          'Batch 1': { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' }
+        };
 
         tbody.innerHTML = contacts.map(c => {
           const statusBadge = c.conversationStatus === 'OPEN'
@@ -997,17 +1113,37 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             : (c.conversationStatus === 'CLOSED' ? '<span class="badge badge-closed">🔵 CLOSED</span>' : '<span class="badge">NONE</span>');
           
           const unreadBadge = c.unread 
-            ? '<span class="badge badge-needs-reply">🟡 UNREAD (' + c.unreadCount + ')</span>'
-            : '<span style="color: var(--text-dim); font-size: 11px;">Acknowledged</span>';
+            ? '<span class="badge badge-needs-reply" style="margin-top: 3px;">🟡 UNREAD (' + c.unreadCount + ')</span>'
+            : '<span style="color: var(--text-dim); font-size: 11px;">Ack</span>';
 
           const projectName = c.project ? c.project.toUpperCase() : 'GENERAL';
 
+          // Batch Badge
+          const batchInfo = batchColorMap[c.batchName] || { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' };
+          const batchBadge = '<span class="badge" style="background: ' + batchInfo.bg + '; color: ' + batchInfo.text + '; border: 1px solid ' + batchInfo.border + '; font-weight: 700;">' + (c.batchName || 'Batch 1') + '</span>';
+
+          // Delivery / Seen Status Badge (Sent, Delivered, Read with blue tick)
+          const dStatus = (c.latestDeliveryStatus || 'sent').toLowerCase();
+          let deliveryBadge = '';
+          if (dStatus === 'read') {
+            deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
+              '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 700;" title="Customer opened and read this message">👁️ Read ✓✓</span>' +
+              (c.seenAt ? '<span style="font-size: 10px; color: #94a3b8;">' + formatTimeAgo(c.seenAt) + '</span>' : '') +
+            '</div>';
+          } else if (dStatus === 'delivered') {
+            deliveryBadge = '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 600;" title="Delivered to customer WhatsApp">📬 Delivered ✓✓</span>';
+          } else if (dStatus === 'failed') {
+            deliveryBadge = '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600;" title="Delivery Failed">⚠️ Failed</span>';
+          } else {
+            deliveryBadge = '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;" title="Sent / Dispatched by Meta">📨 Sent ✓</span>';
+          }
+
           // Latest Inbound Reply pill
-          let replyHtml = '<span style="color: var(--text-dim); font-size: 12px;">No reply yet</span>';
+          let replyHtml = '<span style="color: var(--text-dim); font-size: 11px;">No reply yet</span>';
           if (c.hasReplied || c.lastReplyText) {
             const replyText = c.lastReplyText || 'Inbound reply';
-            replyHtml = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
-              '<div style="font-size: 12px; font-weight: 600; color: #34d399; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + escapeHtml(replyText) + '">💬 ' + escapeHtml(replyText) + '</div>' +
+            replyHtml = '<div style="display: flex; flex-direction: column; gap: 3px;">' +
+              '<div style="font-size: 12px; font-weight: 700; color: #34d399; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 4px; padding: 2px 6px;" title="' + escapeHtml(replyText) + '">💬 ' + escapeHtml(replyText) + '</div>' +
               (c.lastReplyAt ? '<div style="font-size: 10px; color: var(--text-dim);">' + formatTimeAgo(c.lastReplyAt) + '</div>' : '') +
             '</div>';
           }
@@ -1023,15 +1159,20 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           return '<tr class="clickable" onclick="window.location.href=\\'/contacts/' + c.id + '\\'">' +
             '<td style="font-weight: 600; color: #f8fafc;">' + (c.name || 'Unnamed Prospect') + '</td>' +
             '<td>' + formatFullPhone(c.phone) + '</td>' +
+            '<td>' + batchBadge + '</td>' +
+            '<td>' + deliveryBadge + '</td>' +
+            '<td>' + replyHtml + '</td>' +
+            '<td>' +
+              '<div style="display: flex; align-items: center; gap: 6px;">' +
+                journeyBadge +
+                '<button class="btn" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" onclick="event.stopPropagation(); openJourneyModal(\\'' + c.id + '\\')" title="View Automation Journey Flow">🗺️</button>' +
+              '</div>' +
+            '</td>' +
             '<td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">' + projectName + '</span></td>' +
             '<td>' + formatDateTime(c.firstSeenAt) + '</td>' +
-            '<td>' + formatDateTime(c.lastActivityAt) + '</td>' +
-            '<td>' + replyHtml + '</td>' +
-            '<td>' + journeyBadge + '</td>' +
-            '<td>' + statusBadge + '<div style="margin-top: 4px;">' + unreadBadge + '</div></td>' +
+            '<td>' + statusBadge + '<div style="margin-top: 2px;">' + unreadBadge + '</div></td>' +
             '<td>' +
               '<div style="display: flex; gap: 6px;" onclick="event.stopPropagation();">' +
-                '<button class="btn" style="padding: 4px 8px; font-size: 11px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" onclick="openJourneyModal(\\'' + c.id + '\\')" title="View Automation Journey Steps">🗺️ Flow</button>' +
                 '<a href="/contacts/' + c.id + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
               '</div>' +
             '</td>' +
@@ -1229,8 +1370,59 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         '</div>';
       }
 
-      // Initial load
-      fetchContacts();
+      // Initial page load: parse URL query params
+      (function initPage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("batch")) {
+          selectedBatch = urlParams.get("batch");
+          const bSelect = document.getElementById("batchFilter");
+          if (bSelect) bSelect.value = selectedBatch;
+          selectedDate = BATCH_DATE_MAP[selectedBatch] || "";
+          const dInput = document.getElementById("dateFilterInput");
+          if (dInput) dInput.value = selectedDate;
+
+          document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
+          const chip = document.getElementById("chip-batch-" + selectedBatch);
+          if (chip) chip.classList.add("active");
+        } else if (urlParams.get("date")) {
+          selectedDate = urlParams.get("date");
+          const dInput = document.getElementById("dateFilterInput");
+          if (dInput) dInput.value = selectedDate;
+          for (const [b, d] of Object.entries(BATCH_DATE_MAP)) {
+            if (d === selectedDate) {
+              selectedBatch = b;
+              const bSelect = document.getElementById("batchFilter");
+              if (bSelect) bSelect.value = b;
+              document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
+              const chip = document.getElementById("chip-batch-" + b);
+              if (chip) chip.classList.add("active");
+              break;
+            }
+          }
+        }
+
+        if (urlParams.get("replied") === "true") {
+          activeEngagementTab = "replied";
+        } else if (urlParams.get("unread") === "true") {
+          activeEngagementTab = "unread";
+        } else if (urlParams.get("status")) {
+          const st = urlParams.get("status");
+          selectedDeliveryStatus = st;
+          const sSelect = document.getElementById("deliveryStatusFilter");
+          if (sSelect) sSelect.value = st;
+          if (st === "read") activeEngagementTab = "read";
+          else if (st === "delivered") activeEngagementTab = "delivered";
+        }
+
+        if (activeEngagementTab) {
+          document.querySelectorAll(".filter-tab").forEach(el => el.classList.remove("active"));
+          const tabEl = document.getElementById("tab-" + activeEngagementTab);
+          if (tabEl) tabEl.classList.add("active");
+        }
+
+        updateDateBanner();
+        fetchContacts();
+      })();
     </script>
   `;
 

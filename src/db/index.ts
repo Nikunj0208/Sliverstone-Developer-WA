@@ -32,11 +32,8 @@ export async function initDatabase(): Promise<AnalyticsRepository> {
       await runPostgresMigrations(pool);
       currentRepository = new PostgresAnalyticsRepository(pool);
       console.info("[DATABASE] PostgreSQL analytics repository initialized successfully");
-      const { total } = await currentRepository.listContacts({ limit: 1 });
-      if (total === 0) {
-        console.info("[DATABASE] Populating initial broadcast logs datewise...");
-        await syncBroadcastLogsToRepository(currentRepository);
-      }
+      console.info("[DATABASE] Syncing broadcast logs datewise...");
+      await syncBroadcastLogsToRepository(currentRepository);
       return currentRepository;
     } catch (error) {
       console.warn("[DATABASE] Failed to initialize PostgreSQL pool, falling back to memory:", error);

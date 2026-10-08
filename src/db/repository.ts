@@ -524,10 +524,72 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
           return isoDate === targetDate || localDate === targetDate;
         };
 
-        const isMatched = matchesDate(contact.first_seen_at) || matchesDate(contact.created_at) || matchesDate(lastActivityAt);
+        const isMatched = matchesDate(contact.first_seen_at) || matchesDate(contact.created_at) || (contact.source_detail || "").includes(targetDate);
         if (!isMatched) {
           continue;
         }
+      }
+
+      // Batch Filter (1, 2, 3, 4, 5)
+      if (query.batch) {
+        const batchNum = query.batch.trim();
+        const batchDateMap: Record<string, string> = {
+          "5": "2026-10-08",
+          "4": "2026-10-06",
+          "3": "2026-10-05",
+          "2": "2026-10-04",
+          "1": "2026-10-03"
+        };
+        const targetDate = batchDateMap[batchNum];
+        if (targetDate) {
+          const isoDate = contact.first_seen_at ? contact.first_seen_at.toISOString().slice(0, 10) : "";
+          const createdDate = contact.created_at ? contact.created_at.toISOString().slice(0, 10) : "";
+          const sourceDetail = contact.source_detail || "";
+          if (isoDate !== targetDate && createdDate !== targetDate && !sourceDetail.includes(targetDate)) {
+            continue;
+          }
+        }
+      }
+
+      // Message delivery & seen status calculation
+      const msgIds = new Set(contactMsgs.map((m) => m.id));
+      let latestDeliveryStatus = "sent";
+      let latestStatusTime = 0;
+      let seenAt: Date | null = null;
+      for (const st of this.statusEvents.values()) {
+        if (msgIds.has(st.message_id)) {
+          const stTime = st.event_timestamp ? st.event_timestamp.getTime() : 0;
+          const sLower = st.status.toLowerCase();
+          if (sLower === "read" && (!seenAt || (st.event_timestamp && st.event_timestamp > seenAt))) {
+            seenAt = st.event_timestamp;
+          }
+          if (stTime >= latestStatusTime) {
+            latestStatusTime = stTime;
+            if (sLower === "read") latestDeliveryStatus = "read";
+            else if (sLower === "delivered") latestDeliveryStatus = "delivered";
+            else if (sLower === "failed") latestDeliveryStatus = "failed";
+            else latestDeliveryStatus = "sent";
+          }
+        }
+      }
+
+      if (query.deliveryStatus && latestDeliveryStatus.toLowerCase() !== query.deliveryStatus.toLowerCase()) {
+        continue;
+      }
+
+      let batchName = "Batch 1";
+      const firstSeenStr = contact.first_seen_at ? contact.first_seen_at.toISOString() : (contact.created_at ? contact.created_at.toISOString() : "");
+      const sourceStr = contact.source_detail || "";
+      if (sourceStr.includes("2026-10-08") || firstSeenStr.startsWith("2026-10-08")) {
+        batchName = "Batch 5";
+      } else if (sourceStr.includes("2026-10-06") || firstSeenStr.startsWith("2026-10-06")) {
+        batchName = "Batch 4";
+      } else if (sourceStr.includes("2026-10-05") || firstSeenStr.startsWith("2026-10-05")) {
+        batchName = "Batch 3";
+      } else if (sourceStr.includes("2026-10-04") || firstSeenStr.startsWith("2026-10-04")) {
+        batchName = "Batch 2";
+      } else if (sourceStr.includes("2026-10-03") || firstSeenStr.startsWith("2026-10-03")) {
+        batchName = "Batch 1";
       }
 
       // Date Range Filter
@@ -594,7 +656,10 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         hasReplied,
         brochureRequested,
         planRequested,
-        siteVisitRequested
+        siteVisitRequested,
+        batchName,
+        latestDeliveryStatus,
+        seenAt
       });
     }
 
