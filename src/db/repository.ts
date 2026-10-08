@@ -21,6 +21,19 @@ import type {
   DuplicateContactCandidate
 } from "./types.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
+import { writeFile, readFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { dirname } from "node:path";
+
+export type RepositorySerializedState = {
+  version: number;
+  contacts: Contact[];
+  conversations: Conversation[];
+  messages: Message[];
+  statusEvents: MessageStatusEvent[];
+  conversationEvents: ConversationEvent[];
+  auditLogs: AuditLog[];
+};
 
 export interface AnalyticsRepository {
   // Contacts
@@ -124,6 +137,131 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
   private statusEvents = new Map<string, MessageStatusEvent>();
   private conversationEvents = new Map<string, ConversationEvent>();
   private auditLogs: AuditLog[] = [];
+  private persistentFilePath: string | null = null;
+  private saveDebounceTimer: NodeJS.Timeout | null = null;
+
+  setPersistentFilePath(filePath: string | null): void {
+    this.persistentFilePath = filePath;
+  }
+
+  scheduleSave(): void {
+    if (!this.persistentFilePath) return;
+    if (this.saveDebounceTimer) {
+      clearTimeout(this.saveDebounceTimer);
+    }
+    this.saveDebounceTimer = setTimeout(() => {
+      this.saveToFile().catch((err) => {
+        console.warn("[REPO] Failed to persist CRM store to file:", err.message);
+      });
+    }, 300);
+  }
+
+  exportState(): RepositorySerializedState {
+    return {
+      version: 1,
+      contacts: Array.from(this.contacts.values()),
+      conversations: Array.from(this.conversations.values()),
+      messages: Array.from(this.messages.values()),
+      statusEvents: Array.from(this.statusEvents.values()),
+      conversationEvents: Array.from(this.conversationEvents.values()),
+      auditLogs: [...this.auditLogs]
+    };
+  }
+
+  importState(state: Partial<RepositorySerializedState>): void {
+    if (Array.isArray(state.contacts)) {
+      for (const c of state.contacts) {
+        this.contacts.set(c.id, {
+          ...c,
+          first_seen_at: c.first_seen_at ? new Date(c.first_seen_at) : new Date(),
+          last_seen_at: c.last_seen_at ? new Date(c.last_seen_at) : new Date(),
+          last_activity_at: c.last_activity_at ? new Date(c.last_activity_at) : new Date(),
+          created_at: c.created_at ? new Date(c.created_at) : new Date(),
+          updated_at: c.updated_at ? new Date(c.updated_at) : new Date(),
+          opt_in_at: c.opt_in_at ? new Date(c.opt_in_at) : null,
+          opt_out_at: c.opt_out_at ? new Date(c.opt_out_at) : null
+        });
+      }
+    }
+
+    if (Array.isArray(state.conversations)) {
+      for (const conv of state.conversations) {
+        this.conversations.set(conv.id, {
+          ...conv,
+          opened_at: conv.opened_at ? new Date(conv.opened_at) : new Date(),
+          closed_at: conv.closed_at ? new Date(conv.closed_at) : null,
+          last_message_at: conv.last_message_at ? new Date(conv.last_message_at) : null,
+          last_inbound_at: conv.last_inbound_at ? new Date(conv.last_inbound_at) : null,
+          last_outbound_at: conv.last_outbound_at ? new Date(conv.last_outbound_at) : null,
+          first_response_at: conv.first_response_at ? new Date(conv.first_response_at) : null,
+          last_customer_message_at: conv.last_customer_message_at ? new Date(conv.last_customer_message_at) : null,
+          last_internal_read_at: conv.last_internal_read_at ? new Date(conv.last_internal_read_at) : null,
+          created_at: conv.created_at ? new Date(conv.created_at) : new Date(),
+          updated_at: conv.updated_at ? new Date(conv.updated_at) : new Date()
+        });
+      }
+    }
+
+    if (Array.isArray(state.messages)) {
+      for (const msg of state.messages) {
+        this.messages.set(msg.id, {
+          ...msg,
+          created_at: msg.created_at ? new Date(msg.created_at) : new Date()
+        });
+      }
+    }
+
+    if (Array.isArray(state.statusEvents)) {
+      for (const st of state.statusEvents) {
+        this.statusEvents.set(st.id, {
+          ...st,
+          event_timestamp: st.event_timestamp ? new Date(st.event_timestamp) : new Date(),
+          received_at: st.received_at ? new Date(st.received_at) : new Date()
+        });
+      }
+    }
+
+    if (Array.isArray(state.conversationEvents)) {
+      for (const ev of state.conversationEvents) {
+        this.conversationEvents.set(ev.id, {
+          ...ev,
+          created_at: ev.created_at ? new Date(ev.created_at) : new Date()
+        });
+      }
+    }
+
+    if (Array.isArray(state.auditLogs)) {
+      this.auditLogs = state.auditLogs.map((log) => ({
+        ...log,
+        created_at: log.created_at ? new Date(log.created_at) : new Date()
+      }));
+    }
+  }
+
+  async saveToFile(filePath?: string): Promise<void> {
+    const target = filePath || this.persistentFilePath;
+    if (!target) return;
+    const parentDir = dirname(target);
+    if (!existsSync(parentDir)) {
+      await mkdir(parentDir, { recursive: true });
+    }
+    const serialized = JSON.stringify(this.exportState(), null, 2);
+    await writeFile(target, serialized, "utf-8");
+  }
+
+  async loadFromFile(filePath?: string): Promise<boolean> {
+    const target = filePath || this.persistentFilePath;
+    if (!target || !existsSync(target)) return false;
+    try {
+      const raw = await readFile(target, "utf-8");
+      const state = JSON.parse(raw);
+      this.importState(state);
+      return true;
+    } catch (err: any) {
+      console.warn(`[REPO] Failed to load store from ${target}:`, err.message);
+      return false;
+    }
+  }
 
   // Contacts
   async findContactById(id: string): Promise<Contact | null> {
@@ -173,6 +311,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       updated_at: data.updated_at ?? now
     };
     this.contacts.set(id, contact);
+    this.scheduleSave();
     return contact;
   }
 
@@ -185,6 +324,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       updated_at: new Date()
     };
     this.contacts.set(id, updated);
+    this.scheduleSave();
     return updated;
   }
 
@@ -551,6 +691,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       updated_at: data.updated_at ?? now
     };
     this.conversations.set(id, conversation);
+    this.scheduleSave();
     return conversation;
   }
 
@@ -563,6 +704,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       updated_at: new Date()
     };
     this.conversations.set(id, updated);
+    this.scheduleSave();
     return updated;
   }
 
@@ -576,6 +718,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       updated_at: new Date()
     };
     this.conversations.set(id, updated);
+    this.scheduleSave();
     return updated;
   }
 
@@ -589,6 +732,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       updated_at: new Date()
     };
     this.conversations.set(id, updated);
+    this.scheduleSave();
     return updated;
   }
 
@@ -843,6 +987,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       received_at: data.received_at ?? now
     };
     this.statusEvents.set(id, event);
+    this.scheduleSave();
     return event;
   }
 
@@ -916,6 +1061,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       created_at: data.created_at ?? now
     };
     this.conversationEvents.set(id, event);
+    this.scheduleSave();
 
     // Update contact last_activity_at
     const contact = this.contacts.get(data.contact_id);
@@ -958,6 +1104,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       created_at: new Date()
     };
     this.auditLogs.push(log);
+    this.scheduleSave();
     return log;
   }
 

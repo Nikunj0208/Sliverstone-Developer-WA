@@ -16,21 +16,35 @@ export async function syncBroadcastLogsToRepository(repo: AnalyticsRepository): 
   totalSynced: number;
   batches: Array<{ filename: string; date: string; count: number }>;
 }> {
-  const logsDir = join(process.cwd(), "logs");
-  if (!existsSync(logsDir)) {
+  const dirs = [
+    join(process.cwd(), "data", "broadcasts"),
+    join(process.cwd(), "logs")
+  ];
+
+  const foundFiles = new Map<string, string>();
+  for (const dir of dirs) {
+    if (existsSync(dir)) {
+      const allFiles = await readdir(dir);
+      for (const file of allFiles) {
+        if (file.startsWith("broadcast-") && file.endsWith(".json")) {
+          if (!foundFiles.has(file)) {
+            foundFiles.set(file, join(dir, file));
+          }
+        }
+      }
+    }
+  }
+
+  if (foundFiles.size === 0) {
     return { totalFiles: 0, totalSynced: 0, batches: [] };
   }
 
-  const allFiles = await readdir(logsDir);
-  const logFiles = allFiles
-    .filter((f) => f.startsWith("broadcast-") && f.endsWith(".json"))
-    .sort();
-
+  const logFiles = Array.from(foundFiles.keys()).sort();
   let totalSynced = 0;
   const batches: Array<{ filename: string; date: string; count: number }> = [];
 
   for (const file of logFiles) {
-    const filePath = join(logsDir, file);
+    const filePath = foundFiles.get(file)!;
     const match = /broadcast-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.json/.exec(file);
     if (!match) continue;
 

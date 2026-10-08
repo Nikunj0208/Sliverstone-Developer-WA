@@ -27,6 +27,40 @@ function internalAuth(req: Request, res: Response, next: NextFunction): void {
 analyticsRouter.use("/api", internalAuth);
 
 /**
+ * POST /api/sync/live
+ * Pulls any new live customer replies and webhook events from Render deployment
+ */
+analyticsRouter.post("/api/sync/live", async (_req: Request, res: Response) => {
+  try {
+    const { getAnalyticsRepository } = await import("../db/index.js");
+    const { syncFromLiveRender } = await import("../services/live-sync.js");
+    const repo = getAnalyticsRepository();
+    const result = await syncFromLiveRender(repo);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[API] Failed to run live sync:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/sync/broadcasts
+ * Re-reads and synchronizes all broadcast log JSON files datewise
+ */
+analyticsRouter.post("/api/sync/broadcasts", async (_req: Request, res: Response) => {
+  try {
+    const { getAnalyticsRepository } = await import("../db/index.js");
+    const { syncBroadcastLogsToRepository } = await import("../db/sync-logs.js");
+    const repo = getAnalyticsRepository();
+    const result = await syncBroadcastLogsToRepository(repo);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[API] Failed to run broadcast sync:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/analytics/overview
  */
 analyticsRouter.get("/api/analytics/overview", async (_req: Request, res: Response) => {

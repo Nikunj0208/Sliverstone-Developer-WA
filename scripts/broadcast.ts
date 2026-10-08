@@ -312,13 +312,26 @@ async function main() {
   if (!existsSync("logs")) {
     await mkdir("logs", { recursive: true });
   }
-  const logFile = `logs/broadcast-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-  await writeFile(logFile, JSON.stringify(results, null, 2));
-  console.log(`\nBroadcast complete! Detailed log saved to: ${logFile}`);
+  if (!existsSync("data/broadcasts")) {
+    await mkdir("data/broadcasts", { recursive: true });
+  }
+  const timestampStr = new Date().toISOString().replace(/[:.]/g, "-");
+  const logFile = `logs/broadcast-${timestampStr}.json`;
+  const dataFile = `data/broadcasts/broadcast-${timestampStr}.json`;
+  const serialized = JSON.stringify(results, null, 2);
+  await writeFile(logFile, serialized);
+  await writeFile(dataFile, serialized);
+  console.log(`\nBroadcast complete! Detailed log saved to: ${logFile} and ${dataFile}`);
 
   const sentCount = results.filter((r) => r.status === "SENT").length;
   const failCount = results.filter((r) => r.status === "FAILED").length;
   console.log(`Summary: ${sentCount} sent successfully, ${failCount} failed.`);
+
+  // Auto-notify local dev CRM if running
+  try {
+    await axios.post("http://localhost:3000/api/sync/broadcasts", {}, { timeout: 3000 });
+    console.log("[CRM] Automatically synced new broadcast batch with local CRM database.");
+  } catch {}
 }
 
 main();
