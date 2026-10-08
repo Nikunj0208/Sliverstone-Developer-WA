@@ -54,6 +54,14 @@ export async function runPostgresMigrations(pool: Pool): Promise<void> {
       schemaSql = await readFile(schemaPath, "utf-8");
     }
     await pool.query(schemaSql);
+    // Retroactive migration: synchronize first_seen_at and created_at with broadcast dates from source_detail
+    await pool.query(`
+      UPDATE contacts SET first_seen_at = '2026-10-03 07:34:02+00'::timestamptz, created_at = '2026-10-03 07:34:02+00'::timestamptz WHERE source_detail LIKE '%2026-10-03%';
+      UPDATE contacts SET first_seen_at = '2026-10-04 07:44:26+00'::timestamptz, created_at = '2026-10-04 07:44:26+00'::timestamptz WHERE source_detail LIKE '%2026-10-04%';
+      UPDATE contacts SET first_seen_at = '2026-10-05 07:23:44+00'::timestamptz, created_at = '2026-10-05 07:23:44+00'::timestamptz WHERE source_detail LIKE '%2026-10-05%';
+      UPDATE contacts SET first_seen_at = '2026-10-06 06:48:02+00'::timestamptz, created_at = '2026-10-06 06:48:02+00'::timestamptz WHERE source_detail LIKE '%2026-10-06%';
+      UPDATE contacts SET first_seen_at = '2026-10-08 07:18:14+00'::timestamptz, created_at = '2026-10-08 07:18:14+00'::timestamptz WHERE source_detail LIKE '%2026-10-08%';
+    `);
     console.info("[POSTGRES] Database migrations applied successfully");
   } catch (error) {
     console.error("[POSTGRES] Migration schema execution failed:", error);
@@ -97,7 +105,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         id, wa_id, phone, name, email, project_id, lead_source, source_detail,
         consent_status, opt_in_source, opt_in_at, opted_out, opt_out_at,
         first_seen_at, last_seen_at, last_activity_at, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW(), NOW(), NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE($14, NOW()), COALESCE($15, NOW()), COALESCE($16, NOW()), COALESCE($17, NOW()), COALESCE($18, NOW()))
       RETURNING *`,
       [
         id,
@@ -112,7 +120,12 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         data.opt_in_source ?? null,
         data.opt_in_at ?? null,
         data.opted_out ?? false,
-        data.opt_out_at ?? null
+        data.opt_out_at ?? null,
+        data.first_seen_at ?? null,
+        data.last_seen_at ?? null,
+        data.last_activity_at ?? null,
+        data.created_at ?? null,
+        data.updated_at ?? null
       ]
     );
     return res.rows[0];
@@ -245,12 +258,14 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       const targetDate = batchDateMap[batchNum];
       if (targetDate) {
         conditions.push(`(
-          (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
-          c.first_seen_at::date = $${idx}::date OR
-          c.source_detail LIKE $${idx + 1}
+          c.source_detail LIKE $${idx} OR
+          ((c.source_detail IS NULL OR c.source_detail = '') AND (
+            (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx + 1}::date OR
+            c.first_seen_at::date = $${idx + 1}::date
+          ))
         )`);
-        values.push(targetDate);
         values.push(`%${targetDate}%`);
+        values.push(targetDate);
         idx += 2;
       }
     }
@@ -327,17 +342,27 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       const hasReplied = inboundCount > 0;
 
       let batchName = "Batch 1";
-      const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
       const sourceStr = row.source_detail || "";
-      if (sourceStr.includes("2026-10-08") || firstSeenStr.startsWith("2026-10-08")) {
+      const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
+      if (sourceStr.includes("2026-10-08")) {
         batchName = "Batch 5";
-      } else if (sourceStr.includes("2026-10-06") || firstSeenStr.startsWith("2026-10-06")) {
+      } else if (sourceStr.includes("2026-10-06")) {
         batchName = "Batch 4";
-      } else if (sourceStr.includes("2026-10-05") || firstSeenStr.startsWith("2026-10-05")) {
+      } else if (sourceStr.includes("2026-10-05")) {
         batchName = "Batch 3";
-      } else if (sourceStr.includes("2026-10-04") || firstSeenStr.startsWith("2026-10-04")) {
+      } else if (sourceStr.includes("2026-10-04")) {
         batchName = "Batch 2";
-      } else if (sourceStr.includes("2026-10-03") || firstSeenStr.startsWith("2026-10-03")) {
+      } else if (sourceStr.includes("2026-10-03")) {
+        batchName = "Batch 1";
+      } else if (firstSeenStr.startsWith("2026-10-08")) {
+        batchName = "Batch 5";
+      } else if (firstSeenStr.startsWith("2026-10-06")) {
+        batchName = "Batch 4";
+      } else if (firstSeenStr.startsWith("2026-10-05")) {
+        batchName = "Batch 3";
+      } else if (firstSeenStr.startsWith("2026-10-04")) {
+        batchName = "Batch 2";
+      } else if (firstSeenStr.startsWith("2026-10-03")) {
         batchName = "Batch 1";
       }
 
@@ -409,7 +434,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         opened_at, last_message_at, last_inbound_at, last_outbound_at, first_response_at,
         last_customer_message_id, last_customer_message_at, last_internal_read_at, unread_count,
         closed_at, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, NOW()), $9, $10, $11, $12, $13, $14, $15, $16, $17, COALESCE($18, NOW()), COALESCE($19, NOW()))
       RETURNING *`,
       [
         id,
@@ -419,6 +444,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         data.assigned_agent_id ?? null,
         data.campaign_id ?? null,
         data.project_id ?? null,
+        data.opened_at ?? null,
         data.last_message_at ?? null,
         data.last_inbound_at ?? null,
         data.last_outbound_at ?? null,
@@ -427,7 +453,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         data.last_customer_message_at ?? null,
         data.last_internal_read_at ?? null,
         data.unread_count ?? 0,
-        data.closed_at ?? null
+        data.closed_at ?? null,
+        data.created_at ?? null,
+        data.updated_at ?? null
       ]
     );
     return res.rows[0];
@@ -604,7 +632,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         direction, message_type, body_text, template_name, template_language,
         button_id, list_row_id, media_id, reply_to_message_id, agent_id,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE($16, NOW()))
       RETURNING *`,
       [
         id,
@@ -621,7 +649,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         data.list_row_id ?? null,
         data.media_id ?? null,
         data.reply_to_message_id ?? null,
-        data.agent_id ?? null
+        data.agent_id ?? null,
+        data.created_at ?? null
       ]
     );
 
