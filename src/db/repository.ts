@@ -249,11 +249,73 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         }
       }
 
-      // Check reply & event flags
-      const hasReplied = contactMsgs.some((m) => m.direction === "inbound");
+      // Inbound reply details
+      const inboundMsgs = contactMsgs.filter((m) => m.direction === "inbound");
+      const hasReplied = inboundMsgs.length > 0;
+      const lastInboundMsg = inboundMsgs.length > 0 ? inboundMsgs[inboundMsgs.length - 1] : null;
+      const lastReplyAt = lastInboundMsg ? lastInboundMsg.created_at : null;
+      const lastReplyText = lastInboundMsg
+        ? (lastInboundMsg.body_text || (lastInboundMsg.button_id ? `Clicked button: ${lastInboundMsg.button_id}` : (lastInboundMsg.list_row_id ? `Selected: ${lastInboundMsg.list_row_id}` : `[${lastInboundMsg.message_type}]`)))
+        : null;
+      const lastReplyType = lastInboundMsg ? (lastInboundMsg.button_id ? "button" : (lastInboundMsg.list_row_id ? "list" : "text")) : null;
+
+      // Event flags
       const brochureRequested = contactEvents.some((e) => e.event_type === "BROCHURE_REQUESTED");
-      const planRequested = contactEvents.some((e) => e.event_type === "PLANS_REQUESTED");
+      const brochureSent = contactEvents.some((e) => e.event_type === "BROCHURE_SENT");
+      const planRequested = contactEvents.some((e) => e.event_type === "PLANS_REQUESTED" || e.event_type === "SQFT_SELECTED" || e.event_type === "BHK_SELECTED");
+      const planSent = contactEvents.some((e) => e.event_type === "PLAN_SENT");
       const siteVisitRequested = contactEvents.some((e) => e.event_type === "SITE_VISIT_REQUESTED");
+      const callRequested = contactEvents.some((e) => e.event_type === "CALL_REQUESTED");
+      const chatRequested = contactEvents.some((e) => e.event_type === "CHAT_REQUESTED");
+      const projectSelectedEv = contactEvents.find((e) => e.event_type === "PROJECT_SELECTED");
+
+      // Derive Journey Step
+      let currentJourneyStep = "Step 0: Lead Registered";
+      let currentJourneyStepNumber = 0;
+      let currentJourneyStepDetails = "Registered";
+
+      if (siteVisitRequested) {
+        currentJourneyStep = "Step 7: Site Visit Requested";
+        currentJourneyStepNumber = 7;
+        currentJourneyStepDetails = "Booked visit slot";
+      } else if (callRequested) {
+        currentJourneyStep = "Step 7: Call Requested";
+        currentJourneyStepNumber = 7;
+        currentJourneyStepDetails = "Sales callback intent";
+      } else if (chatRequested) {
+        currentJourneyStep = "Step 7: Chat Requested";
+        currentJourneyStepNumber = 7;
+        currentJourneyStepDetails = "Live human agent handoff";
+      } else if (planSent) {
+        currentJourneyStep = "Step 5: Floor Plan Sent";
+        currentJourneyStepNumber = 5;
+        currentJourneyStepDetails = "Plan PDF delivered";
+      } else if (planRequested) {
+        currentJourneyStep = "Step 4: Floor Plan Requested";
+        currentJourneyStepNumber = 4;
+        currentJourneyStepDetails = "Configurations requested";
+      } else if (brochureSent) {
+        currentJourneyStep = "Step 5: Brochure Sent";
+        currentJourneyStepNumber = 5;
+        currentJourneyStepDetails = "Digital brochure delivered";
+      } else if (brochureRequested) {
+        currentJourneyStep = "Step 4: Brochure Requested";
+        currentJourneyStepNumber = 4;
+        currentJourneyStepDetails = "Brochure download tapped";
+      } else if (projectSelectedEv) {
+        const projName = (projectSelectedEv.event_value || "Project").toUpperCase();
+        currentJourneyStep = `Step 3: Project Viewed (${projName})`;
+        currentJourneyStepNumber = 3;
+        currentJourneyStepDetails = projName;
+      } else if (hasReplied) {
+        currentJourneyStep = `Step 2: Replied to Bot`;
+        currentJourneyStepNumber = 2;
+        currentJourneyStepDetails = lastReplyText ? `"${lastReplyText.slice(0, 30)}"` : "Inbound response";
+      } else if (contactMsgs.some((m) => m.direction === "outbound")) {
+        currentJourneyStep = "Step 1: Broadcast Sent";
+        currentJourneyStepNumber = 1;
+        currentJourneyStepDetails = "silverstone_invitation";
+      }
 
       const unreadCount = activeConv?.unread_count ?? (
         activeConv?.last_inbound_at && (!activeConv.last_outbound_at || activeConv.last_inbound_at > activeConv.last_outbound_at) ? 1 : 0
@@ -310,6 +372,24 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         continue;
       }
 
+      // Single Day Filter (YYYY-MM-DD): only show records for that specific date
+      if (query.date) {
+        const targetDate = query.date.trim();
+        const matchesDate = (d: Date | null | undefined): boolean => {
+          if (!d) return false;
+          const dObj = new Date(d);
+          if (isNaN(dObj.getTime())) return false;
+          const isoDate = dObj.toISOString().slice(0, 10);
+          const localDate = dObj.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+          return isoDate === targetDate || localDate === targetDate;
+        };
+
+        const isMatched = matchesDate(contact.first_seen_at) || matchesDate(contact.created_at) || matchesDate(lastActivityAt);
+        if (!isMatched) {
+          continue;
+        }
+      }
+
       // Date Range Filter
       if (query.lastActivityRange && lastActivityAt) {
         const now = new Date();
@@ -356,8 +436,15 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         email: contact.email,
         project: contact.project_id || activeConv?.project_id || null,
         leadSource: contact.lead_source,
+        firstSeenAt: contact.first_seen_at || contact.created_at || null,
         lastActivityAt,
         lastMessageDirection: latestMsg?.direction || null,
+        lastReplyAt,
+        lastReplyText,
+        lastReplyType,
+        currentJourneyStep,
+        currentJourneyStepNumber,
+        currentJourneyStepDetails,
         conversationStatus: activeConv?.status || null,
         currentState: activeConv?.state || null,
         unread,
@@ -377,6 +464,11 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     const orderMult = sortOrder === "asc" ? 1 : -1;
 
     result.sort((a, b) => {
+      if (sortBy === "newest_reply") {
+        const aTime = a.lastReplyAt ? a.lastReplyAt.getTime() : 0;
+        const bTime = b.lastReplyAt ? b.lastReplyAt.getTime() : 0;
+        return (aTime - bTime) * orderMult;
+      }
       if (sortBy === "latest_activity" || sortBy === "oldest_activity") {
         const aTime = a.lastActivityAt ? a.lastActivityAt.getTime() : 0;
         const bTime = b.lastActivityAt ? b.lastActivityAt.getTime() : 0;
@@ -559,6 +651,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         id: conv.id,
         contactId: conv.contact_id,
         contactName: contact?.name || null,
+        phone: contact?.phone || "",
         phoneMasked: maskPhoneNumber(contact?.phone),
         latestMessageText: latestMsg ? (latestMsg.body_text || latestMsg.template_name || `[${latestMsg.message_type}]`) : null,
         latestMessageDirection: latestMsg ? latestMsg.direction : null,

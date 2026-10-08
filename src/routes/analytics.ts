@@ -93,6 +93,7 @@ analyticsRouter.get("/api/contacts", async (req: Request, res: Response) => {
       conversationStatus: typeof req.query.conversationStatus === "string" ? req.query.conversationStatus : undefined,
       currentState: typeof req.query.currentState === "string" ? req.query.currentState : undefined,
       lastActivityRange: typeof req.query.lastActivityRange === "string" ? req.query.lastActivityRange : undefined,
+      date: typeof req.query.date === "string" ? req.query.date : undefined,
       unread: req.query.unread === "true" ? true : req.query.unread === "false" ? false : undefined,
       replied: req.query.replied === "true" ? true : req.query.replied === "false" ? false : undefined,
       brochureRequested: req.query.brochureRequested === "true" ? true : undefined,
@@ -100,7 +101,7 @@ analyticsRouter.get("/api/contacts", async (req: Request, res: Response) => {
       siteVisitRequested: req.query.siteVisitRequested === "true" ? true : undefined,
       sortBy: typeof req.query.sortBy === "string" ? (req.query.sortBy as ContactListQuery["sortBy"]) : "latest_activity",
       sortOrder: req.query.sortOrder === "asc" ? "asc" : "desc",
-      limit: req.query.limit ? Math.min(100, Math.max(1, parseInt(req.query.limit as string, 10))) : 50,
+      limit: req.query.limit ? Math.min(1000, Math.max(1, parseInt(req.query.limit as string, 10))) : 50,
       offset: req.query.offset ? Math.max(0, parseInt(req.query.offset as string, 10)) : 0
     };
 

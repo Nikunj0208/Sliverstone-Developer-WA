@@ -225,6 +225,7 @@ export interface ContactListQuery {
   conversationStatus?: string;
   currentState?: string;
   lastActivityRange?: string; // 'today' | 'yesterday' | '7d' | '30d' | 'custom'
+  date?: string; // Specific single-day filter YYYY-MM-DD
   startDate?: Date;
   endDate?: Date;
   unread?: boolean;
@@ -256,8 +257,15 @@ export interface ContactListItem {
   email: string | null;
   project: string | null;
   leadSource: string | null;
+  firstSeenAt: Date | null;
   lastActivityAt: Date | null;
   lastMessageDirection: MessageDirection | null;
+  lastReplyAt?: Date | null;
+  lastReplyText?: string | null;
+  lastReplyType?: string | null;
+  currentJourneyStep?: string;
+  currentJourneyStepNumber?: number;
+  currentJourneyStepDetails?: string;
   conversationStatus: string | null;
   currentState: string | null;
   unread: boolean;
@@ -288,6 +296,7 @@ export interface ConversationListItem {
   id: string;
   contactId: string;
   contactName: string | null;
+  phone?: string;
   phoneMasked: string;
   latestMessageText: string | null;
   latestMessageDirection: MessageDirection | null;

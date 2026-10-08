@@ -222,6 +222,27 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       idx++;
     }
 
+    if (query.date) {
+      conditions.push(`(
+        (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
+        (c.created_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
+        (c.last_activity_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx}::date OR
+        c.first_seen_at::date = $${idx}::date OR
+        c.created_at::date = $${idx}::date OR
+        c.last_activity_at::date = $${idx}::date
+      )`);
+      values.push(query.date.trim());
+      idx++;
+    }
+
+    if (typeof query.replied === "boolean") {
+      if (query.replied) {
+        conditions.push(`EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound')`);
+      } else {
+        conditions.push(`NOT EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound')`);
+      }
+    }
+
     if (query.search && query.search.trim()) {
       const term = `%${query.search.trim().toLowerCase()}%`;
       conditions.push(`(
@@ -253,8 +274,10 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     const selectQuery = `
       SELECT 
         c.id, c.wa_id, c.phone, c.name, c.email, c.project_id, c.lead_source,
-        c.last_activity_at, c.created_at,
-        conv.status as conv_status, conv.state as conv_state, conv.unread_count, conv.assigned_agent_id
+        c.first_seen_at, c.last_activity_at, c.created_at,
+        conv.status as conv_status, conv.state as conv_state, conv.unread_count, conv.assigned_agent_id,
+        (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id) as total_messages,
+        (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound') as inbound_count
       FROM contacts c
       LEFT JOIN conversations conv ON conv.contact_id = c.id AND conv.status = 'OPEN'
       WHERE ${whereClause}
@@ -264,28 +287,35 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     values.push(limit, offset);
 
     const res = await this.pool.query(selectQuery, values);
-    const items: ContactListItem[] = res.rows.map((row) => ({
-      id: row.id,
-      wa_id: row.wa_id,
-      phone: row.phone,
-      phoneMasked: maskPhoneNumber(row.phone),
-      name: row.name,
-      email: row.email,
-      project: row.project_id,
-      leadSource: row.lead_source,
-      lastActivityAt: row.last_activity_at ? new Date(row.last_activity_at) : null,
-      lastMessageDirection: null,
-      conversationStatus: row.conv_status || null,
-      currentState: row.conv_state || null,
-      unread: (row.unread_count || 0) > 0,
-      unreadCount: row.unread_count || 0,
-      assignedAgentId: row.assigned_agent_id || null,
-      totalMessages: 0,
-      hasReplied: false,
-      brochureRequested: false,
-      planRequested: false,
-      siteVisitRequested: false
-    }));
+    const items: ContactListItem[] = res.rows.map((row) => {
+      const inboundCount = parseInt(row.inbound_count || "0", 10);
+      const totalMessages = parseInt(row.total_messages || "0", 10);
+      const hasReplied = inboundCount > 0;
+      return {
+        id: row.id,
+        wa_id: row.wa_id,
+        phone: row.phone,
+        phoneMasked: maskPhoneNumber(row.phone),
+        name: row.name,
+        email: row.email,
+        project: row.project_id,
+        leadSource: row.lead_source,
+        firstSeenAt: row.first_seen_at ? new Date(row.first_seen_at) : (row.created_at ? new Date(row.created_at) : null),
+        lastActivityAt: row.last_activity_at ? new Date(row.last_activity_at) : null,
+        lastMessageDirection: null,
+        currentJourneyStep: hasReplied ? "Step 2: Replied to Bot" : (totalMessages > 0 ? "Step 1: Broadcast Sent" : "Step 0: Lead Registered"),
+        conversationStatus: row.conv_status || null,
+        currentState: row.conv_state || null,
+        unread: (row.unread_count || 0) > 0,
+        unreadCount: row.unread_count || 0,
+        assignedAgentId: row.assigned_agent_id || null,
+        totalMessages,
+        hasReplied,
+        brochureRequested: false,
+        planRequested: false,
+        siteVisitRequested: false
+      };
+    });
 
     return { contacts: items, total };
   }
@@ -462,6 +492,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       id: row.id,
       contactId: row.contact_id,
       contactName: row.contact_name,
+      phone: row.contact_phone || "",
       phoneMasked: maskPhoneNumber(row.contact_phone),
       latestMessageText: null,
       latestMessageDirection: null,
