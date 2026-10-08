@@ -33,16 +33,22 @@ export async function initDatabase(): Promise<AnalyticsRepository> {
       await runPostgresMigrations(pool);
       currentRepository = new PostgresAnalyticsRepository(pool);
       console.info("[DATABASE] PostgreSQL analytics repository initialized successfully");
-      console.info("[DATABASE] Syncing broadcast logs datewise...");
-      await syncBroadcastLogsToRepository(currentRepository);
       
-      // Sync official Meta WhatsApp Business Insights to PostgreSQL
-      try {
-        await metaInsightsService.syncToDatabase(currentRepository);
-        metaInsightsService.startPeriodicSync(currentRepository);
-      } catch (e: any) {
-        console.warn("[DATABASE] Meta insights initial sync note:", e.message);
+      // Fast startup: only sync broadcast files if contacts table is fresh/empty
+      const { rows } = await pool.query("SELECT COUNT(*) FROM contacts");
+      const contactCount = parseInt(rows[0]?.count || "0", 10);
+      if (contactCount === 0) {
+        console.info("[DATABASE] Contacts table empty, running initial broadcast log sync...");
+        await syncBroadcastLogsToRepository(currentRepository);
+      } else {
+        console.info(`[DATABASE] PostgreSQL already has ${contactCount} verified contacts. Fast startup ready.`);
       }
+      
+      // Sync official Meta WhatsApp Business Insights in background
+      metaInsightsService.syncToDatabase(currentRepository).catch((e: any) => {
+        console.warn("[DATABASE] Meta insights background sync note:", e.message);
+      });
+      metaInsightsService.startPeriodicSync(currentRepository);
 
       return currentRepository;
     } catch (error) {

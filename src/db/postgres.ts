@@ -34,11 +34,13 @@ import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
 const { Pool: PgPool } = pg;
 
 export async function createPostgresPool(connectionString: string): Promise<Pool> {
+  const isExternal = connectionString.includes(".render.com") || connectionString.includes("sslmode=require");
   const pool = new PgPool({
     connectionString,
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000
+    connectionTimeoutMillis: 10000,
+    ssl: isExternal ? { rejectUnauthorized: false } : undefined
   });
 
   return pool;
