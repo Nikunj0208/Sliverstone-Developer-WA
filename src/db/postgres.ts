@@ -63,6 +63,11 @@ export async function runPostgresMigrations(pool: Pool): Promise<void> {
       UPDATE contacts SET first_seen_at = '2026-10-05 07:23:44+00'::timestamptz, created_at = '2026-10-05 07:23:44+00'::timestamptz WHERE source_detail LIKE '%2026-10-05%';
       UPDATE contacts SET first_seen_at = '2026-10-06 06:48:02+00'::timestamptz, created_at = '2026-10-06 06:48:02+00'::timestamptz WHERE source_detail LIKE '%2026-10-06%';
       UPDATE contacts SET first_seen_at = '2026-10-08 07:18:14+00'::timestamptz, created_at = '2026-10-08 07:18:14+00'::timestamptz WHERE source_detail LIKE '%2026-10-08%';
+
+      -- Data Integrity: Clean any synthetic messages (wamid.reply_ or wamid.btn_)
+      DELETE FROM messages WHERE wa_message_id LIKE 'wamid.reply_%' OR wa_message_id LIKE 'wamid.btn_%';
+      -- Clean synthetic conversation events
+      DELETE FROM conversation_events WHERE (event_type = 'CUSTOMER_REPLIED' OR event_type = 'BUTTON_CLICKED') AND contact_id NOT IN (SELECT contact_id FROM messages WHERE direction = 'inbound');
     `);
     console.info("[POSTGRES] Database migrations applied successfully");
   } catch (error) {
@@ -350,8 +355,17 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         (SELECT COUNT(*) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound') as inbound_count,
         (SELECT COALESCE(m.body_text, CASE WHEN m.button_id IS NOT NULL THEN 'Clicked button: ' || m.button_id WHEN m.list_row_id IS NOT NULL THEN 'Selected: ' || m.list_row_id ELSE '[' || m.message_type || ']' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_text,
         (SELECT m.created_at FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' ORDER BY m.created_at DESC LIMIT 1) as last_reply_at,
-        (SELECT CASE WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read') THEN 'read' WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'delivered') THEN 'delivered' ELSE 'sent' END) as latest_delivery_status,
+        (SELECT CASE 
+          WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read') THEN 'read' 
+          WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'delivered') THEN 'delivered' 
+          WHEN EXISTS (SELECT 1 FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed') THEN 'failed'
+          WHEN EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound') THEN 'sent'
+          ELSE 'not_sent' 
+        END) as latest_delivery_status,
         (SELECT mse.event_timestamp FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'read' ORDER BY mse.event_timestamp DESC LIMIT 1) as seen_at,
+        (SELECT mse.error_code FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed' ORDER BY mse.event_timestamp DESC LIMIT 1) as error_code,
+        (SELECT mse.error_message FROM message_status_events mse JOIN messages m ON mse.message_id = m.id WHERE m.contact_id = c.id AND LOWER(mse.status) = 'failed' ORDER BY mse.event_timestamp DESC LIMIT 1) as error_message,
+        (SELECT m.wa_message_id FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound' ORDER BY m.created_at DESC LIMIT 1) as last_wa_message_id,
         (EXISTS (SELECT 1 FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%')) OR EXISTS (SELECT 1 FROM conversation_events ce WHERE ce.contact_id = c.id AND ce.event_type = 'BUTTON_CLICKED')) as button_clicked,
         (SELECT COALESCE(m.button_id, CASE WHEN m.body_text LIKE 'Clicked button:%' THEN REPLACE(m.body_text, 'Clicked button: ', '') ELSE 'More Details' END) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound' AND (m.button_id IS NOT NULL OR m.message_type = 'button_reply' OR m.body_text LIKE 'Clicked button:%') ORDER BY m.created_at DESC LIMIT 1) as last_button_clicked
       FROM contacts c
@@ -423,7 +437,10 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         lastButtonClicked: row.last_button_clicked || (row.button_clicked ? "More Details" : null),
         brochureRequested: false,
         planRequested: false,
-        siteVisitRequested: false
+        siteVisitRequested: false,
+        errorCode: row.error_code || null,
+        errorMessage: row.error_message || null,
+        lastWaMessageId: row.last_wa_message_id || null
       };
     });
 

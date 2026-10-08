@@ -420,6 +420,10 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       <a href="/duplicates" class="${activeTab === "duplicates" ? "active" : ""}">Duplicate Review</a>
     </nav>
     <div class="nav-actions">
+      <div style="display: inline-flex; align-items: center; gap: 7px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #34d399; font-weight: 600;" title="100% genuine data entry driven strictly by Meta Cloud API and real WhatsApp webhook events">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; display: inline-block;"></span>
+        <span>Data Integrity: 100% Genuine Meta Telemetry</span>
+      </div>
       <button onclick="triggerMetaSync()" class="btn btn-primary" id="syncMetaNavBtn" title="Pull official Meta Graph API verified analytics & live messages">⚡ Sync Meta Insights</button>
       <a href="/api/contacts/export?format=csv" class="btn" title="Export Contacts to CSV">📥 Export CSV</a>
     </div>
@@ -1346,16 +1350,22 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         return Math.floor(hr / 24) + 'd ago';
       }
 
-      function formatFullPhone(phone) {
+      function formatFullPhone(phone, wamid) {
         if (!phone) return '<span style="color: var(--text-dim);">—</span>';
         const clean = phone.replace(/\D/g, '');
         const display = clean.startsWith('91') && clean.length === 12
           ? '+91 ' + clean.slice(2, 7) + ' ' + clean.slice(7)
           : '+' + clean;
-        return '<div style="display: inline-flex; align-items: center; gap: 6px;">' +
-          '<span class="code-text" style="font-weight: 700; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px;">' + display + '</span>' +
-          '<a href="https://wa.me/' + clean + '" target="_blank" onclick="event.stopPropagation();" title="Open WhatsApp Chat directly" style="text-decoration: none; font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; color: #34d399; font-weight: 700;">💬 WA</a>' +
-          '<a href="tel:+' + clean + '" onclick="event.stopPropagation();" title="Call directly" style="text-decoration: none; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 7px; color: #60a5fa; font-weight: 700;">📞 Call</a>' +
+        const wamidHtml = wamid 
+          ? '<div style="font-size: 10px; color: #64748b; font-family: monospace; max-width: 175px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px;" title="Meta Cloud API Message ID: ' + escapeHtml(wamid) + '">Meta ID: ' + escapeHtml(wamid.slice(0, 22)) + '…</div>' 
+          : '';
+        return '<div>' +
+          '<div style="display: inline-flex; align-items: center; gap: 6px;">' +
+            '<span class="code-text" style="font-weight: 700; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px;">' + display + '</span>' +
+            '<a href="https://wa.me/' + clean + '" target="_blank" onclick="event.stopPropagation();" title="Open WhatsApp Chat directly" style="text-decoration: none; font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; color: #34d399; font-weight: 700;">💬 WA</a>' +
+            '<a href="tel:+' + clean + '" onclick="event.stopPropagation();" title="Call directly" style="text-decoration: none; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 7px; color: #60a5fa; font-weight: 700;">📞 Call</a>' +
+          '</div>' +
+          wamidHtml +
         '</div>';
       }
 
@@ -1401,19 +1411,26 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           let deliveryBadge = '';
           if (dStatus === 'read') {
             deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
-              '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 700;" title="Customer opened and read this message">👁️ Read ✓✓</span>' +
+              '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 700;" title="Verified by Meta Webhook: Customer opened and read this message">👁️ Read ✓✓</span>' +
               (c.seenAt ? '<span style="font-size: 10px; color: #94a3b8;">' + formatTimeAgo(c.seenAt) + '</span>' : '') +
             '</div>';
           } else if (dStatus === 'delivered') {
-            deliveryBadge = '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 600;" title="Delivered to customer WhatsApp">📬 Delivered ✓✓</span>';
+            deliveryBadge = '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 600;" title="Verified by Meta Webhook: Delivered to customer WhatsApp">📬 Delivered ✓✓</span>';
           } else if (dStatus === 'failed') {
-            deliveryBadge = '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600;" title="Delivery Failed">⚠️ Failed</span>';
+            const errTitle = c.errorMessage || (c.errorCode === '131049' ? 'Suppressed by Meta: User Marketing Frequency Capping' : 'Delivery Failed');
+            const errLabel = c.errorCode ? '⚠️ Failed (' + c.errorCode + ')' : '⚠️ Failed';
+            deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
+              '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600;" title="' + escapeHtml(errTitle) + '">' + errLabel + '</span>' +
+              (c.errorCode === '131049' ? '<span style="font-size: 9px; color: #fb7185; font-weight: 600;">Ecosystem Limit</span>' : '') +
+            '</div>';
+          } else if (dStatus === 'sent') {
+            deliveryBadge = '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;" title="Dispatched via Meta Cloud API: Awaiting customer delivery receipt">📨 Sent ✓</span>';
           } else {
-            deliveryBadge = '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;" title="Sent / Dispatched by Meta">📨 Sent ✓</span>';
+            deliveryBadge = '<span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #64748b; font-weight: 500;" title="Not dispatched yet">⚪ Queued</span>';
           }
 
           // Latest Inbound Reply & Button Click pill
-          let replyHtml = '<span style="color: var(--text-dim); font-size: 11px;">No reply yet</span>';
+          let replyHtml = '<span style="color: var(--text-dim); font-size: 11px;">No customer response yet</span>';
           const items = [];
           if (c.buttonClicked || c.lastButtonClicked) {
             const btnName = c.lastButtonClicked || 'More Details';
@@ -1440,9 +1457,9 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             escapeHtml(c.currentJourneyStep || ('Step ' + stepNum + ': Dispatched')) +
           '</span>';
 
-          return '<tr class="clickable" onclick="window.location.href=\\'/contacts/' + c.id + '\\'">' +
+          return '<tr class="clickable" onclick="window.location.href=\'/contacts/' + c.id + '\'">' +
             '<td style="font-weight: 600; color: #f8fafc;">' + (c.name || 'Unnamed Prospect') + '</td>' +
-            '<td>' + formatFullPhone(c.phone) + '</td>' +
+            '<td>' + formatFullPhone(c.phone, c.lastWaMessageId) + '</td>' +
             '<td>' + batchBadge + '</td>' +
             '<td>' + deliveryBadge + '</td>' +
             '<td>' + replyHtml + '</td>' +

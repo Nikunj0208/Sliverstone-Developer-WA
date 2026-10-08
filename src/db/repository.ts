@@ -215,6 +215,9 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
 
     if (Array.isArray(state.messages)) {
       for (const msg of state.messages) {
+        if (msg.wa_message_id && (msg.wa_message_id.startsWith("wamid.reply_") || msg.wa_message_id.startsWith("wamid.btn_"))) {
+          continue;
+        }
         this.messages.set(msg.id, {
           ...msg,
           created_at: msg.created_at ? new Date(msg.created_at) : new Date()
@@ -224,16 +227,22 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
 
     if (Array.isArray(state.statusEvents)) {
       for (const st of state.statusEvents) {
-        this.statusEvents.set(st.id, {
-          ...st,
-          event_timestamp: st.event_timestamp ? new Date(st.event_timestamp) : new Date(),
-          received_at: st.received_at ? new Date(st.received_at) : new Date()
-        });
+        if (this.messages.has(st.message_id)) {
+          this.statusEvents.set(st.id, {
+            ...st,
+            event_timestamp: st.event_timestamp ? new Date(st.event_timestamp) : new Date(),
+            received_at: st.received_at ? new Date(st.received_at) : new Date()
+          });
+        }
       }
     }
 
     if (Array.isArray(state.conversationEvents)) {
+      const seenConvEvents = new Set<string>();
       for (const ev of state.conversationEvents) {
+        const key = `${ev.conversation_id}_${ev.event_type}_${ev.event_value || ""}`;
+        if (seenConvEvents.has(key)) continue;
+        seenConvEvents.add(key);
         this.conversationEvents.set(ev.id, {
           ...ev,
           created_at: ev.created_at ? new Date(ev.created_at) : new Date()
@@ -592,9 +601,16 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
 
       // Message delivery & seen status calculation
       const msgIds = new Set(contactMsgs.map((m) => m.id));
-      let latestDeliveryStatus = "sent";
+      const outboundMsgs = contactMsgs.filter((m) => m.direction === "outbound");
+      const lastOutbound = outboundMsgs.length > 0 ? outboundMsgs[outboundMsgs.length - 1] : null;
+      const lastWaMessageId = lastOutbound?.wa_message_id || null;
+
+      let latestDeliveryStatus = outboundMsgs.length > 0 ? "sent" : "not_sent";
       let latestStatusTime = 0;
       let seenAt: Date | null = null;
+      let latestErrorCode: string | null = null;
+      let latestErrorMessage: string | null = null;
+
       for (const st of this.statusEvents.values()) {
         if (msgIds.has(st.message_id)) {
           const stTime = st.event_timestamp ? st.event_timestamp.getTime() : 0;
@@ -606,8 +622,13 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
             latestStatusTime = stTime;
             if (sLower === "read") latestDeliveryStatus = "read";
             else if (sLower === "delivered") latestDeliveryStatus = "delivered";
-            else if (sLower === "failed") latestDeliveryStatus = "failed";
-            else latestDeliveryStatus = "sent";
+            else if (sLower === "failed") {
+              latestDeliveryStatus = "failed";
+              latestErrorCode = st.error_code || null;
+              latestErrorMessage = st.error_message || null;
+            } else if (sLower === "sent") {
+              latestDeliveryStatus = "sent";
+            }
           }
         }
       }
@@ -707,7 +728,10 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         siteVisitRequested,
         batchName,
         latestDeliveryStatus,
-        seenAt
+        seenAt,
+        errorCode: latestErrorCode,
+        errorMessage: latestErrorMessage,
+        lastWaMessageId
       });
     }
 

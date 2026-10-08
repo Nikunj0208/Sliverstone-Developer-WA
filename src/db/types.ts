@@ -285,6 +285,9 @@ export interface ContactListItem {
   brochureRequested: boolean;
   planRequested: boolean;
   siteVisitRequested: boolean;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  lastWaMessageId?: string | null;
 }
 
 export interface ConversationListQuery {
