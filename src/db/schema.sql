@@ -133,3 +133,29 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs (entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at);
+
+-- 7. META TEMPLATE ANALYTICS (Official Meta WhatsApp Business API Verified Insights)
+CREATE TABLE IF NOT EXISTS meta_template_analytics (
+  id VARCHAR(64) PRIMARY KEY,
+  template_id VARCHAR(64) NOT NULL,
+  template_name VARCHAR(128) NOT NULL,
+  date_str VARCHAR(16) NOT NULL,
+  batch_number INT,
+  start_timestamp BIGINT NOT NULL,
+  end_timestamp BIGINT NOT NULL,
+  sent_count INT NOT NULL DEFAULT 0,
+  delivered_count INT NOT NULL DEFAULT 0,
+  read_count INT NOT NULL DEFAULT 0,
+  replied_count INT NOT NULL DEFAULT 0,
+  button_clicks INT NOT NULL DEFAULT 0,
+  button_content VARCHAR(128),
+  amount_spent NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  cost_per_delivered NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  currency VARCHAR(8) NOT NULL DEFAULT 'INR',
+  synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_meta_template_date UNIQUE (template_id, date_str)
+);
+
+CREATE INDEX IF NOT EXISTS idx_meta_template_date ON meta_template_analytics (date_str);
+CREATE INDEX IF NOT EXISTS idx_meta_batch ON meta_template_analytics (batch_number);
+

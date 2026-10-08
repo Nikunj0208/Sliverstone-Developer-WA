@@ -18,7 +18,9 @@ import type {
   MessagePaginationQuery,
   PaginatedMessagesResult,
   AuditLog,
-  DuplicateContactCandidate
+  DuplicateContactCandidate,
+  MetaTemplateDailyMetric,
+  MetaCampaignOverview
 } from "./types.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
 import { writeFile, readFile, mkdir } from "node:fs/promises";
@@ -33,6 +35,7 @@ export type RepositorySerializedState = {
   statusEvents: MessageStatusEvent[];
   conversationEvents: ConversationEvent[];
   auditLogs: AuditLog[];
+  metaMetrics?: MetaTemplateDailyMetric[];
 };
 
 export interface AnalyticsRepository {
@@ -128,6 +131,12 @@ export interface AnalyticsRepository {
     bhkBreakdown: Record<string, number>;
   }>;
   getContact360(contactId: string): Promise<Contact360 | null>;
+
+  // Meta Verified Analytics
+  upsertMetaDailyMetric(metric: MetaTemplateDailyMetric): Promise<void>;
+  getMetaDailyMetrics(): Promise<MetaTemplateDailyMetric[]>;
+  getMetaMetricForDateOrBatch(dateOrBatch: string): Promise<MetaTemplateDailyMetric | null>;
+  getMetaCampaignOverview(): Promise<MetaCampaignOverview>;
 }
 
 export class InMemoryAnalyticsRepository implements AnalyticsRepository {
@@ -137,6 +146,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
   private statusEvents = new Map<string, MessageStatusEvent>();
   private conversationEvents = new Map<string, ConversationEvent>();
   private auditLogs: AuditLog[] = [];
+  private metaMetrics = new Map<string, MetaTemplateDailyMetric>();
   private persistentFilePath: string | null = null;
   private saveDebounceTimer: NodeJS.Timeout | null = null;
 
@@ -164,7 +174,8 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       messages: Array.from(this.messages.values()),
       statusEvents: Array.from(this.statusEvents.values()),
       conversationEvents: Array.from(this.conversationEvents.values()),
-      auditLogs: [...this.auditLogs]
+      auditLogs: [...this.auditLogs],
+      metaMetrics: Array.from(this.metaMetrics.values())
     };
   }
 
@@ -235,6 +246,15 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
         ...log,
         created_at: log.created_at ? new Date(log.created_at) : new Date()
       }));
+    }
+
+    if (Array.isArray(state.metaMetrics)) {
+      for (const m of state.metaMetrics) {
+        this.metaMetrics.set(`${m.templateId}_${m.dateStr}`, {
+          ...m,
+          syncedAt: m.syncedAt ? new Date(m.syncedAt) : new Date()
+        });
+      }
     }
   }
 
@@ -1718,6 +1738,65 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     };
   }
 
+  // Meta Verified Analytics implementation
+  async upsertMetaDailyMetric(metric: MetaTemplateDailyMetric): Promise<void> {
+    const key = `${metric.templateId}_${metric.dateStr}`;
+    this.metaMetrics.set(key, { ...metric, syncedAt: metric.syncedAt || new Date() });
+    this.scheduleSave();
+  }
+
+  async getMetaDailyMetrics(): Promise<MetaTemplateDailyMetric[]> {
+    return Array.from(this.metaMetrics.values()).sort((a, b) => a.startTimestamp - b.startTimestamp);
+  }
+
+  async getMetaMetricForDateOrBatch(dateOrBatch: string): Promise<MetaTemplateDailyMetric | null> {
+    const trimmed = dateOrBatch.trim().toLowerCase();
+    for (const m of this.metaMetrics.values()) {
+      if (m.dateStr === trimmed) return m;
+      if (m.batchNumber !== null && String(m.batchNumber) === trimmed) return m;
+      if (trimmed === `batch ${m.batchNumber}` || trimmed === `batch-${m.batchNumber}`) return m;
+    }
+    return null;
+  }
+
+  async getMetaCampaignOverview(): Promise<MetaCampaignOverview> {
+    const daily = await this.getMetaDailyMetrics();
+    let totalSent = 0;
+    let totalDelivered = 0;
+    let totalRead = 0;
+    let totalReplied = 0;
+    let totalButtonClicks = 0;
+    let totalSpent = 0;
+    let lastSyncedAt = new Date();
+
+    for (const d of daily) {
+      totalSent += d.sent;
+      totalDelivered += d.delivered;
+      totalRead += d.read;
+      totalReplied += d.replied;
+      totalButtonClicks += d.buttonClicks;
+      totalSpent += d.amountSpent;
+      if (d.syncedAt && d.syncedAt > lastSyncedAt) {
+        lastSyncedAt = d.syncedAt;
+      }
+    }
+
+    return {
+      totalSent,
+      totalDelivered,
+      overallDeliveryRatePercent: totalSent > 0 ? Number(((totalDelivered / totalSent) * 100).toFixed(1)) : 0,
+      totalRead,
+      overallReadRatePercent: totalDelivered > 0 ? Number(((totalRead / totalDelivered) * 100).toFixed(1)) : 0,
+      totalReplied,
+      overallReplyRatePercent: totalDelivered > 0 ? Number(((totalReplied / totalDelivered) * 100).toFixed(1)) : 0,
+      totalButtonClicks,
+      totalSpent: Number(totalSpent.toFixed(2)),
+      currency: "INR",
+      lastSyncedAt,
+      dailyBreakdown: daily
+    };
+  }
+
   // Cleanup
   clear(): void {
     this.contacts.clear();
@@ -1726,5 +1805,6 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.statusEvents.clear();
     this.conversationEvents.clear();
     this.auditLogs = [];
+    this.metaMetrics.clear();
   }
 }

@@ -24,7 +24,9 @@ import type {
   MessagePaginationQuery,
   PaginatedMessagesResult,
   AuditLog,
-  DuplicateContactCandidate
+  DuplicateContactCandidate,
+  MetaTemplateDailyMetric,
+  MetaCampaignOverview
 } from "./types.js";
 import type { AnalyticsRepository } from "./repository.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
@@ -1355,6 +1357,169 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       engagement,
       messagesSummary,
       campaignSummary
+    };
+  }
+
+  // Meta Verified Analytics
+  async upsertMetaDailyMetric(metric: MetaTemplateDailyMetric): Promise<void> {
+    const id = metric.id || `meta_${metric.templateId}_${metric.dateStr}`;
+    await this.pool.query(
+      `INSERT INTO meta_template_analytics (
+        id, template_id, template_name, date_str, batch_number,
+        start_timestamp, end_timestamp, sent_count, delivered_count,
+        read_count, replied_count, button_clicks, button_content,
+        amount_spent, cost_per_delivered, currency, synced_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
+      ON CONFLICT (template_id, date_str) DO UPDATE SET
+        batch_number = EXCLUDED.batch_number,
+        start_timestamp = EXCLUDED.start_timestamp,
+        end_timestamp = EXCLUDED.end_timestamp,
+        sent_count = EXCLUDED.sent_count,
+        delivered_count = EXCLUDED.delivered_count,
+        read_count = EXCLUDED.read_count,
+        replied_count = EXCLUDED.replied_count,
+        button_clicks = EXCLUDED.button_clicks,
+        button_content = EXCLUDED.button_content,
+        amount_spent = EXCLUDED.amount_spent,
+        cost_per_delivered = EXCLUDED.cost_per_delivered,
+        currency = EXCLUDED.currency,
+        synced_at = NOW()`,
+      [
+        id,
+        metric.templateId,
+        metric.templateName,
+        metric.dateStr,
+        metric.batchNumber,
+        metric.startTimestamp,
+        metric.endTimestamp,
+        metric.sent,
+        metric.delivered,
+        metric.read,
+        metric.replied,
+        metric.buttonClicks,
+        metric.buttonContent,
+        metric.amountSpent,
+        metric.costPerDelivered,
+        metric.currency || "INR"
+      ]
+    );
+  }
+
+  async getMetaDailyMetrics(): Promise<MetaTemplateDailyMetric[]> {
+    const res = await this.pool.query(
+      `SELECT * FROM meta_template_analytics ORDER BY start_timestamp ASC`
+    );
+    return res.rows.map((row) => {
+      const sent = Number(row.sent_count || 0);
+      const delivered = Number(row.delivered_count || 0);
+      const read = Number(row.read_count || 0);
+      const replied = Number(row.replied_count || 0);
+      return {
+        id: row.id,
+        templateId: row.template_id,
+        templateName: row.template_name,
+        dateStr: row.date_str,
+        batchNumber: row.batch_number !== null ? Number(row.batch_number) : null,
+        startTimestamp: Number(row.start_timestamp),
+        endTimestamp: Number(row.end_timestamp),
+        sent,
+        delivered,
+        deliveryRatePercent: sent > 0 ? Number(((delivered / sent) * 100).toFixed(1)) : 0,
+        read,
+        readRatePercent: delivered > 0 ? Number(((read / delivered) * 100).toFixed(1)) : 0,
+        replied,
+        replyRatePercent: delivered > 0 ? Number(((replied / delivered) * 100).toFixed(1)) : 0,
+        buttonClicks: Number(row.button_clicks || 0),
+        buttonContent: row.button_content || "More Details",
+        amountSpent: Number(row.amount_spent || 0),
+        costPerDelivered: Number(row.cost_per_delivered || 0),
+        currency: row.currency || "INR",
+        syncedAt: row.synced_at
+      };
+    });
+  }
+
+  async getMetaMetricForDateOrBatch(dateOrBatch: string): Promise<MetaTemplateDailyMetric | null> {
+    const trimmed = dateOrBatch.trim();
+    const batchNum = Number(trimmed.replace(/\D/g, ""));
+    let res: QueryResult;
+    if (!isNaN(batchNum) && batchNum >= 1 && batchNum <= 5) {
+      res = await this.pool.query(
+        `SELECT * FROM meta_template_analytics WHERE batch_number = $1 LIMIT 1`,
+        [batchNum]
+      );
+    } else {
+      res = await this.pool.query(
+        `SELECT * FROM meta_template_analytics WHERE date_str = $1 LIMIT 1`,
+        [trimmed]
+      );
+    }
+
+    if (res.rows.length === 0) return null;
+    const row = res.rows[0];
+    const sent = Number(row.sent_count || 0);
+    const delivered = Number(row.delivered_count || 0);
+    const read = Number(row.read_count || 0);
+    const replied = Number(row.replied_count || 0);
+    return {
+      id: row.id,
+      templateId: row.template_id,
+      templateName: row.template_name,
+      dateStr: row.date_str,
+      batchNumber: row.batch_number !== null ? Number(row.batch_number) : null,
+      startTimestamp: Number(row.start_timestamp),
+      endTimestamp: Number(row.end_timestamp),
+      sent,
+      delivered,
+      deliveryRatePercent: sent > 0 ? Number(((delivered / sent) * 100).toFixed(1)) : 0,
+      read,
+      readRatePercent: delivered > 0 ? Number(((read / delivered) * 100).toFixed(1)) : 0,
+      replied,
+      replyRatePercent: delivered > 0 ? Number(((replied / delivered) * 100).toFixed(1)) : 0,
+      buttonClicks: Number(row.button_clicks || 0),
+      buttonContent: row.button_content || "More Details",
+      amountSpent: Number(row.amount_spent || 0),
+      costPerDelivered: Number(row.cost_per_delivered || 0),
+      currency: row.currency || "INR",
+      syncedAt: row.synced_at
+    };
+  }
+
+  async getMetaCampaignOverview(): Promise<MetaCampaignOverview> {
+    const daily = await this.getMetaDailyMetrics();
+    let totalSent = 0;
+    let totalDelivered = 0;
+    let totalRead = 0;
+    let totalReplied = 0;
+    let totalButtonClicks = 0;
+    let totalSpent = 0;
+    let lastSyncedAt = new Date();
+
+    for (const d of daily) {
+      totalSent += d.sent;
+      totalDelivered += d.delivered;
+      totalRead += d.read;
+      totalReplied += d.replied;
+      totalButtonClicks += d.buttonClicks;
+      totalSpent += d.amountSpent;
+      if (d.syncedAt && d.syncedAt > lastSyncedAt) {
+        lastSyncedAt = d.syncedAt;
+      }
+    }
+
+    return {
+      totalSent,
+      totalDelivered,
+      overallDeliveryRatePercent: totalSent > 0 ? Number(((totalDelivered / totalSent) * 100).toFixed(1)) : 0,
+      totalRead,
+      overallReadRatePercent: totalDelivered > 0 ? Number(((totalRead / totalDelivered) * 100).toFixed(1)) : 0,
+      totalReplied,
+      overallReplyRatePercent: totalDelivered > 0 ? Number(((totalReplied / totalDelivered) * 100).toFixed(1)) : 0,
+      totalButtonClicks,
+      totalSpent: Number(totalSpent.toFixed(2)),
+      currency: "INR",
+      lastSyncedAt,
+      dailyBreakdown: daily
     };
   }
 }

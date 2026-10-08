@@ -490,11 +490,17 @@ export class AnalyticsService {
     const safeContacts = contacts.map((c) => ({
       id: c.id,
       wa_id: c.wa_id,
+      phone: c.phone,
       phoneMasked: c.phoneMasked,
+      batchName: c.batchName || "",
+      latestDeliveryStatus: c.latestDeliveryStatus || "sent",
+      lastReplyText: c.lastReplyText || "",
+      currentJourneyStep: c.currentJourneyStep || "Step 1: Dispatched",
       name: c.name || "",
       email: c.email || "",
       project: c.project || "",
       leadSource: c.leadSource || "",
+      firstSeenAt: c.firstSeenAt ? c.firstSeenAt.toISOString() : "",
       lastActivityAt: c.lastActivityAt ? c.lastActivityAt.toISOString() : "",
       conversationStatus: c.conversationStatus || "",
       currentState: c.currentState || "",
@@ -508,41 +514,45 @@ export class AnalyticsService {
 
     if (format === "csv") {
       const headers = [
-        "ID",
-        "WhatsApp ID",
+        "Full Phone",
         "Masked Phone",
         "Name",
-        "Email",
-        "Project",
-        "Lead Source",
-        "Last Activity",
+        "Batch",
+        "Delivery Status",
+        "Customer Reply",
+        "Journey Step",
+        "Project Interest",
+        "Broadcast Date",
         "Conversation Status",
-        "Current State",
         "Unread",
         "Total Messages",
-        "Replied",
+        "Has Replied",
         "Brochure Requested",
         "Plan Requested",
-        "Site Visit Requested"
+        "Site Visit Requested",
+        "WhatsApp ID",
+        "Lead ID"
       ];
       const rows = safeContacts.map((c) =>
         [
-          c.id,
-          c.wa_id,
+          `"+${c.phone.replace(/\D/g, "")}"`,
           c.phoneMasked,
           `"${(c.name || "").replace(/"/g, '""')}"`,
-          `"${(c.email || "").replace(/"/g, '""')}"`,
+          `"${c.batchName}"`,
+          c.latestDeliveryStatus,
+          `"${(c.lastReplyText || "").replace(/"/g, '""')}"`,
+          `"${c.currentJourneyStep}"`,
           c.project,
-          c.leadSource,
-          c.lastActivityAt,
+          c.firstSeenAt,
           c.conversationStatus,
-          c.currentState,
           c.unread,
           c.totalMessages,
           c.hasReplied,
           c.brochureRequested,
           c.planRequested,
-          c.siteVisitRequested
+          c.siteVisitRequested,
+          c.wa_id,
+          c.id
         ].join(",")
       );
       return [headers.join(","), ...rows].join("\n");

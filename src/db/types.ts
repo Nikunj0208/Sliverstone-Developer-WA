@@ -334,3 +334,42 @@ export interface DuplicateContactCandidate {
   matchType: "wa_id" | "phone" | "email";
   matchValue: string;
 }
+
+export interface MetaTemplateDailyMetric {
+  id?: string;
+  templateId: string;
+  templateName: string;
+  dateStr: string; // '2026-10-03', '2026-10-04', etc.
+  batchNumber: number | null; // 1, 2, 3, 4, 5
+  startTimestamp: number;
+  endTimestamp: number;
+  sent: number;
+  delivered: number;
+  deliveryRatePercent: number;
+  read: number;
+  readRatePercent: number;
+  replied: number;
+  replyRatePercent: number;
+  buttonClicks: number;
+  buttonContent: string;
+  amountSpent: number;
+  costPerDelivered: number;
+  currency: string;
+  syncedAt: Date;
+}
+
+export interface MetaCampaignOverview {
+  totalSent: number;
+  totalDelivered: number;
+  overallDeliveryRatePercent: number;
+  totalRead: number;
+  overallReadRatePercent: number;
+  totalReplied: number;
+  overallReplyRatePercent: number;
+  totalButtonClicks: number;
+  totalSpent: number;
+  currency: string;
+  lastSyncedAt: Date | string;
+  dailyBreakdown: MetaTemplateDailyMetric[];
+}
+

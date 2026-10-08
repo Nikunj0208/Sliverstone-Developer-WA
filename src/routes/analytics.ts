@@ -61,6 +61,59 @@ analyticsRouter.post("/api/sync/broadcasts", async (_req: Request, res: Response
 });
 
 /**
+ * POST /api/sync/meta
+ * Pulls latest official metrics directly from Meta WhatsApp Business Platform
+ */
+analyticsRouter.post("/api/sync/meta", async (_req: Request, res: Response) => {
+  try {
+    const { getAnalyticsRepository } = await import("../db/index.js");
+    const { metaInsightsService } = await import("../services/meta-insights-service.js");
+    const repo = getAnalyticsRepository();
+    const result = await metaInsightsService.syncToDatabase(repo);
+    res.json(result);
+  } catch (error: any) {
+    console.error("[API] Failed to run Meta sync:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/analytics/meta-insights
+ * Returns official verified Meta WhatsApp Business Platform analytics
+ */
+analyticsRouter.get("/api/analytics/meta-insights", async (_req: Request, res: Response) => {
+  try {
+    const { getAnalyticsRepository } = await import("../db/index.js");
+    const repo = getAnalyticsRepository();
+    const overview = await repo.getMetaCampaignOverview();
+    res.json(overview);
+  } catch (error: any) {
+    console.error("[API] Failed to get Meta insights:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/analytics/meta-insights/:dateOrBatch
+ * Returns official Meta insights for a specific day (YYYY-MM-DD) or batch (1..5)
+ */
+analyticsRouter.get("/api/analytics/meta-insights/:dateOrBatch", async (req: Request, res: Response) => {
+  try {
+    const { getAnalyticsRepository } = await import("../db/index.js");
+    const repo = getAnalyticsRepository();
+    const metric = await repo.getMetaMetricForDateOrBatch(String(req.params.dateOrBatch));
+    if (!metric) {
+      res.status(404).json({ error: "Meta metrics not found for specified date or batch" });
+      return;
+    }
+    res.json(metric);
+  } catch (error: any) {
+    console.error("[API] Failed to get Meta metric for date/batch:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/analytics/overview
  */
 analyticsRouter.get("/api/analytics/overview", async (_req: Request, res: Response) => {

@@ -3,6 +3,7 @@ import { InMemoryAnalyticsRepository, type AnalyticsRepository } from "./reposit
 import { PostgresAnalyticsRepository, createPostgresPool, runPostgresMigrations } from "./postgres.js";
 import { syncBroadcastLogsToRepository } from "./sync-logs.js";
 import { syncFromLiveRender } from "../services/live-sync.js";
+import { metaInsightsService } from "../services/meta-insights-service.js";
 import { join } from "node:path";
 
 export * from "./types.js";
@@ -34,6 +35,15 @@ export async function initDatabase(): Promise<AnalyticsRepository> {
       console.info("[DATABASE] PostgreSQL analytics repository initialized successfully");
       console.info("[DATABASE] Syncing broadcast logs datewise...");
       await syncBroadcastLogsToRepository(currentRepository);
+      
+      // Sync official Meta WhatsApp Business Insights to PostgreSQL
+      try {
+        await metaInsightsService.syncToDatabase(currentRepository);
+        metaInsightsService.startPeriodicSync(currentRepository);
+      } catch (e: any) {
+        console.warn("[DATABASE] Meta insights initial sync note:", e.message);
+      }
+
       return currentRepository;
     } catch (error) {
       console.warn("[DATABASE] Failed to initialize PostgreSQL pool, falling back to memory:", error);
@@ -60,6 +70,12 @@ export async function initDatabase(): Promise<AnalyticsRepository> {
       if (result.synced && (result.importedContacts > 0 || result.importedMessages > 0)) {
         console.info(`[SYNC] Pulled live customer data from WhatsApp: ${result.importedContacts} contacts, ${result.importedMessages} messages`);
       }
+    } catch {}
+
+    // Sync official Meta WhatsApp Business Insights
+    try {
+      await metaInsightsService.syncToDatabase(memoryRepo);
+      metaInsightsService.startPeriodicSync(memoryRepo);
     } catch {}
 
     await memoryRepo.saveToFile();
