@@ -1451,93 +1451,101 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         };
 
         tbody.innerHTML = contacts.map(c => {
-          const statusBadge = c.conversationStatus === 'OPEN'
-            ? '<span class="badge badge-active">🟢 OPEN</span>'
-            : (c.conversationStatus === 'CLOSED' ? '<span class="badge badge-closed">🔵 CLOSED</span>' : '<span class="badge">NONE</span>');
-          
-          const unreadBadge = c.unread 
-            ? '<span class="badge badge-needs-reply" style="margin-top: 3px;">🟡 UNREAD (' + c.unreadCount + ')</span>'
-            : '<span style="color: var(--text-dim); font-size: 11px;">Ack</span>';
+          try {
+            const statusBadge = c.conversationStatus === 'OPEN'
+              ? '<span class="badge badge-active">🟢 OPEN</span>'
+              : (c.conversationStatus === 'CLOSED' ? '<span class="badge badge-closed">🔵 CLOSED</span>' : '<span class="badge">NONE</span>');
+            
+            const unreadBadge = c.unread 
+              ? '<span class="badge badge-needs-reply" style="margin-top: 3px;">🟡 UNREAD (' + (c.unreadCount || 1) + ')</span>'
+              : '<span style="color: var(--text-dim); font-size: 11px;">Ack</span>';
 
-          const projectName = c.project ? c.project.toUpperCase() : 'GENERAL';
+            const projectName = c.project ? escapeHtml(c.project.toUpperCase()) : 'GENERAL';
 
-          // Batch Badge
-          const batchInfo = batchColorMap[c.batchName] || { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' };
-          const batchBadge = '<span class="badge" style="background: ' + batchInfo.bg + '; color: ' + batchInfo.text + '; border: 1px solid ' + batchInfo.border + '; font-weight: 700;">' + (c.batchName || 'Batch 1') + '</span>';
+            // Batch Badge
+            const batchInfo = batchColorMap[c.batchName] || { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' };
+            const batchBadge = '<span class="badge" style="background: ' + batchInfo.bg + '; color: ' + batchInfo.text + '; border: 1px solid ' + batchInfo.border + '; font-weight: 700;">' + escapeHtml(c.batchName || 'Batch 1') + '</span>';
 
-          // Delivery / Seen Status Badge (Sent, Delivered, Read with blue tick)
-          const dStatus = (c.latestDeliveryStatus || 'sent').toLowerCase();
-          let deliveryBadge = '';
-          if (dStatus === 'read') {
-            deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
-              '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 700;" title="Verified by Meta Webhook: Customer opened and read this message">👁️ Read ✓✓</span>' +
-              (c.seenAt ? '<span style="font-size: 10px; color: #94a3b8;">' + formatTimeAgo(c.seenAt) + '</span>' : '') +
-            '</div>';
-          } else if (dStatus === 'delivered') {
-            deliveryBadge = '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 600;" title="Verified by Meta Webhook: Delivered to customer WhatsApp">📬 Delivered ✓✓</span>';
-          } else if (dStatus === 'failed') {
-            const errTitle = c.errorMessage || (c.errorCode === '131049' ? 'Suppressed by Meta: User Marketing Frequency Capping' : 'Delivery Failed');
-            const errLabel = c.errorCode ? '⚠️ Failed (' + c.errorCode + ')' : '⚠️ Failed';
-            deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
-              '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600;" title="' + escapeHtml(errTitle) + '">' + errLabel + '</span>' +
-              (c.errorCode === '131049' ? '<span style="font-size: 9px; color: #fb7185; font-weight: 600;">Ecosystem Limit</span>' : '') +
-            '</div>';
-          } else if (dStatus === 'sent') {
-            deliveryBadge = '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;" title="Dispatched via Meta Cloud API: Awaiting customer delivery receipt">📨 Sent ✓</span>';
-          } else {
-            deliveryBadge = '<span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #64748b; font-weight: 500;" title="Not dispatched yet">⚪ Queued</span>';
-          }
-
-          // Latest Inbound Reply & Button Click pill
-          let replyHtml = '<span style="color: var(--text-dim); font-size: 11px;">No customer response yet</span>';
-          const items = [];
-          if (c.buttonClicked || c.lastButtonClicked) {
-            const btnName = c.lastButtonClicked || 'More Details';
-            items.push('<div style="font-size: 11px; font-weight: 700; color: #fbbf24; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 4px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px;" title="Customer tapped button: ' + escapeHtml(btnName) + '">🔘 Button: ' + escapeHtml(btnName) + '</div>');
-          }
-          if (c.hasReplied || c.lastReplyText) {
-            const replyText = c.lastReplyText || 'Inbound reply';
-            if (!c.buttonClicked || !replyText.includes(c.lastButtonClicked || 'More Details')) {
-              items.push('<div style="font-size: 11px; font-weight: 600; color: #34d399; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + escapeHtml(replyText) + '">💬 "' + escapeHtml(replyText) + '"</div>');
+            // Delivery / Seen Status Badge (Sent, Delivered, Read with blue tick)
+            const dStatus = (c.latestDeliveryStatus || 'sent').toLowerCase();
+            let deliveryBadge = '';
+            if (dStatus === 'read') {
+              deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
+                '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 700;" title="Verified by Meta Webhook: Customer opened and read this message">👁️ Read ✓✓</span>' +
+                (c.seenAt ? '<span style="font-size: 10px; color: #94a3b8;">' + formatTimeAgo(c.seenAt) + '</span>' : '') +
+              '</div>';
+            } else if (dStatus === 'delivered') {
+              deliveryBadge = '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 600;" title="Verified by Meta Webhook: Delivered to customer WhatsApp">📬 Delivered ✓✓</span>';
+            } else if (dStatus === 'failed') {
+              const errTitle = c.errorMessage || (c.errorCode === '131049' ? 'Suppressed by Meta: User Marketing Frequency Capping' : 'Delivery Failed');
+              const errLabel = c.errorCode ? '⚠️ Failed (' + c.errorCode + ')' : '⚠️ Failed';
+              deliveryBadge = '<div style="display: flex; flex-direction: column; gap: 2px;">' +
+                '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600;" title="' + escapeHtml(errTitle) + '">' + errLabel + '</span>' +
+                (c.errorCode === '131049' ? '<span style="font-size: 9px; color: #fb7185; font-weight: 600;">Ecosystem Limit</span>' : '') +
+              '</div>';
+            } else if (dStatus === 'sent') {
+              deliveryBadge = '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;" title="Dispatched via Meta Cloud API: Awaiting customer delivery receipt">📨 Sent ✓</span>';
+            } else {
+              deliveryBadge = '<span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #64748b; font-weight: 500;" title="Not dispatched yet">⚪ Queued</span>';
             }
-          }
-          if (items.length > 0) {
-            replyHtml = '<div style="display: flex; flex-direction: column; gap: 4px;">' +
-              items.join('') +
-              (c.lastReplyAt ? '<div style="font-size: 10px; color: var(--text-dim);">' + formatTimeAgo(c.lastReplyAt) + '</div>' : '') +
-            '</div>';
-          }
 
-          // Journey Step Badge
-          const stepNum = c.currentJourneyStepNumber || (c.hasReplied ? 2 : 1);
-          const stepBadgeColor = stepNum >= 6 ? '#10b981' : (stepNum >= 3 ? '#818cf8' : (stepNum === 2 ? '#34d399' : '#94a3b8'));
-          const stepBadgeBg = stepNum >= 6 ? 'rgba(16, 185, 129, 0.15)' : (stepNum >= 3 ? 'rgba(129, 140, 248, 0.15)' : 'rgba(148, 163, 184, 0.15)');
-          const journeyBadge = '<span class="badge" style="background: ' + stepBadgeBg + '; color: ' + stepBadgeColor + '; border: 1px solid ' + stepBadgeColor + '40;">' +
-            escapeHtml(c.currentJourneyStep || ('Step ' + stepNum + ': Dispatched')) +
-          '</span>';
+            // Latest Inbound Reply & Button Click pill
+            let replyHtml = '<span style="color: var(--text-dim); font-size: 11px;">No customer response yet</span>';
+            const items = [];
+            if (c.buttonClicked || c.lastButtonClicked) {
+              const btnName = String(c.lastButtonClicked || 'More Details');
+              items.push('<div style="font-size: 11px; font-weight: 700; color: #fbbf24; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 4px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px;" title="Customer tapped button: ' + escapeHtml(btnName) + '">🔘 Button: ' + escapeHtml(btnName) + '</div>');
+            }
+            if (c.hasReplied || c.lastReplyText) {
+              const replyText = String(c.lastReplyText || 'Inbound reply');
+              const btnRef = String(c.lastButtonClicked || 'More Details');
+              if (!c.buttonClicked || !replyText.includes(btnRef)) {
+                items.push('<div style="font-size: 11px; font-weight: 600; color: #34d399; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + escapeHtml(replyText) + '">💬 "' + escapeHtml(replyText) + '"</div>');
+              }
+            }
+            if (items.length > 0) {
+              replyHtml = '<div style="display: flex; flex-direction: column; gap: 4px;">' +
+                items.join('') +
+                (c.lastReplyAt ? '<div style="font-size: 10px; color: var(--text-dim);">' + formatTimeAgo(c.lastReplyAt) + '</div>' : '') +
+              '</div>';
+            }
 
-          return '<tr class="clickable" data-href="/contacts/' + c.id + '">' +
-            '<td style="font-weight: 600; color: #f8fafc;">' + escapeHtml(c.name || 'Unnamed Prospect') + '</td>' +
-            '<td>' + formatFullPhone(c.phone, c.lastWaMessageId) + '</td>' +
-            '<td>' + batchBadge + '</td>' +
-            '<td>' + deliveryBadge + '</td>' +
-            '<td>' + replyHtml + '</td>' +
-            '<td>' +
-              '<div style="display: flex; align-items: center; gap: 6px;">' +
-                journeyBadge +
-                '<button type="button" class="btn btn-journey-map" data-id="' + c.id + '" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" title="View Automation Journey Flow">🗺️</button>' +
-              '</div>' +
-            '</td>' +
-            '<td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">' + projectName + '</span></td>' +
-            '<td>' + formatDateTime(c.firstSeenAt) + '</td>' +
-            '<td>' + statusBadge + '<div style="margin-top: 2px;">' + unreadBadge + '</div></td>' +
-            '<td>' +
-              '<div style="display: flex; gap: 6px;">' +
-                '<a href="/contacts/' + c.id + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
-                '<button type="button" class="btn btn-send-invite" data-id="' + c.id + '" data-name="' + escapeHtml(c.name || 'Lead') + '" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
-              '</div>' +
-            '</td>' +
-          '</tr>';
+            // Journey Step Badge
+            const stepNum = c.currentJourneyStepNumber || (c.hasReplied ? 2 : 1);
+            const stepBadgeColor = stepNum >= 6 ? '#10b981' : (stepNum >= 3 ? '#818cf8' : (stepNum === 2 ? '#34d399' : '#94a3b8'));
+            const stepBadgeBg = stepNum >= 6 ? 'rgba(16, 185, 129, 0.15)' : (stepNum >= 3 ? 'rgba(129, 140, 248, 0.15)' : 'rgba(148, 163, 184, 0.15)');
+            const journeyBadge = '<span class="badge" style="background: ' + stepBadgeBg + '; color: ' + stepBadgeColor + '; border: 1px solid ' + stepBadgeColor + '40;">' +
+              escapeHtml(c.currentJourneyStep || ('Step ' + stepNum + ': Dispatched')) +
+            '</span>';
+
+            return '<tr class="clickable" data-href="/contacts/' + c.id + '">' +
+              '<td style="font-weight: 600; color: #f8fafc;">' + escapeHtml(c.name || 'Unnamed Prospect') + '</td>' +
+              '<td>' + formatFullPhone(c.phone, c.lastWaMessageId) + '</td>' +
+              '<td>' + batchBadge + '</td>' +
+              '<td>' + deliveryBadge + '</td>' +
+              '<td>' + replyHtml + '</td>' +
+              '<td>' +
+                '<div style="display: flex; align-items: center; gap: 6px;">' +
+                  journeyBadge +
+                  '<button type="button" class="btn btn-journey-map" data-id="' + c.id + '" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" title="View Automation Journey Flow">🗺️</button>' +
+                '</div>' +
+              '</td>' +
+              '<td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">' + projectName + '</span></td>' +
+              '<td>' + formatDateTime(c.firstSeenAt) + '</td>' +
+              '<td>' + statusBadge + '<div style="margin-top: 2px;">' + unreadBadge + '</div></td>' +
+              '<td>' +
+                '<div style="display: flex; gap: 6px;">' +
+                  '<a href="/contacts/' + c.id + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
+                  '<button type="button" class="btn btn-send-invite" data-id="' + c.id + '" data-name="' + escapeHtml(c.name || 'Lead') + '" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
+                '</div>' +
+              '</td>' +
+            '</tr>';
+          } catch (rowErr) {
+            console.error("Error formatting contact row:", rowErr, c);
+            return '<tr class="clickable" data-href="/contacts/' + (c.id || '') + '">' +
+              '<td colspan="10" style="padding: 10px; color: #94a3b8;">Lead: ' + escapeHtml(c.name || c.phone || 'Unknown') + '</td>' +
+            '</tr>';
+          }
         }).join('');
       }
 
@@ -1834,8 +1842,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
 
       function initTableEvents() {
         const tbody = document.getElementById("contactsTableBody");
-        if (!tbody || tbody.dataset.eventsBound) return;
-        tbody.dataset.eventsBound = "true";
+        if (!tbody || tbody.getAttribute("data-events-bound") === "true") return;
+        tbody.setAttribute("data-events-bound", "true");
         tbody.addEventListener("click", function(e) {
           const journeyBtn = e.target.closest(".btn-journey-map");
           if (journeyBtn) {
