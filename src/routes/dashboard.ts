@@ -889,32 +889,32 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         <div style="font-size: 11px; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
           <span>🟢 OFFICIAL META WHATSAPP BUSINESS METRICS</span>
         </div>
-        <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px;" id="metaBannerTitle">Total Campaign (03 - 08 Oct)</h3>
+        <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px;" id="metaBannerTitle">Total Campaign (03 - 09 Oct)</h3>
       </div>
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;" id="metaBannerMetrics">
         <div id="bannerCardSent" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('sent')" title="Click to view all Sent leads with Name and Phone">
           <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">📨 META SENT</div>
-          <div style="font-size: 16px; font-weight: 700; color: #fff; font-family: monospace;" id="bannerSent">705</div>
+          <div style="font-size: 16px; font-weight: 700; color: #fff; font-family: monospace;" id="bannerSent">847</div>
         </div>
         <div id="bannerCardDelivered" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('delivered')" title="Click to view all Delivered leads with Name and Phone">
           <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">📬 DELIVERED</div>
-          <div style="font-size: 16px; font-weight: 700; color: #38bdf8; font-family: monospace;" id="bannerDelivered">628 (89.1%)</div>
+          <div style="font-size: 16px; font-weight: 700; color: #38bdf8; font-family: monospace;" id="bannerDelivered">749 (88.4%)</div>
         </div>
         <div id="bannerCardRead" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('read')" title="Click to view all Read leads (Blue Ticks) with Name and Phone">
           <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">👁️ READ (BLUE TICKS)</div>
-          <div style="font-size: 16px; font-weight: 700; color: #60a5fa; font-family: monospace;" id="bannerRead">443 (70.5%)</div>
+          <div style="font-size: 16px; font-weight: 700; color: #60a5fa; font-family: monospace;" id="bannerRead">501 (66.9%)</div>
         </div>
         <div id="bannerCardClicks" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('button_clicks')" title="Click to view all Button Click leads (More Details) with Name and Phone">
           <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">🔘 BUTTON CLICKS</div>
-          <div style="font-size: 16px; font-weight: 700; color: #fbbf24; font-family: monospace;" id="bannerClicks">58</div>
+          <div style="font-size: 16px; font-weight: 700; color: #fbbf24; font-family: monospace;" id="bannerClicks">61</div>
         </div>
         <div id="bannerCardReplied" style="background: var(--bg-card); border: 2px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onclick="setEngagementTab('replied')" title="Click to view all Replied leads with Name, Phone and Reply message">
           <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">💬 REPLIED</div>
-          <div style="font-size: 16px; font-weight: 700; color: #34d399; font-family: monospace;" id="bannerReplied">76</div>
+          <div style="font-size: 16px; font-weight: 700; color: #34d399; font-family: monospace;" id="bannerReplied">91</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 6px 14px; text-align: center;">
           <div style="font-size: 10px; color: var(--text-muted); font-weight: 700;">💰 CAMPAIGN SPEND</div>
-          <div style="font-size: 16px; font-weight: 700; color: #c084fc; font-family: monospace;" id="bannerSpend">₹553.98</div>
+          <div style="font-size: 16px; font-weight: 700; color: #c084fc; font-family: monospace;" id="bannerSpend">₹658.01</div>
         </div>
       </div>
     </div>
@@ -1029,6 +1029,7 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       let cachedMetaOverview = null;
 
       const BATCH_DATE_MAP = {
+        "6": "2026-10-09",
         "5": "2026-10-08",
         "4": "2026-10-06",
         "3": "2026-10-05",
@@ -1049,15 +1050,15 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       function updateMetaBatchBar() {
         if (!cachedMetaOverview) return;
 
-        let sent = cachedMetaOverview.totalSent || 705;
-        let delivered = cachedMetaOverview.totalDelivered || 628;
-        let deliveryRate = cachedMetaOverview.overallDeliveryRatePercent || 89.1;
-        let read = cachedMetaOverview.totalRead || 443;
-        let readRate = cachedMetaOverview.overallReadRatePercent || 70.5;
-        let clicks = cachedMetaOverview.totalButtonClicks || 58;
-        let replied = cachedMetaOverview.totalReplied || 76;
-        let spend = '₹' + Number(cachedMetaOverview.totalSpent || 553.98).toFixed(2);
-        let title = 'Total Campaign (03 - 08 Oct)';
+        let sent = cachedMetaOverview.totalSent || 847;
+        let delivered = cachedMetaOverview.totalDelivered || 749;
+        let deliveryRate = cachedMetaOverview.overallDeliveryRatePercent || 88.4;
+        let read = cachedMetaOverview.totalRead || 501;
+        let readRate = cachedMetaOverview.overallReadRatePercent || 66.9;
+        let clicks = cachedMetaOverview.totalButtonClicks || 61;
+        let replied = cachedMetaOverview.totalReplied || 91;
+        let spend = '₹' + Number(cachedMetaOverview.totalSpent || 658.01).toFixed(2);
+        let title = 'Total Campaign (03 - 09 Oct)';
 
         if (selectedBatch && Array.isArray(cachedMetaOverview.dailyBreakdown)) {
           const matched = cachedMetaOverview.dailyBreakdown.find(d => String(d.batchNumber) === String(selectedBatch));
@@ -1312,6 +1313,7 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
 
         try {
           const res = await fetch('/api/contacts?' + params.toString());
+          if (!res.ok) throw new Error("HTTP " + res.status);
           const data = await res.json();
           renderContacts(data.contacts || []);
           
@@ -1321,9 +1323,14 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           } else if (selectedDate) {
             countBadgeText += ' (' + selectedDate + ' Only)';
           }
-          document.getElementById("contactCountBadge").textContent = countBadgeText;
+          const badge = document.getElementById("contactCountBadge");
+          if (badge) badge.textContent = countBadgeText;
         } catch (e) {
           console.error("Failed to load contacts", e);
+          const tbody = document.getElementById("contactsTableBody");
+          if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #f87171;">⚠️ Failed to load contacts: ' + escapeHtml(e.message) + '</td></tr>';
+          const badge = document.getElementById("contactCountBadge");
+          if (badge) badge.textContent = 'Failed to load';
         }
       }
 
@@ -1460,8 +1467,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             escapeHtml(c.currentJourneyStep || ('Step ' + stepNum + ': Dispatched')) +
           '</span>';
 
-          return '<tr class="clickable" onclick="window.location.href=\'/contacts/' + c.id + '\'">' +
-            '<td style="font-weight: 600; color: #f8fafc;">' + (c.name || 'Unnamed Prospect') + '</td>' +
+          return '<tr class="clickable" data-href="/contacts/' + c.id + '">' +
+            '<td style="font-weight: 600; color: #f8fafc;">' + escapeHtml(c.name || 'Unnamed Prospect') + '</td>' +
             '<td>' + formatFullPhone(c.phone, c.lastWaMessageId) + '</td>' +
             '<td>' + batchBadge + '</td>' +
             '<td>' + deliveryBadge + '</td>' +
@@ -1469,16 +1476,16 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
             '<td>' +
               '<div style="display: flex; align-items: center; gap: 6px;">' +
                 journeyBadge +
-                '<button class="btn" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" onclick="event.stopPropagation(); openJourneyModal(\\'' + c.id + '\\')" title="View Automation Journey Flow">🗺️</button>' +
+                '<button type="button" class="btn btn-journey-map" data-id="' + c.id + '" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" title="View Automation Journey Flow">🗺️</button>' +
               '</div>' +
             '</td>' +
             '<td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">' + projectName + '</span></td>' +
             '<td>' + formatDateTime(c.firstSeenAt) + '</td>' +
             '<td>' + statusBadge + '<div style="margin-top: 2px;">' + unreadBadge + '</div></td>' +
             '<td>' +
-              '<div style="display: flex; gap: 6px;" onclick="event.stopPropagation();">' +
+              '<div style="display: flex; gap: 6px;">' +
                 '<a href="/contacts/' + c.id + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
-                '<button class="btn" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" onclick="sendMetaInvitation(\'' + c.id + '\', \'' + escapeHtml(c.name || 'Lead') + '\', this)" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
+                '<button type="button" class="btn btn-send-invite" data-id="' + c.id + '" data-name="' + escapeHtml(c.name || 'Lead') + '" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
               '</div>' +
             '</td>' +
           '</tr>';
@@ -1496,13 +1503,13 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           const res = await fetch('/api/contacts/' + contactId + '/send-invitation', { method: 'POST' });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Failed to send');
-          alert('✅ Official Meta WhatsApp invitation sent successfully to ' + (data.name || name) + ' (+' + data.phone + ')!\nMeta Message ID: ' + data.waMessageId);
+          alert('✅ Official Meta WhatsApp invitation sent successfully to ' + (data.name || name) + ' (+' + data.phone + ')!\\nMeta Message ID: ' + data.waMessageId);
           fetchContacts();
           if (document.getElementById("journeyModalBackdrop").classList.contains("active")) {
             openJourneyModal(contactId);
           }
         } catch (e) {
-          alert('❌ Failed to send WhatsApp message via Meta API:\n' + e.message);
+          alert('❌ Failed to send WhatsApp message via Meta API:\\n' + e.message);
         } finally {
           if (btn) {
             btn.disabled = false;
@@ -1544,7 +1551,13 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
           : '+' + cleanPhone;
 
         document.getElementById("journeyModalName").textContent = displayName + " — Automation Journey Flow";
-        document.getElementById("journeyModalSub").innerHTML = 'Full Phone: <strong class="code-text" style="color: #38bdf8;">' + phoneFormatted + '</strong> | <a href="https://wa.me/' + cleanPhone + '" target="_blank" style="color: #34d399; font-weight: 600; text-decoration: none;">💬 Chat on WhatsApp</a> | <button class="btn" style="padding: 2px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; margin-left: 8px;" onclick="sendMetaInvitation(\'' + c.id + '\', \'' + escapeHtml(displayName) + '\', this)">🚀 Resend WhatsApp</button>';
+        document.getElementById("journeyModalSub").innerHTML = 'Full Phone: <strong class="code-text" style="color: #38bdf8;">' + phoneFormatted + '</strong> | <a href="https://wa.me/' + cleanPhone + '" target="_blank" style="color: #34d399; font-weight: 600; text-decoration: none;">💬 Chat on WhatsApp</a> | <button type="button" id="journeyModalResendBtn" class="btn" style="padding: 2px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; margin-left: 8px;">🚀 Resend WhatsApp</button>';
+        const modalResendBtn = document.getElementById("journeyModalResendBtn");
+        if (modalResendBtn) {
+          modalResendBtn.onclick = function() {
+            sendMetaInvitation(c.id, displayName, this);
+          };
+        }
 
         // Evaluate Steps
         const outboundMsg = msgs.find(m => m.direction === 'outbound');
@@ -1701,59 +1714,116 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         '</div>';
       }
 
+      function initTableEvents() {
+        const tbody = document.getElementById("contactsTableBody");
+        if (!tbody || tbody.dataset.eventsBound) return;
+        tbody.dataset.eventsBound = "true";
+        tbody.addEventListener("click", function(e) {
+          const journeyBtn = e.target.closest(".btn-journey-map");
+          if (journeyBtn) {
+            e.stopPropagation();
+            openJourneyModal(journeyBtn.dataset.id);
+            return;
+          }
+          const sendBtn = e.target.closest(".btn-send-invite");
+          if (sendBtn) {
+            e.stopPropagation();
+            sendMetaInvitation(sendBtn.dataset.id, sendBtn.dataset.name, sendBtn);
+            return;
+          }
+          const row = e.target.closest("tr.clickable");
+          if (row && !e.target.closest("a") && !e.target.closest("button")) {
+            if (row.dataset.href) window.location.href = row.dataset.href;
+          }
+        });
+      }
+
       // Initial page load: parse URL query params
       (function initPage() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("batch")) {
-          selectedBatch = urlParams.get("batch");
-          const bSelect = document.getElementById("batchFilter");
-          if (bSelect) bSelect.value = selectedBatch;
-          selectedDate = BATCH_DATE_MAP[selectedBatch] || "";
-          const dInput = document.getElementById("dateFilterInput");
-          if (dInput) dInput.value = selectedDate;
+        try {
+          initTableEvents();
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get("batch")) {
+            selectedBatch = urlParams.get("batch");
+            const bSelect = document.getElementById("batchFilter");
+            if (bSelect) bSelect.value = selectedBatch;
+            selectedDate = BATCH_DATE_MAP[selectedBatch] || "";
+            const dInput = document.getElementById("dateFilterInput");
+            if (dInput) dInput.value = selectedDate;
 
-          document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
-          const chip = document.getElementById("chip-batch-" + selectedBatch);
-          if (chip) chip.classList.add("active");
-        } else if (urlParams.get("date")) {
-          selectedDate = urlParams.get("date");
-          const dInput = document.getElementById("dateFilterInput");
-          if (dInput) dInput.value = selectedDate;
-          for (const [b, d] of Object.entries(BATCH_DATE_MAP)) {
-            if (d === selectedDate) {
-              selectedBatch = b;
-              const bSelect = document.getElementById("batchFilter");
-              if (bSelect) bSelect.value = b;
-              document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
-              const chip = document.getElementById("chip-batch-" + b);
-              if (chip) chip.classList.add("active");
-              break;
+            document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
+            const chip = document.getElementById("chip-batch-" + selectedBatch);
+            if (chip) chip.classList.add("active");
+          } else if (urlParams.get("date")) {
+            selectedDate = urlParams.get("date");
+            const dInput = document.getElementById("dateFilterInput");
+            if (dInput) dInput.value = selectedDate;
+            for (const [b, d] of Object.entries(BATCH_DATE_MAP)) {
+              if (d === selectedDate) {
+                selectedBatch = b;
+                const bSelect = document.getElementById("batchFilter");
+                if (bSelect) bSelect.value = b;
+                document.querySelectorAll(".date-chip").forEach(el => el.classList.remove("active"));
+                const chip = document.getElementById("chip-batch-" + b);
+                if (chip) chip.classList.add("active");
+                break;
+              }
             }
           }
-        }
 
-        if (urlParams.get("replied") === "true") {
-          activeEngagementTab = "replied";
-        } else if (urlParams.get("unread") === "true") {
-          activeEngagementTab = "unread";
-        } else if (urlParams.get("status")) {
-          const st = urlParams.get("status");
-          selectedDeliveryStatus = st;
-          const sSelect = document.getElementById("deliveryStatusFilter");
-          if (sSelect) sSelect.value = st;
-          if (st === "read") activeEngagementTab = "read";
-          else if (st === "delivered") activeEngagementTab = "delivered";
-        }
+          if (urlParams.get("replied") === "true") {
+            activeEngagementTab = "replied";
+          } else if (urlParams.get("unread") === "true") {
+            activeEngagementTab = "unread";
+          } else if (urlParams.get("buttonClicks") === "true") {
+            activeEngagementTab = "button_clicks";
+          } else if (urlParams.get("deliveryStatus")) {
+            const st = urlParams.get("deliveryStatus");
+            selectedDeliveryStatus = st;
+            const sSelect = document.getElementById("deliveryStatusFilter");
+            if (sSelect) sSelect.value = st;
+            if (st === "read") activeEngagementTab = "read";
+            else if (st === "delivered") activeEngagementTab = "delivered";
+            else if (st === "sent") activeEngagementTab = "sent";
+          } else if (urlParams.get("status")) {
+            const st = urlParams.get("status");
+            selectedDeliveryStatus = st;
+            const sSelect = document.getElementById("deliveryStatusFilter");
+            if (sSelect) sSelect.value = st;
+            if (st === "read") activeEngagementTab = "read";
+            else if (st === "delivered") activeEngagementTab = "delivered";
+            else if (st === "sent") activeEngagementTab = "sent";
+          }
 
-        if (activeEngagementTab) {
-          document.querySelectorAll(".filter-tab").forEach(el => el.classList.remove("active"));
-          const tabEl = document.getElementById("tab-" + activeEngagementTab);
-          if (tabEl) tabEl.classList.add("active");
-        }
+          if (activeEngagementTab) {
+            document.querySelectorAll(".filter-tab").forEach(el => el.classList.remove("active"));
+            const tabEl = document.getElementById("tab-" + activeEngagementTab);
+            if (tabEl) tabEl.classList.add("active");
 
-        updateDateBanner();
-        fetchMetaStats();
-        fetchContacts();
+            const activeCardMap = {
+              "sent": "bannerCardSent",
+              "delivered": "bannerCardDelivered",
+              "read": "bannerCardRead",
+              "button_clicks": "bannerCardClicks",
+              "replied": "bannerCardReplied"
+            };
+            const activeCardId = activeCardMap[activeEngagementTab];
+            if (activeCardId) {
+              const activeCardEl = document.getElementById(activeCardId);
+              if (activeCardEl) {
+                activeCardEl.style.borderColor = "#818cf8";
+                activeCardEl.style.boxShadow = "0 0 14px rgba(129, 140, 248, 0.45)";
+              }
+            }
+          }
+
+          updateDateBanner();
+          fetchMetaStats();
+          fetchContacts();
+        } catch (err) {
+          console.error("Initialization error in initPage:", err);
+          fetchContacts();
+        }
       })();
     </script>
   `;

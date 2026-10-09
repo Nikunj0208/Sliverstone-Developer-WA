@@ -52,6 +52,8 @@ export interface TrackOutboundParams {
   mediaId?: string;
   replyToMessageId?: string;
   agentId?: string;
+  profileName?: string;
+  campaignId?: string;
 }
 
 export class AnalyticsService {
@@ -211,13 +213,14 @@ export class AnalyticsService {
     message: Message;
   }> {
     const repo = this.repo();
-    const contact = await this.resolveContact(params.to);
+    const contact = await this.resolveContact(params.to, params.profileName);
     const conversation = await this.getOrCreateConversation(contact.id);
 
     const now = new Date();
     const message = await repo.createMessage({
       contact_id: contact.id,
       conversation_id: conversation.id,
+      campaign_id: params.campaignId ?? null,
       wa_message_id: params.waMessageId,
       direction: "outbound",
       message_type: params.messageType,

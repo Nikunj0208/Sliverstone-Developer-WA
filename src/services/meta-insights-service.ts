@@ -124,6 +124,26 @@ const FALLBACK_META_METRICS: Array<Omit<MetaTemplateDailyMetric, "id" | "syncedA
     amountSpent: 116.65,
     costPerDelivered: 0.90,
     currency: "INR"
+  },
+  {
+    templateId: "1409540194136378",
+    templateName: "silverstone_invitation",
+    dateStr: "2026-10-09",
+    batchNumber: 6,
+    startTimestamp: 1791504000,
+    endTimestamp: 1791590400,
+    sent: 152,
+    delivered: 126,
+    deliveryRatePercent: 82.9,
+    read: 55,
+    readRatePercent: 43.7,
+    replied: 8,
+    replyRatePercent: 6.3,
+    buttonClicks: 5,
+    buttonContent: "More Details",
+    amountSpent: 108.75,
+    costPerDelivered: 0.86,
+    currency: "INR"
   }
 ];
 
@@ -141,6 +161,7 @@ export class MetaInsightsService {
     if (dateStr.includes("2026-10-05")) return 3;
     if (dateStr.includes("2026-10-06")) return 4;
     if (dateStr.includes("2026-10-08")) return 5;
+    if (dateStr.includes("2026-10-09")) return 6;
     return null;
   }
 

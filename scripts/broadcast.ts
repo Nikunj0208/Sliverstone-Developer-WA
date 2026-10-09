@@ -5,6 +5,7 @@ import axios from "axios";
 import { env } from "../src/config/env.js";
 import { uploadMedia } from "../src/meta/media.js";
 import { analyticsService } from "../src/services/analytics-service.js";
+import { initDatabase } from "../src/db/index.js";
 
 type Contact = {
   phone: string;
@@ -55,6 +56,10 @@ async function main() {
   console.log("==========================================");
   console.log(" SILVERSTONE OUTBOUND INVITATION BROADCAST");
   console.log("==========================================");
+
+  if (!isDryRun) {
+    await initDatabase();
+  }
 
   // 1. Check template status
   console.log("\n[1/4] Checking Meta Template: silverstone_invitation (ID: 1409540194136378)...");
@@ -277,7 +282,7 @@ async function main() {
             templateName: "silverstone_invitation",
             bodyText: `Invitation to ${contact.name || "Customer"}`
           });
-        } catch {}
+        } catch { }
       }
     } catch (err: any) {
       const errMsg = err.response?.data?.error?.message || err.message;
@@ -289,7 +294,7 @@ async function main() {
       try {
         await appendFile(inactivePath, `${contact.phone}\n`);
         inactiveSet.add(contact.phone);
-      } catch {}
+      } catch { }
 
       // Circuit breaker: halt immediately if rate limit or tier limit is hit
       if (errCode === 131056 || errCode === 131048 || errCode === 130429) {
@@ -331,7 +336,7 @@ async function main() {
   try {
     await axios.post("http://localhost:3000/api/sync/broadcasts", {}, { timeout: 3000 });
     console.log("[CRM] Automatically synced new broadcast batch with local CRM database.");
-  } catch {}
+  } catch { }
 }
 
 main();
