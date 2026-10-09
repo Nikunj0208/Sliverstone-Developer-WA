@@ -586,6 +586,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       if (query.batch) {
         const batchNum = query.batch.trim();
         const batchDateMap: Record<string, string> = {
+          "6": "2026-10-09",
           "5": "2026-10-08",
           "4": "2026-10-06",
           "3": "2026-10-05",
@@ -655,7 +656,9 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       let batchName = "Batch 1";
       const firstSeenStr = contact.first_seen_at ? contact.first_seen_at.toISOString() : (contact.created_at ? contact.created_at.toISOString() : "");
       const sourceStr = contact.source_detail || "";
-      if (sourceStr.includes("2026-10-08") || firstSeenStr.startsWith("2026-10-08")) {
+      if (sourceStr.includes("2026-10-09") || firstSeenStr.startsWith("2026-10-09")) {
+        batchName = "Batch 6";
+      } else if (sourceStr.includes("2026-10-08") || firstSeenStr.startsWith("2026-10-08")) {
         batchName = "Batch 5";
       } else if (sourceStr.includes("2026-10-06") || firstSeenStr.startsWith("2026-10-06")) {
         batchName = "Batch 4";

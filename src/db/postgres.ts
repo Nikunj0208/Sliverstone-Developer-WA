@@ -260,6 +260,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     if (query.batch) {
       const batchNum = query.batch.trim();
       const batchDateMap: Record<string, string> = {
+        "6": "2026-10-09",
         "5": "2026-10-08",
         "4": "2026-10-06",
         "3": "2026-10-05",
@@ -395,7 +396,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       let batchName = "Batch 1";
       const sourceStr = row.source_detail || "";
       const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
-      if (sourceStr.includes("2026-10-08")) {
+      if (sourceStr.includes("2026-10-09")) {
+        batchName = "Batch 6";
+      } else if (sourceStr.includes("2026-10-08")) {
         batchName = "Batch 5";
       } else if (sourceStr.includes("2026-10-06")) {
         batchName = "Batch 4";
@@ -405,6 +408,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         batchName = "Batch 2";
       } else if (sourceStr.includes("2026-10-03")) {
         batchName = "Batch 1";
+      } else if (firstSeenStr.startsWith("2026-10-09")) {
+        batchName = "Batch 6";
       } else if (firstSeenStr.startsWith("2026-10-08")) {
         batchName = "Batch 5";
       } else if (firstSeenStr.startsWith("2026-10-06")) {

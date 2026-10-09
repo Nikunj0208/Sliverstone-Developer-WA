@@ -854,7 +854,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">📦 Filter by Batch:</span>
           <select id="batchFilter" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-subtle); font-weight: 600;" onchange="onBatchSelect(this.value)">
-            <option value="">All Batches (1,000 Contacts)</option>
+            <option value="">All Batches (1,200 Contacts)</option>
+            <option value="6">Batch 6 — 09 Oct 2026 (200 Leads)</option>
             <option value="5">Batch 5 — 08 Oct 2026 (200 Leads)</option>
             <option value="4">Batch 4 — 06 Oct 2026 (200 Leads)</option>
             <option value="3">Batch 3 — 05 Oct 2026 (200 Leads)</option>
@@ -872,7 +873,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         <span style="font-size: 11px; color: var(--text-dim); font-weight: 600;">Quick Batches:</span>
-        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (1,000)</button>
+        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (1,200)</button>
+        <button class="date-chip" id="chip-batch-6" onclick="selectBatchChip('6')">Batch 6 (09 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-5" onclick="selectBatchChip('5')">Batch 5 (08 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-4" onclick="selectBatchChip('4')">Batch 4 (06 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-3" onclick="selectBatchChip('3')">Batch 3 (05 Oct • 200)</button>
@@ -1384,6 +1386,7 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         }
 
         const batchColorMap = {
+          'Batch 6': { bg: 'rgba(236, 72, 153, 0.2)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.4)' },
           'Batch 5': { bg: 'rgba(168, 85, 247, 0.2)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' },
           'Batch 4': { bg: 'rgba(59, 130, 246, 0.2)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.4)' },
           'Batch 3': { bg: 'rgba(16, 185, 129, 0.2)', text: '#34d399', border: 'rgba(16, 185, 129, 0.4)' },
