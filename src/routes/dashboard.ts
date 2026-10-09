@@ -842,6 +842,7 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       </div>
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
         <span id="contactCountBadge" class="badge badge-active">Loading leads...</span>
+        <button class="btn" onclick="openMetaImportModal()" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399; font-weight: 600;" title="Upload Meta WhatsApp Manager Message Activity CSV to populate genuine row-level delivery and read timestamps">📥 Import Meta CSV</button>
         <button class="btn btn-primary" onclick="triggerMetaSync()" title="Pull latest verified metrics directly from Meta Graph API">⚡ Sync with Meta</button>
         <a href="/api/contacts/export?format=csv" class="btn" title="Download filtered contacts CSV with full unmasked phone numbers">📥 Export CSV</a>
         <button class="btn" onclick="fetchContacts()" title="Refresh List">🔄 Refresh</button>
@@ -1016,6 +1017,48 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         </div>
         <div id="journeyModalBody" style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
           <div style="text-align: center; padding: 40px; color: var(--text-muted);">Loading journey data...</div>
+        </div>
+      </div>
+    <!-- Meta Activity CSV Importer Modal Dialog -->
+    <div class="modal-backdrop" id="metaImportModalBackdrop" onclick="closeMetaImportModal()">
+      <div class="modal-content" style="max-width: 680px;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 22px;">📊</span>
+            <div>
+              <h3 style="font-size: 16px; font-weight: 700;">Import Meta WhatsApp Activity CSV</h3>
+              <div style="font-size: 12px; color: var(--text-muted);">Sync official individual message delivery &amp; read timestamps from WhatsApp Manager</div>
+            </div>
+          </div>
+          <button class="modal-close" onclick="closeMetaImportModal()">✕</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px; padding-top: 10px;">
+          <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; padding: 12px; font-size: 12px; color: #cbd5e1; line-height: 1.5;">
+            <strong style="color: #818cf8;">📌 How to download genuine activity data from Meta:</strong>
+            <ol style="margin: 6px 0 0 18px; padding: 0;">
+              <li>Open <a href="https://business.facebook.com/wa/manage/message-templates/" target="_blank" style="color: #38bdf8;">Meta WhatsApp Manager</a> &rarr; <strong>Insights</strong> (or <strong>Campaigns</strong>).</li>
+              <li>Select your campaign date range (e.g. <strong>03 Oct to 09 Oct 2026</strong>).</li>
+              <li>Click <strong>Export &rarr; Message Activity Report (CSV)</strong>.</li>
+              <li>Upload or paste the CSV content below to automatically attach genuine Meta read &amp; delivery blue ticks to every lead.</li>
+            </ol>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 6px;">Select Meta CSV File:</label>
+            <input type="file" id="metaCsvFileInput" accept=".csv,text/csv" style="padding: 8px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 6px; width: 100%; color: #fff; font-size: 12px;" onchange="handleMetaCsvFileSelect(event)" />
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 6px;">Or Paste CSV Content Here:</label>
+            <textarea id="metaCsvTextInput" rows="6" placeholder="Paste raw CSV content with headers (e.g., Phone, Status, Timestamp)..." style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 6px; color: #fff; padding: 10px; font-family: monospace; font-size: 11px;"></textarea>
+          </div>
+
+          <div id="metaImportStatusMsg" style="display: none; padding: 10px; border-radius: 6px; font-size: 12px;"></div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+            <button class="btn" onclick="closeMetaImportModal()">Cancel</button>
+            <button class="btn btn-primary" id="metaImportSubmitBtn" onclick="submitMetaActivityImport()">🚀 Import &amp; Sync Leads</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1386,9 +1429,15 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       function renderContacts(contacts) {
         const tbody = document.getElementById("contactsTableBody");
         if (contacts.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">' +
-            (selectedBatch ? 'No contacts found for Batch ' + selectedBatch : (selectedDate ? 'No contacts found for date: ' + selectedDate : 'No contacts found matching criteria.')) +
-          '</td></tr>';
+          let emptyMsg = (selectedBatch ? 'No contacts found for Batch ' + selectedBatch : (selectedDate ? 'No contacts found for date: ' + selectedDate : 'No contacts found matching criteria.'));
+          if (activeEngagementTab === 'read' && selectedBatch && Number(selectedBatch) <= 4) {
+            emptyMsg = '<div style="max-width: 580px; margin: 0 auto; text-align: center;">' +
+              '<div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px;">Batch ' + selectedBatch + ' has verified Meta reads in aggregate banner</div>' +
+              '<div style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin-bottom: 12px;">Individual per-recipient read blue ticks are logged in real-time from Oct 8 onward (Batch 5 &amp; 6). To populate historical per-contact blue ticks for Batch ' + selectedBatch + ', you can import the Meta WhatsApp Manager Activity CSV.</div>' +
+              '<button type="button" class="btn" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399; font-weight: 600;" onclick="openMetaImportModal()">📥 Import Meta Activity CSV</button>' +
+            '</div>';
+          }
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">' + emptyMsg + '</td></tr>';
           return;
         }
 
@@ -1536,6 +1585,75 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
 
       function closeJourneyModal() {
         document.getElementById("journeyModalBackdrop").classList.remove("active");
+      }
+
+      function openMetaImportModal() {
+        document.getElementById("metaImportModalBackdrop").classList.add("active");
+        const statusEl = document.getElementById("metaImportStatusMsg");
+        if (statusEl) statusEl.style.display = "none";
+      }
+
+      function closeMetaImportModal() {
+        document.getElementById("metaImportModalBackdrop").classList.remove("active");
+      }
+
+      function handleMetaCsvFileSelect(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const txt = event.target && event.target.result;
+          if (typeof txt === "string") {
+            document.getElementById("metaCsvTextInput").value = txt;
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      async function submitMetaActivityImport() {
+        const text = document.getElementById("metaCsvTextInput").value.trim();
+        const statusEl = document.getElementById("metaImportStatusMsg");
+        const btn = document.getElementById("metaImportSubmitBtn");
+        if (!text) {
+          alert("Please select a CSV file or paste CSV text first.");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "⏳ Importing & Matching...";
+        statusEl.style.display = "block";
+        statusEl.style.background = "rgba(99, 102, 241, 0.15)";
+        statusEl.style.color = "#818cf8";
+        statusEl.style.border = "1px solid rgba(99, 102, 241, 0.3)";
+        statusEl.textContent = "Processing Meta activity data points and matching with CRM prospects...";
+
+        try {
+          const res = await fetch("/api/contacts/import-meta-activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ csvText: text })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Import failed");
+
+          statusEl.style.background = "rgba(16, 185, 129, 0.15)";
+          statusEl.style.color = "#34d399";
+          statusEl.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+          statusEl.innerHTML = "✅ Successfully imported <strong>" + data.importedCount + "</strong> genuine Meta activity events!<br>👁️ Reads: " + data.readCount + " | 📬 Delivered: " + data.deliveredCount + " | ⚠️ Failed: " + data.failedCount;
+          fetchContacts();
+          fetchMetaStats();
+          setTimeout(function() {
+            closeMetaImportModal();
+          }, 2500);
+        } catch (err) {
+          statusEl.style.background = "rgba(239, 68, 68, 0.15)";
+          statusEl.style.color = "#f87171";
+          statusEl.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+          statusEl.textContent = "❌ Error: " + err.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "🚀 Import & Sync Leads";
+        }
       }
 
       function renderModalJourney(data) {
