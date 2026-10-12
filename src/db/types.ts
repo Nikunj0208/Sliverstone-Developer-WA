@@ -179,10 +179,11 @@ export interface Contact360CampaignSummary {
   lastCampaign: string | null;
   lastCampaignStatus: string | null;
   lastTemplate: string | null;
+  batchName?: string | null;
 }
 
 export interface Contact360 {
-  contact: Contact & { phoneMasked?: string };
+  contact: Contact & { phoneMasked?: string; batchName?: string };
   conversation: Conversation | null;
   conversations?: Conversation[];
   messages: Array<Message & { latestStatus?: string }>;

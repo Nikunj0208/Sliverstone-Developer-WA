@@ -88,6 +88,12 @@ export async function syncBroadcastLogsToRepository(repo: AnalyticsRepository): 
             created_at: batchDate,
             updated_at: batchDate
           });
+        } else if (!contact.source_detail || !contact.name) {
+          await repo.updateContact(contact.id, {
+            source_detail: contact.source_detail || file,
+            name: contact.name || (item.name ? item.name.trim() : undefined),
+            lead_source: contact.lead_source || "broadcast_invitation"
+          });
         }
 
         let conversation = await repo.findOpenConversationByContactId(contact.id);

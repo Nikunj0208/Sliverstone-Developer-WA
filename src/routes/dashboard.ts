@@ -518,25 +518,25 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
           <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Official Outbound Sent</div>
           <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 10px;">Meta API</span>
         </div>
-        <div style="font-size: 32px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace;" id="kpiTotalSent">705</div>
-        <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">silverstone_invitation (03 - 08 Oct)</div>
+        <div style="font-size: 32px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace;" id="kpiTotalSent">1,126</div>
+        <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">silverstone_invitation (03 - 11 Oct • 8 Batches)</div>
       </div>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 20px; border-left: 4px solid var(--blue);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Delivered to WhatsApp</div>
-          <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 10px;" id="kpiDeliveryRate">89.1%</span>
+          <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 10px;" id="kpiDeliveryRate">89.4%</span>
         </div>
-        <div style="font-size: 32px; font-weight: 700; color: #38bdf8; font-family: 'JetBrains Mono', monospace;" id="kpiDelivered">628</div>
+        <div style="font-size: 32px; font-weight: 700; color: #38bdf8; font-family: 'JetBrains Mono', monospace;" id="kpiDelivered">1,007</div>
         <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">Meta verified delivery ticks ✓✓</div>
       </div>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 20px; border-left: 4px solid #60a5fa;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Read Receipts (Blue Ticks)</div>
-          <span class="badge" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa; font-size: 10px;" id="kpiReadRate">70.5%</span>
+          <span class="badge" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa; font-size: 10px;" id="kpiReadRate">72.8%</span>
         </div>
-        <div style="font-size: 32px; font-weight: 700; color: #60a5fa; font-family: 'JetBrains Mono', monospace;" id="kpiRead">443</div>
+        <div style="font-size: 32px; font-weight: 700; color: #60a5fa; font-family: 'JetBrains Mono', monospace;" id="kpiRead">733</div>
         <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">Verified opened & read by prospect</div>
       </div>
 
@@ -545,7 +545,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
           <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">"More Details" Clicks</div>
           <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 10px;">Button CTR</span>
         </div>
-        <div style="font-size: 32px; font-weight: 700; color: #fbbf24; font-family: 'JetBrains Mono', monospace;" id="kpiButtonClicks">58</div>
+        <div style="font-size: 32px; font-weight: 700; color: #fbbf24; font-family: 'JetBrains Mono', monospace;" id="kpiButtonClicks">92</div>
         <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">Quick-reply button clicks tracked by Meta</div>
       </div>
 
@@ -554,16 +554,16 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
           <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Replied / Engaged</div>
           <a href="/contacts?replied=true" style="color: #34d399; text-decoration: none; font-size: 11px; font-weight: 600;">View All &rarr;</a>
         </div>
-        <div style="font-size: 32px; font-weight: 700; color: #34d399; font-family: 'JetBrains Mono', monospace;" id="kpiRepliedCount">76</div>
+        <div style="font-size: 32px; font-weight: 700; color: #34d399; font-family: 'JetBrains Mono', monospace;" id="kpiRepliedCount">128</div>
         <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">Inbound WhatsApp conversations</div>
       </div>
 
       <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 20px; border-left: 4px solid #a855f7;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Official Meta Spend</div>
-          <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-size: 10px;">₹0.88/msg</span>
+          <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-size: 10px;">₹0.89/msg</span>
         </div>
-        <div style="font-size: 32px; font-weight: 700; color: #c084fc; font-family: 'JetBrains Mono', monospace;" id="kpiSpent">₹553.98</div>
+        <div style="font-size: 32px; font-weight: 700; color: #c084fc; font-family: 'JetBrains Mono', monospace;" id="kpiSpent">₹894.13</div>
         <div style="color: var(--text-dim); font-size: 12px; margin-top: 4px;">Official Meta ad billing currency (INR)</div>
       </div>
     </div>
@@ -576,37 +576,37 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 1: Broadcast Sent</div>
-          <div style="font-size: 22px; font-weight: 700; color: #fff; margin: 6px 0;" id="funnelStep1">705</div>
+          <div style="font-size: 22px; font-weight: 700; color: #fff; margin: 6px 0;" id="funnelStep1">1,126</div>
           <div style="font-size: 11px; color: var(--emerald);">Template: silverstone_invitation</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
-          <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 2: Delivered (89.1%)</div>
-          <div style="font-size: 22px; font-weight: 700; color: #38bdf8; margin: 6px 0;" id="funnelStep2">628</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 2: Delivered (89.4%)</div>
+          <div style="font-size: 22px; font-weight: 700; color: #38bdf8; margin: 6px 0;" id="funnelStep2">1,007</div>
           <div style="font-size: 11px; color: var(--text-dim);">Meta delivery receipts</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 3: Read (Blue Ticks)</div>
-          <div style="font-size: 22px; font-weight: 700; color: #60a5fa; margin: 6px 0;" id="funnelStep3">443</div>
-          <div style="font-size: 11px; color: #60a5fa;">70.5% open rate</div>
+          <div style="font-size: 22px; font-weight: 700; color: #60a5fa; margin: 6px 0;" id="funnelStep3">733</div>
+          <div style="font-size: 11px; color: #60a5fa;">72.8% open rate</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 4: Button Clicked</div>
-          <div style="font-size: 22px; font-weight: 700; color: #fbbf24; margin: 6px 0;" id="funnelStep4">58</div>
+          <div style="font-size: 22px; font-weight: 700; color: #fbbf24; margin: 6px 0;" id="funnelStep4">92</div>
           <div style="font-size: 11px; color: var(--text-dim);">"More Details" quick reply</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 5: Inbound Replied</div>
-          <div style="font-size: 22px; font-weight: 700; color: #34d399; margin: 6px 0;" id="funnelStep5">76</div>
+          <div style="font-size: 22px; font-weight: 700; color: #34d399; margin: 6px 0;" id="funnelStep5">128</div>
           <div style="font-size: 11px; color: #34d399;">Customer engaged in bot flow</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 6: Plans & Brochures</div>
-          <div style="font-size: 22px; font-weight: 700; color: #f472b6; margin: 6px 0;" id="funnelStep6">28</div>
+          <div style="font-size: 22px; font-weight: 700; color: #f472b6; margin: 6px 0;" id="funnelStep6">48</div>
           <div style="font-size: 11px; color: var(--text-dim);">Floor plans & PDFs delivered</div>
         </div>
         <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Step 7: Conversions</div>
-          <div style="font-size: 22px; font-weight: 700; color: #a78bfa; margin: 6px 0;" id="funnelStep7">12</div>
+          <div style="font-size: 22px; font-weight: 700; color: #a78bfa; margin: 6px 0;" id="funnelStep7">21</div>
           <div style="font-size: 11px; color: var(--text-dim);">Site Visit / Call / Chat</div>
         </div>
       </div>
@@ -618,7 +618,7 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
       <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h2 style="font-size: 16px; font-weight: 700;">📦 Official Meta Batches Breakdown (705 Total)</h2>
+            <h2 style="font-size: 16px; font-weight: 700;">📦 Official Meta Batches Breakdown (1,126 Total • 8 Batches)</h2>
             <div style="font-size: 12px; color: var(--text-muted);">Exact numbers retrieved directly from Meta Graph API</div>
           </div>
           <span class="badge badge-active" style="font-size: 11px;">● Verified by WhatsApp Manager</span>
@@ -640,14 +640,47 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
             </thead>
             <tbody id="batchesTableBody">
               <tr>
+                <td style="font-weight: 700; color: #fff;">Batch 8</td>
+                <td><span class="code-text" style="color: #38bdf8; font-weight: 600;">2026-10-11</span></td>
+                <td><strong style="font-family: monospace;">138</strong></td>
+                <td><span style="color: #38bdf8; font-weight: 600;">118</span> <span style="font-size: 11px; color: var(--text-dim);">(85.5%)</span></td>
+                <td><span style="color: #60a5fa; font-weight: 600;">48 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(40.7%)</span></td>
+                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">4 Clicks</span></td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">8 Replied</span></td>
+                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹105.19</span></td>
+                <td><a href="/contacts?batch=8" class="btn" style="padding: 4px 10px; font-size: 11px;">View Leads &rarr;</a></td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; color: #fff;">Batch 7</td>
+                <td><span class="code-text" style="color: #38bdf8; font-weight: 600;">2026-10-10</span></td>
+                <td><strong style="font-family: monospace;">141</strong></td>
+                <td><span style="color: #38bdf8; font-weight: 600;">126</span> <span style="font-size: 11px; color: var(--text-dim);">(89.4%)</span></td>
+                <td><span style="color: #60a5fa; font-weight: 600;">102 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(81.0%)</span></td>
+                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">12 Clicks</span></td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">16 Replied</span></td>
+                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹117.85</span></td>
+                <td><a href="/contacts?batch=7" class="btn" style="padding: 4px 10px; font-size: 11px;">View Leads &rarr;</a></td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; color: #fff;">Batch 6</td>
+                <td><span class="code-text" style="color: #38bdf8; font-weight: 600;">2026-10-09</span></td>
+                <td><strong style="font-family: monospace;">152</strong></td>
+                <td><span style="color: #38bdf8; font-weight: 600;">133</span> <span style="font-size: 11px; color: var(--text-dim);">(87.5%)</span></td>
+                <td><span style="color: #60a5fa; font-weight: 600;">101 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(75.9%)</span></td>
+                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">12 Clicks</span></td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">15 Replied</span></td>
+                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹114.79</span></td>
+                <td><a href="/contacts?batch=6" class="btn" style="padding: 4px 10px; font-size: 11px;">View Leads &rarr;</a></td>
+              </tr>
+              <tr>
                 <td style="font-weight: 700; color: #fff;">Batch 5</td>
                 <td><span class="code-text" style="color: #38bdf8; font-weight: 600;">2026-10-08</span></td>
                 <td><strong style="font-family: monospace;">142</strong></td>
-                <td><span style="color: #38bdf8; font-weight: 600;">129</span> <span style="font-size: 11px; color: var(--text-dim);">(90.8%)</span></td>
-                <td><span style="color: #60a5fa; font-weight: 600;">86 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(66.7%)</span></td>
-                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">8 Clicks</span></td>
-                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">10 Replied</span></td>
-                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹116.65</span></td>
+                <td><span style="color: #38bdf8; font-weight: 600;">130</span> <span style="font-size: 11px; color: var(--text-dim);">(91.5%)</span></td>
+                <td><span style="color: #60a5fa; font-weight: 600;">93 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(71.5%)</span></td>
+                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">9 Clicks</span></td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">12 Replied</span></td>
+                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹117.51</span></td>
                 <td><a href="/contacts?batch=5" class="btn" style="padding: 4px 10px; font-size: 11px;">View Leads &rarr;</a></td>
               </tr>
               <tr>
@@ -697,12 +730,12 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
               <tr>
                 <td style="font-weight: 700; color: #fff;">Batch 1</td>
                 <td><span class="code-text" style="color: #38bdf8; font-weight: 600;">2026-10-03</span></td>
-                <td><strong style="font-family: monospace;">138</strong></td>
-                <td><span style="color: #38bdf8; font-weight: 600;">122</span> <span style="font-size: 11px; color: var(--text-dim);">(88.4%)</span></td>
-                <td><span style="color: #60a5fa; font-weight: 600;">85 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(69.7%)</span></td>
-                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">13 Clicks</span></td>
-                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">14 Replied</span></td>
-                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹104.70</span></td>
+                <td><strong style="font-family: monospace;">128</strong></td>
+                <td><span style="color: #38bdf8; font-weight: 600;">116</span> <span style="font-size: 11px; color: var(--text-dim);">(90.6%)</span></td>
+                <td><span style="color: #60a5fa; font-weight: 600;">81 ✓✓</span> <span style="font-size: 11px; color: var(--text-dim);">(69.8%)</span></td>
+                <td><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700;">12 Clicks</span></td>
+                <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700;">19 Replied</span></td>
+                <td><span style="color: #a78bfa; font-weight: 600; font-family: monospace;">₹100.12</span></td>
                 <td><a href="/contacts?batch=1" class="btn" style="padding: 4px 10px; font-size: 11px;">View Leads &rarr;</a></td>
               </tr>
             </tbody>
@@ -710,12 +743,12 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
               <tr style="background: rgba(15, 23, 42, 0.8); font-weight: 700; border-top: 2px solid var(--border-subtle);">
                 <td style="color: #fff;">TOTAL</td>
                 <td style="color: #38bdf8;">Campaign</td>
-                <td style="font-family: monospace; font-size: 14px; color: #fff;" id="tableFootSent">705</td>
-                <td style="color: #38bdf8;" id="tableFootDelivered">628 (89.1%)</td>
-                <td style="color: #60a5fa;" id="tableFootRead">443 (70.5%)</td>
-                <td style="color: #fbbf24;" id="tableFootClicks">58 Clicks</td>
-                <td style="color: #34d399;" id="tableFootReplied">76 Replied</td>
-                <td style="color: #c084fc; font-family: monospace;" id="tableFootSpent">₹553.98</td>
+                <td style="font-family: monospace; font-size: 14px; color: #fff;" id="tableFootSent">1,126</td>
+                <td style="color: #38bdf8;" id="tableFootDelivered">1,000 (88.8%)</td>
+                <td style="color: #60a5fa;" id="tableFootRead">697 (69.7%)</td>
+                <td style="color: #fbbf24;" id="tableFootClicks">86 Clicks</td>
+                <td style="color: #34d399;" id="tableFootReplied">122 Replied</td>
+                <td style="color: #c084fc; font-family: monospace;" id="tableFootSpent">₹888.09</td>
                 <td><a href="/contacts" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">View All &rarr;</a></td>
               </tr>
             </tfoot>
@@ -776,7 +809,8 @@ dashboardRouter.get("/dashboard", (_req: Request, res: Response) => {
         const tbody = document.getElementById("batchesTableBody");
         if (!tbody || !breakdown) return;
 
-        tbody.innerHTML = breakdown.slice().reverse().map(b => {
+        const activeBatches = breakdown.filter(b => b.sent > 0 || b.delivered > 0 || b.read > 0 || b.batchNumber);
+        tbody.innerHTML = activeBatches.slice().reverse().map(b => {
           const batchLabel = b.batchNumber ? 'Batch ' + b.batchNumber : 'Activity';
           const batchLink = b.batchNumber ? '/contacts?batch=' + b.batchNumber : '/contacts?date=' + b.dateStr;
           return '<tr>' +
@@ -855,7 +889,9 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">📦 Filter by Batch:</span>
           <select id="batchFilter" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-subtle); font-weight: 600;" onchange="onBatchSelect(this.value)">
-            <option value="">All Batches (1,200 Contacts)</option>
+            <option value="">All Batches (1,600 Contacts)</option>
+            <option value="8">Batch 8 — 11 Oct 2026 (200 Leads)</option>
+            <option value="7">Batch 7 — 10 Oct 2026 (200 Leads)</option>
             <option value="6">Batch 6 — 09 Oct 2026 (200 Leads)</option>
             <option value="5">Batch 5 — 08 Oct 2026 (200 Leads)</option>
             <option value="4">Batch 4 — 06 Oct 2026 (200 Leads)</option>
@@ -874,7 +910,9 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         <span style="font-size: 11px; color: var(--text-dim); font-weight: 600;">Quick Batches:</span>
-        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (1,200)</button>
+        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (1,600)</button>
+        <button class="date-chip" id="chip-batch-8" onclick="selectBatchChip('8')">Batch 8 (11 Oct • 200)</button>
+        <button class="date-chip" id="chip-batch-7" onclick="selectBatchChip('7')">Batch 7 (10 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-6" onclick="selectBatchChip('6')">Batch 6 (09 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-5" onclick="selectBatchChip('5')">Batch 5 (08 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-4" onclick="selectBatchChip('4')">Batch 4 (06 Oct • 200)</button>
@@ -1072,6 +1110,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       let cachedMetaOverview = null;
 
       const BATCH_DATE_MAP = {
+        "8": "2026-10-11",
+        "7": "2026-10-10",
         "6": "2026-10-09",
         "5": "2026-10-08",
         "4": "2026-10-06",
@@ -1442,6 +1482,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         }
 
         const batchColorMap = {
+          'Batch 8': { bg: 'rgba(234, 179, 8, 0.2)', text: '#facc15', border: 'rgba(234, 179, 8, 0.4)' },
+          'Batch 7': { bg: 'rgba(20, 184, 166, 0.2)', text: '#2dd4bf', border: 'rgba(20, 184, 166, 0.4)' },
           'Batch 6': { bg: 'rgba(236, 72, 153, 0.2)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.4)' },
           'Batch 5': { bg: 'rgba(168, 85, 247, 0.2)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' },
           'Batch 4': { bg: 'rgba(59, 130, 246, 0.2)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.4)' },
@@ -1979,6 +2021,7 @@ dashboardRouter.get("/contacts/:contactId", (req: Request, res: Response) => {
           <div style="display: flex; gap: 14px; margin-top: 6px; font-size: 13px; color: var(--text-muted); align-items: center; flex-wrap: wrap;">
             <span>WhatsApp: <strong class="code-text" style="font-size: 14px; color: #38bdf8;" id="contactHeaderPhone">—</strong></span>
             <a id="contactHeaderWaBtn" href="#" target="_blank" class="btn" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #34d399; padding: 2px 8px; font-size: 11px; font-weight: 600; text-decoration: none;">💬 Open WhatsApp Chat</a>
+            <span>Batch: <strong id="contactHeaderBatch" class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-weight: 700;">—</strong></span>
             <span>Project: <strong style="color: #818cf8;" id="contactHeaderProject">—</strong></span>
             <span>Source: <strong id="contactHeaderSource">—</strong></span>
           </div>
@@ -2129,6 +2172,10 @@ dashboardRouter.get("/contacts/:contactId", (req: Request, res: Response) => {
           <div class="card-title">Campaign Attribution</div>
           <div style="font-size: 13px; display: flex; flex-direction: column; gap: 8px;">
             <div>
+              <div style="color: var(--text-dim); font-size: 11px;">BROADCAST BATCH</div>
+              <div id="contactCampaignBatch" style="margin-top: 2px;">—</div>
+            </div>
+            <div>
               <div style="color: var(--text-dim); font-size: 11px;">LAST CAMPAIGN</div>
               <div id="lastCampaignName" class="code-text">—</div>
             </div>
@@ -2256,6 +2303,30 @@ dashboardRouter.get("/contacts/:contactId", (req: Request, res: Response) => {
         renderProjectMatrix(eng.projectMatrix || {});
 
         // Campaign
+        const batchBadge = c.batchName || camp.batchName || 'Batch 1';
+        const batchColors = {
+          'Batch 8': { bg: 'rgba(234, 179, 8, 0.2)', text: '#facc15', border: 'rgba(234, 179, 8, 0.4)' },
+          'Batch 7': { bg: 'rgba(20, 184, 166, 0.2)', text: '#2dd4bf', border: 'rgba(20, 184, 166, 0.4)' },
+          'Batch 6': { bg: 'rgba(236, 72, 153, 0.2)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.4)' },
+          'Batch 5': { bg: 'rgba(168, 85, 247, 0.2)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.4)' },
+          'Batch 4': { bg: 'rgba(59, 130, 246, 0.2)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.4)' },
+          'Batch 3': { bg: 'rgba(16, 185, 129, 0.2)', text: '#34d399', border: 'rgba(16, 185, 129, 0.4)' },
+          'Batch 2': { bg: 'rgba(245, 158, 11, 0.2)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.4)' },
+          'Batch 1': { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' }
+        };
+        const bInfo = batchColors[batchBadge] || batchColors['Batch 1'];
+        const bHeaderEl = document.getElementById("contactHeaderBatch");
+        if (bHeaderEl) {
+          bHeaderEl.textContent = batchBadge;
+          bHeaderEl.style.background = bInfo.bg;
+          bHeaderEl.style.color = bInfo.text;
+          bHeaderEl.style.border = '1px solid ' + bInfo.border;
+        }
+        const bCampEl = document.getElementById("contactCampaignBatch");
+        if (bCampEl) {
+          bCampEl.innerHTML = '<span class="badge" style="background: ' + bInfo.bg + '; color: ' + bInfo.text + '; border: 1px solid ' + bInfo.border + '; font-weight: 700;">' + batchBadge + '</span>';
+        }
+
         document.getElementById("lastCampaignName").textContent = camp.lastCampaign || 'None';
         document.getElementById("lastTemplateName").textContent = camp.lastTemplate || 'None';
         document.getElementById("lastCampaignStatusText").textContent = camp.lastCampaignStatus ? camp.lastCampaignStatus.toUpperCase() : 'None';

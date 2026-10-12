@@ -5,7 +5,8 @@ import axios from "axios";
 import { env } from "../src/config/env.js";
 import { uploadMedia } from "../src/meta/media.js";
 import { analyticsService } from "../src/services/analytics-service.js";
-import { initDatabase } from "../src/db/index.js";
+import { initDatabase, getAnalyticsRepository } from "../src/db/index.js";
+import { syncBroadcastLogsToRepository } from "../src/db/sync-logs.js";
 
 type Contact = {
   phone: string;
@@ -187,8 +188,22 @@ async function main() {
             console.log(`Meta rolling 24-hour conversation window clears in: ~${minutesLeft} minute(s).`);
             console.log(`To ensure Meta does not flag your account or hit rate limits, wait ${minutesLeft} minute(s).`);
             if (!isDryRun && !process.argv.includes("--force")) {
-              console.log(`\nStopping safely to protect account health. Run again in ${minutesLeft} minute(s) or pass --force to override.`);
-              process.exit(0);
+              if (process.argv.includes("--wait-safeguard")) {
+                console.log(`\n⏳ Waiting ${minutesLeft} minute(s) until 24-hour window clears...`);
+                while (Date.now() < lastRunTime + 24 * 60 * 60 * 1000) {
+                  const rem = (lastRunTime + 24 * 60 * 60 * 1000) - Date.now();
+                  if (rem <= 0) break;
+                  await sleep(Math.min(rem, 30000));
+                  const sec = Math.ceil(((lastRunTime + 24 * 60 * 60 * 1000) - Date.now()) / 1000);
+                  if (sec > 0) {
+                    console.log(`[SAFEGUARD HEARTBEAT] ~${Math.ceil(sec / 60)} min (${sec}s) remaining before 24-hour window clears...`);
+                  }
+                }
+                console.log(`\n✅ 24-hour window cleared! Safe to proceed.\n`);
+              } else {
+                console.log(`\nStopping safely to protect account health. Run again in ${minutesLeft} minute(s) or pass --wait-safeguard / --force.`);
+                process.exit(0);
+              }
             }
           }
         }
@@ -332,11 +347,24 @@ async function main() {
   const failCount = results.filter((r) => r.status === "FAILED").length;
   console.log(`Summary: ${sentCount} sent successfully, ${failCount} failed.`);
 
+  // Direct CRM repository sync
+  try {
+    const repo = getAnalyticsRepository();
+    if (repo) {
+      await syncBroadcastLogsToRepository(repo);
+      console.log("[CRM] Synced new broadcast batch directly into database repository.");
+    }
+  } catch (err: any) {
+    console.warn("[CRM] Direct sync note:", err.message);
+  }
+
   // Auto-notify local dev CRM if running
   try {
     await axios.post("http://localhost:3000/api/sync/broadcasts", {}, { timeout: 3000 });
     console.log("[CRM] Automatically synced new broadcast batch with local CRM database.");
   } catch { }
+
+  process.exit(0);
 }
 
 main();

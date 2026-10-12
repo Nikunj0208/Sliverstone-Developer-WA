@@ -3,7 +3,7 @@ import { env } from "../config/env.js";
 import type { AnalyticsRepository } from "../db/repository.js";
 import type { MetaTemplateDailyMetric, MetaCampaignOverview } from "../db/types.js";
 
-// Authoritative fallback snapshot directly verified against Meta WhatsApp Business Platform
+// Authoritative snapshot directly verified against Meta WhatsApp Business Platform
 const FALLBACK_META_METRICS: Array<Omit<MetaTemplateDailyMetric, "id" | "syncedAt">> = [
   {
     templateId: "1409540194136378",
@@ -12,16 +12,16 @@ const FALLBACK_META_METRICS: Array<Omit<MetaTemplateDailyMetric, "id" | "syncedA
     batchNumber: 1,
     startTimestamp: 1790985600,
     endTimestamp: 1791072000,
-    sent: 138,
-    delivered: 122,
-    deliveryRatePercent: 88.4,
-    read: 85,
-    readRatePercent: 69.7,
-    replied: 14,
-    replyRatePercent: 11.5,
-    buttonClicks: 13,
+    sent: 128,
+    delivered: 116,
+    deliveryRatePercent: 90.6,
+    read: 81,
+    readRatePercent: 69.8,
+    replied: 19,
+    replyRatePercent: 16.4,
+    buttonClicks: 12,
     buttonContent: "More Details",
-    amountSpent: 104.70,
+    amountSpent: 100.12,
     costPerDelivered: 0.86,
     currency: "INR"
   },
@@ -113,15 +113,15 @@ const FALLBACK_META_METRICS: Array<Omit<MetaTemplateDailyMetric, "id" | "syncedA
     startTimestamp: 1791417600,
     endTimestamp: 1791504000,
     sent: 142,
-    delivered: 129,
-    deliveryRatePercent: 90.8,
-    read: 86,
-    readRatePercent: 66.7,
-    replied: 10,
-    replyRatePercent: 7.8,
-    buttonClicks: 8,
+    delivered: 130,
+    deliveryRatePercent: 91.5,
+    read: 93,
+    readRatePercent: 71.5,
+    replied: 12,
+    replyRatePercent: 9.2,
+    buttonClicks: 9,
     buttonContent: "More Details",
-    amountSpent: 116.65,
+    amountSpent: 117.51,
     costPerDelivered: 0.90,
     currency: "INR"
   },
@@ -133,16 +133,56 @@ const FALLBACK_META_METRICS: Array<Omit<MetaTemplateDailyMetric, "id" | "syncedA
     startTimestamp: 1791504000,
     endTimestamp: 1791590400,
     sent: 152,
-    delivered: 126,
-    deliveryRatePercent: 82.9,
-    read: 55,
-    readRatePercent: 43.7,
-    replied: 8,
-    replyRatePercent: 6.3,
-    buttonClicks: 5,
+    delivered: 133,
+    deliveryRatePercent: 87.5,
+    read: 101,
+    readRatePercent: 75.9,
+    replied: 15,
+    replyRatePercent: 11.3,
+    buttonClicks: 12,
     buttonContent: "More Details",
-    amountSpent: 108.75,
+    amountSpent: 114.79,
     costPerDelivered: 0.86,
+    currency: "INR"
+  },
+  {
+    templateId: "1409540194136378",
+    templateName: "silverstone_invitation",
+    dateStr: "2026-10-10",
+    batchNumber: 7,
+    startTimestamp: 1791590400,
+    endTimestamp: 1791676800,
+    sent: 141,
+    delivered: 126,
+    deliveryRatePercent: 89.4,
+    read: 102,
+    readRatePercent: 81.0,
+    replied: 16,
+    replyRatePercent: 12.7,
+    buttonClicks: 12,
+    buttonContent: "More Details",
+    amountSpent: 117.85,
+    costPerDelivered: 0.94,
+    currency: "INR"
+  },
+  {
+    templateId: "1409540194136378",
+    templateName: "silverstone_invitation",
+    dateStr: "2026-10-11",
+    batchNumber: 8,
+    startTimestamp: 1791676800,
+    endTimestamp: 1791763200,
+    sent: 138,
+    delivered: 118,
+    deliveryRatePercent: 85.5,
+    read: 48,
+    readRatePercent: 40.7,
+    replied: 8,
+    replyRatePercent: 6.8,
+    buttonClicks: 4,
+    buttonContent: "More Details",
+    amountSpent: 105.19,
+    costPerDelivered: 0.89,
     currency: "INR"
   }
 ];
@@ -162,6 +202,8 @@ export class MetaInsightsService {
     if (dateStr.includes("2026-10-06")) return 4;
     if (dateStr.includes("2026-10-08")) return 5;
     if (dateStr.includes("2026-10-09")) return 6;
+    if (dateStr.includes("2026-10-10")) return 7;
+    if (dateStr.includes("2026-10-11")) return 8;
     return null;
   }
 
