@@ -206,6 +206,7 @@ export class MetaInsightsService {
     if (dateStr.includes("2026-10-11")) return 8;
     if (dateStr.includes("2026-10-12")) return 9;
     if (dateStr.includes("2026-10-13")) return 10;
+    if (dateStr.includes("2026-10-14")) return 11;
     return null;
   }
 
