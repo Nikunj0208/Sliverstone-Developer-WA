@@ -27,6 +27,7 @@ async function main() {
   const { total } = await repo.listContacts({ limit: 1 });
   console.log(`\nCRM Total Contacts Now: ${total}`);
   console.log("==========================================");
+  process.exit(0);
 }
 
 main().catch(console.error);
