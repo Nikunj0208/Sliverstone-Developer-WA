@@ -20,6 +20,7 @@
     "sync:logs": "tsx scripts/sync-broadcast-logs-to-crm.ts",
     "meta:import": "tsx scripts/import-meta-activity.ts",
     "batch14:auto": "tsx scripts/automate-batch-14.ts",
+    "batch15:auto": "tsx scripts/automate-batch-15.ts",
     "test": "npm run build && node --test tests/*.test.mjs"
   },
   "dependencies": {
