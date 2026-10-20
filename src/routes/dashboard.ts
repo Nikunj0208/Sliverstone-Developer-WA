@@ -889,7 +889,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">📦 Filter by Batch:</span>
           <select id="batchFilter" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-subtle); font-weight: 600;" onchange="onBatchSelect(this.value)">
-            <option value="">All Batches (3,200 Contacts)</option>
+            <option value="">All Batches (3,400 Contacts)</option>
+            <option value="17">Batch 17 — 20 Oct 2026 (200 Leads)</option>
             <option value="16">Batch 16 — 19 Oct 2026 (200 Leads)</option>
             <option value="15">Batch 15 — 18 Oct 2026 (200 Leads)</option>
             <option value="14">Batch 14 — 17 Oct 2026 (200 Leads)</option>
@@ -918,7 +919,8 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         <span style="font-size: 11px; color: var(--text-dim); font-weight: 600;">Quick Batches:</span>
-        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (3,200)</button>
+        <button class="date-chip active" id="chip-all" onclick="selectBatchChip('')">All Batches (3,400)</button>
+        <button class="date-chip" id="chip-batch-17" onclick="selectBatchChip('17')">Batch 17 (20 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-16" onclick="selectBatchChip('16')">Batch 16 (19 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-15" onclick="selectBatchChip('15')">Batch 15 (18 Oct • 200)</button>
         <button class="date-chip" id="chip-batch-14" onclick="selectBatchChip('14')">Batch 14 (17 Oct • 200)</button>
@@ -1498,6 +1500,7 @@ dashboardRouter.get("/contacts", (_req: Request, res: Response) => {
         }
 
         const batchColorMap = {
+          'Batch 17': { bg: 'rgba(168, 85, 247, 0.25)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.5)' },
           'Batch 16': { bg: 'rgba(14, 165, 233, 0.25)', text: '#38bdf8', border: 'rgba(14, 165, 233, 0.5)' },
           'Batch 15': { bg: 'rgba(236, 72, 153, 0.25)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.5)' },
           'Batch 14': { bg: 'rgba(249, 115, 22, 0.2)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.4)' },
@@ -2329,6 +2332,7 @@ dashboardRouter.get("/contacts/:contactId", (req: Request, res: Response) => {
         // Campaign
         const batchBadge = c.batchName || camp.batchName || 'Batch 1';
         const batchColors = {
+          'Batch 17': { bg: 'rgba(168, 85, 247, 0.25)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.5)' },
           'Batch 16': { bg: 'rgba(14, 165, 233, 0.25)', text: '#38bdf8', border: 'rgba(14, 165, 233, 0.5)' },
           'Batch 15': { bg: 'rgba(236, 72, 153, 0.25)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.5)' },
           'Batch 14': { bg: 'rgba(249, 115, 22, 0.2)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.4)' },
