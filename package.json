@@ -23,6 +23,7 @@
     "batch15:auto": "tsx scripts/automate-batch-15.ts",
     "batch16:auto": "tsx scripts/automate-batch-16.ts",
     "batch17:auto": "tsx scripts/automate-batch-17.ts",
+    "batch18:auto": "tsx scripts/automate-batch-18.ts",
     "test": "npm run build && node --test tests/*.test.mjs"
   },
   "dependencies": {
