@@ -260,6 +260,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     if (query.batch) {
       const batchNum = query.batch.replace(/[^0-9]/g, "") || query.batch.trim();
       const batchDateMap: Record<string, string> = {
+        "22": "2026-10-25",
         "21": "2026-10-24",
         "20": "2026-10-23",
         "19": "2026-10-22",
@@ -411,7 +412,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       let batchName = "Batch 1";
       const sourceStr = row.source_detail || "";
       const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
-      if (sourceStr.includes("2026-10-24")) {
+      if (sourceStr.includes("2026-10-25")) {
+        batchName = "Batch 22";
+      } else if (sourceStr.includes("2026-10-24")) {
         batchName = "Batch 21";
       } else if (sourceStr.includes("2026-10-23")) {
         batchName = "Batch 20";
@@ -453,6 +456,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         batchName = "Batch 2";
       } else if (sourceStr.includes("2026-10-03")) {
         batchName = "Batch 1";
+      } else if (firstSeenStr.startsWith("2026-10-25")) {
+        batchName = "Batch 22";
       } else if (firstSeenStr.startsWith("2026-10-24")) {
         batchName = "Batch 21";
       } else if (firstSeenStr.startsWith("2026-10-23")) {
@@ -1466,7 +1471,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     let batchName = "Batch 1";
     const sourceStr = contact.source_detail || "";
     const firstSeenStr = contact.first_seen_at ? new Date(contact.first_seen_at).toISOString() : (contact.created_at ? new Date(contact.created_at).toISOString() : "");
-    if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
+    if (sourceStr.includes("2026-10-25") || firstSeenStr.startsWith("2026-10-25")) {
+      batchName = "Batch 22";
+    } else if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
       batchName = "Batch 21";
     } else if (sourceStr.includes("2026-10-23") || firstSeenStr.startsWith("2026-10-23")) {
       batchName = "Batch 20";

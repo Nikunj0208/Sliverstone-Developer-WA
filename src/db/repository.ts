@@ -586,6 +586,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       if (query.batch) {
         const batchNum = query.batch.replace(/[^0-9]/g, "") || query.batch.trim();
         const batchDateMap: Record<string, string> = {
+          "22": "2026-10-25",
           "21": "2026-10-24",
           "20": "2026-10-23",
           "19": "2026-10-22",
@@ -671,7 +672,9 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
       let batchName = "Batch 1";
       const firstSeenStr = contact.first_seen_at ? contact.first_seen_at.toISOString() : (contact.created_at ? contact.created_at.toISOString() : "");
       const sourceStr = contact.source_detail || "";
-      if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
+      if (sourceStr.includes("2026-10-25") || firstSeenStr.startsWith("2026-10-25")) {
+        batchName = "Batch 22";
+      } else if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
         batchName = "Batch 21";
       } else if (sourceStr.includes("2026-10-23") || firstSeenStr.startsWith("2026-10-23")) {
         batchName = "Batch 20";
@@ -1818,7 +1821,9 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     let batchName = "Batch 1";
     const sourceStr = contact.source_detail || "";
     const firstSeenStr = contact.first_seen_at ? contact.first_seen_at.toISOString() : (contact.created_at ? contact.created_at.toISOString() : "");
-    if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
+    if (sourceStr.includes("2026-10-25") || firstSeenStr.startsWith("2026-10-25")) {
+      batchName = "Batch 22";
+    } else if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
       batchName = "Batch 21";
     } else if (sourceStr.includes("2026-10-23") || firstSeenStr.startsWith("2026-10-23")) {
       batchName = "Batch 20";
