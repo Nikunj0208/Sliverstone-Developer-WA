@@ -260,6 +260,15 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     if (query.batch) {
       const batchNum = query.batch.replace(/[^0-9]/g, "") || query.batch.trim();
       const batchDateMap: Record<string, string> = {
+        "32": "2026-11-04",
+        "31": "2026-11-03",
+        "30": "2026-11-02",
+        "29": "2026-11-01",
+        "28": "2026-10-31",
+        "27": "2026-10-30",
+        "26": "2026-10-29",
+        "25": "2026-10-28",
+        "24": "2026-10-27",
         "23": "2026-10-26",
         "22": "2026-10-25",
         "21": "2026-10-24",
@@ -413,7 +422,25 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       let batchName = "Batch 1";
       const sourceStr = row.source_detail || "";
       const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
-      if (sourceStr.includes("2026-10-26")) {
+      if (sourceStr.includes("2026-11-04")) {
+        batchName = "Batch 32";
+      } else if (sourceStr.includes("2026-11-03")) {
+        batchName = "Batch 31";
+      } else if (sourceStr.includes("2026-11-02")) {
+        batchName = "Batch 30";
+      } else if (sourceStr.includes("2026-11-01")) {
+        batchName = "Batch 29";
+      } else if (sourceStr.includes("2026-10-31")) {
+        batchName = "Batch 28";
+      } else if (sourceStr.includes("2026-10-30")) {
+        batchName = "Batch 27";
+      } else if (sourceStr.includes("2026-10-29")) {
+        batchName = "Batch 26";
+      } else if (sourceStr.includes("2026-10-28")) {
+        batchName = "Batch 25";
+      } else if (sourceStr.includes("2026-10-27")) {
+        batchName = "Batch 24";
+      } else if (sourceStr.includes("2026-10-26")) {
         batchName = "Batch 23";
       } else if (sourceStr.includes("2026-10-25")) {
         batchName = "Batch 22";
@@ -459,6 +486,24 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         batchName = "Batch 2";
       } else if (sourceStr.includes("2026-10-03")) {
         batchName = "Batch 1";
+      } else if (firstSeenStr.startsWith("2026-11-04")) {
+        batchName = "Batch 32";
+      } else if (firstSeenStr.startsWith("2026-11-03")) {
+        batchName = "Batch 31";
+      } else if (firstSeenStr.startsWith("2026-11-02")) {
+        batchName = "Batch 30";
+      } else if (firstSeenStr.startsWith("2026-11-01")) {
+        batchName = "Batch 29";
+      } else if (firstSeenStr.startsWith("2026-10-31")) {
+        batchName = "Batch 28";
+      } else if (firstSeenStr.startsWith("2026-10-30")) {
+        batchName = "Batch 27";
+      } else if (firstSeenStr.startsWith("2026-10-29")) {
+        batchName = "Batch 26";
+      } else if (firstSeenStr.startsWith("2026-10-28")) {
+        batchName = "Batch 25";
+      } else if (firstSeenStr.startsWith("2026-10-27")) {
+        batchName = "Batch 24";
       } else if (firstSeenStr.startsWith("2026-10-26")) {
         batchName = "Batch 23";
       } else if (firstSeenStr.startsWith("2026-10-25")) {
@@ -1476,7 +1521,25 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     let batchName = "Batch 1";
     const sourceStr = contact.source_detail || "";
     const firstSeenStr = contact.first_seen_at ? new Date(contact.first_seen_at).toISOString() : (contact.created_at ? new Date(contact.created_at).toISOString() : "");
-    if (sourceStr.includes("2026-10-26") || firstSeenStr.startsWith("2026-10-26")) {
+    if (sourceStr.includes("2026-11-04") || firstSeenStr.startsWith("2026-11-04")) {
+      batchName = "Batch 32";
+    } else if (sourceStr.includes("2026-11-03") || firstSeenStr.startsWith("2026-11-03")) {
+      batchName = "Batch 31";
+    } else if (sourceStr.includes("2026-11-02") || firstSeenStr.startsWith("2026-11-02")) {
+      batchName = "Batch 30";
+    } else if (sourceStr.includes("2026-11-01") || firstSeenStr.startsWith("2026-11-01")) {
+      batchName = "Batch 29";
+    } else if (sourceStr.includes("2026-10-31") || firstSeenStr.startsWith("2026-10-31")) {
+      batchName = "Batch 28";
+    } else if (sourceStr.includes("2026-10-30") || firstSeenStr.startsWith("2026-10-30")) {
+      batchName = "Batch 27";
+    } else if (sourceStr.includes("2026-10-29") || firstSeenStr.startsWith("2026-10-29")) {
+      batchName = "Batch 26";
+    } else if (sourceStr.includes("2026-10-28") || firstSeenStr.startsWith("2026-10-28")) {
+      batchName = "Batch 25";
+    } else if (sourceStr.includes("2026-10-27") || firstSeenStr.startsWith("2026-10-27")) {
+      batchName = "Batch 24";
+    } else if (sourceStr.includes("2026-10-26") || firstSeenStr.startsWith("2026-10-26")) {
       batchName = "Batch 23";
     } else if (sourceStr.includes("2026-10-25") || firstSeenStr.startsWith("2026-10-25")) {
       batchName = "Batch 22";

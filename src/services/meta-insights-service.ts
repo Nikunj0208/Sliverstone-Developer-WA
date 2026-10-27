@@ -219,6 +219,15 @@ export class MetaInsightsService {
     if (dateStr.includes("2026-10-24")) return 21;
     if (dateStr.includes("2026-10-25")) return 22;
     if (dateStr.includes("2026-10-26")) return 23;
+    if (dateStr.includes("2026-10-27")) return 24;
+    if (dateStr.includes("2026-10-28")) return 25;
+    if (dateStr.includes("2026-10-29")) return 26;
+    if (dateStr.includes("2026-10-30")) return 27;
+    if (dateStr.includes("2026-10-31")) return 28;
+    if (dateStr.includes("2026-11-01")) return 29;
+    if (dateStr.includes("2026-11-02")) return 30;
+    if (dateStr.includes("2026-11-03")) return 31;
+    if (dateStr.includes("2026-11-04")) return 32;
     return null;
   }
 
