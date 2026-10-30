@@ -6,6 +6,7 @@ import { webhookRouter } from "./routes/webhook.js";
 import { callRouter } from "./routes/call.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { crmRouter } from "./routes/crm.js";
 
 export function createApp() {
   const app = express();
@@ -22,6 +23,7 @@ export function createApp() {
   app.use(callRouter);
   app.use(analyticsRouter);
   app.use(dashboardRouter);
+  app.use("/api/crm", crmRouter);
 
   return app;
 }

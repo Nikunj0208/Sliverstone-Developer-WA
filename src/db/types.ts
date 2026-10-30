@@ -3,6 +3,8 @@ export interface Contact {
   wa_id: string;
   phone: string;
   name: string | null;
+  profile_name?: string | null;
+  campaign_day?: string | null;
   email: string | null;
   project_id: string | null;
   lead_source: string | null;
@@ -11,7 +13,14 @@ export interface Contact {
   opt_in_source: string | null;
   opt_in_at: Date | null;
   opted_out: boolean;
+  opt_out?: boolean;
   opt_out_at: Date | null;
+  last_inbound_at?: Date | null;
+  last_outbound_at?: Date | null;
+  window_24h_open?: boolean;
+  latest_message_preview?: string | null;
+  latest_status?: string | null;
+  unread_count?: number;
   first_seen_at?: Date | null;
   last_seen_at?: Date | null;
   last_activity_at?: Date | null;
@@ -388,6 +397,7 @@ export interface MetaTemplateItem {
   status: string;
   category: string;
   quality_score?: { score: string };
+  components?: any[];
 }
 
 export interface MetaSyncSnapshot {
@@ -423,4 +433,55 @@ export interface BatchSummary {
   buttonClicks: number;
   amountSpent: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  wamid: string | null;
+  wa_id: string;
+  direction: "inbound" | "outbound";
+  message_type: "text" | "template" | "image" | "document" | "audio" | "interactive" | string;
+  content_body: string | null;
+  template_name: string | null;
+  media_url: string | null;
+  status: "queued" | "sent" | "delivered" | "read" | "failed";
+  error_code: string | null;
+  error_title: string | null;
+  official_timestamp: Date;
+  created_at: Date;
+}
+
+export interface CrmContactItem {
+  id: string;
+  wa_id: string;
+  phone: string;
+  name: string;
+  profile_name: string;
+  campaign_day: string;
+  last_inbound_at: string | null;
+  last_outbound_at: string | null;
+  window_24h_open: boolean;
+  window_remaining_formatted?: string;
+  window_expires_at?: string | null;
+  latest_message_preview: string | null;
+  latest_status: string;
+  unread_count: number;
+  opt_out: boolean;
+  first_seen_at?: string | null;
+  last_seen_at?: string | null;
+}
+
+export interface CrmChatHistoryResult {
+  contact: CrmContactItem;
+  window24h: {
+    isOpen: boolean;
+    expiresAt: string | null;
+    remainingHours: number;
+    remainingMinutes: number;
+    badgeText: string;
+    badgeType: "open" | "closed";
+  };
+  messages: ChatMessage[];
+  approvedTemplates: MetaTemplateItem[];
+}
+
 

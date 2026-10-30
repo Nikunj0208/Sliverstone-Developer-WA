@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS contacts (
   wa_id VARCHAR(64) UNIQUE NOT NULL,
   phone VARCHAR(32) NOT NULL,
   name VARCHAR(255),
+  profile_name VARCHAR(255),
+  campaign_day VARCHAR(64),
   email VARCHAR(255),
   project_id VARCHAR(64),
   lead_source VARCHAR(128),
@@ -15,7 +17,14 @@ CREATE TABLE IF NOT EXISTS contacts (
   opt_in_source VARCHAR(128),
   opt_in_at TIMESTAMPTZ,
   opted_out BOOLEAN NOT NULL DEFAULT FALSE,
+  opt_out BOOLEAN NOT NULL DEFAULT FALSE,
   opt_out_at TIMESTAMPTZ,
+  last_inbound_at TIMESTAMPTZ,
+  last_outbound_at TIMESTAMPTZ,
+  window_24h_open BOOLEAN NOT NULL DEFAULT FALSE,
+  latest_message_preview TEXT,
+  latest_status VARCHAR(32) DEFAULT 'sent',
+  unread_count INTEGER NOT NULL DEFAULT 0,
   first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_activity_at TIMESTAMPTZ,
@@ -177,4 +186,28 @@ CREATE TABLE IF NOT EXISTS meta_sync_snapshots (
 );
 
 CREATE INDEX IF NOT EXISTS idx_meta_sync_synced_at ON meta_sync_snapshots (synced_at);
+
+-- 9. CHAT MESSAGES (Full WhatsApp Chat History with authentic Meta message metadata)
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id VARCHAR(64) PRIMARY KEY,
+  wamid VARCHAR(255) UNIQUE,
+  wa_id VARCHAR(64) NOT NULL REFERENCES contacts(wa_id) ON DELETE CASCADE,
+  direction VARCHAR(16) NOT NULL, -- 'inbound' | 'outbound'
+  message_type VARCHAR(32) NOT NULL, -- 'text' | 'template' | 'image' | 'document' | 'audio' | 'interactive'
+  content_body TEXT,
+  template_name VARCHAR(128),
+  media_url TEXT,
+  status VARCHAR(32) NOT NULL DEFAULT 'sent', -- 'queued' | 'sent' | 'delivered' | 'read' | 'failed'
+  error_code VARCHAR(64),
+  error_title TEXT,
+  official_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_wa_id ON chat_messages (wa_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_wamid ON chat_messages (wamid);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages (official_timestamp);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_direction ON chat_messages (direction);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_status ON chat_messages (status);
+
 

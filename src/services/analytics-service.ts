@@ -201,6 +201,33 @@ export class AnalyticsService {
       project_id: conversation.project_id
     });
 
+    // Persist to chat_messages for full WhatsApp Web Chat History
+    await repo.saveChatMessage({
+      id: message.id,
+      wamid: input.messageId,
+      wa_id: contact.wa_id,
+      direction: "inbound",
+      message_type: input.type.toLowerCase(),
+      content_body: input.text || input.buttonId || input.rowId || `[${input.type}]`,
+      status: "delivered",
+      official_timestamp: createdAt
+    });
+
+    // Broadcast real-time event to CRM frontend & WhatsApp Web drawer
+    realtimeHub.broadcast("crm_message", {
+      waId: contact.wa_id,
+      message: {
+        id: message.id,
+        wamid: input.messageId,
+        wa_id: contact.wa_id,
+        direction: "inbound",
+        message_type: input.type.toLowerCase(),
+        content_body: input.text || input.buttonId || input.rowId || `[${input.type}]`,
+        status: "delivered",
+        official_timestamp: createdAt.toISOString()
+      }
+    });
+
     // Broadcast real-time event to CRM frontend
     realtimeHub.broadcast("inbound_message", {
       contactId: contact.id,
@@ -272,6 +299,19 @@ export class AnalyticsService {
       event_timestamp: now
     });
 
+    // Persist to chat_messages for full WhatsApp Web Chat History
+    await repo.saveChatMessage({
+      id: message.id,
+      wamid: message.wa_message_id,
+      wa_id: contact.wa_id,
+      direction: "outbound",
+      message_type: message.message_type,
+      content_body: message.body_text || (message.template_name ? `Template: ${message.template_name}` : null),
+      template_name: message.template_name,
+      status: "sent",
+      official_timestamp: now
+    });
+
     return {
       contact,
       conversation,
@@ -338,7 +378,26 @@ export class AnalyticsService {
       error_message: input.errorMessage ?? null
     });
 
-    // Broadcast real-time status update to connected CRM clients
+    // Update chat_messages for the Interactive WhatsApp Web Chat Drawer
+    await repo.updateChatMessageStatus(
+      input.messageId,
+      statusLower,
+      eventTimestamp,
+      input.errorCode,
+      input.errorMessage
+    );
+
+    // Broadcast real-time status update to connected CRM clients & WhatsApp Web drawer
+    realtimeHub.broadcast("crm_status_updated", {
+      wamid: input.messageId,
+      waId: contact?.wa_id,
+      status: statusLower,
+      timestamp: eventTimestamp.toISOString(),
+      errorCode: input.errorCode,
+      errorMessage: input.errorMessage
+    });
+
+    // Broadcast legacy status update
     realtimeHub.broadcast("status_update", {
       messageId: input.messageId,
       status: statusLower,

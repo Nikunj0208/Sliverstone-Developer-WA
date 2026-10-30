@@ -31,18 +31,25 @@
     "batch23:auto": "tsx scripts/automate-batch-23.ts",
     "batch24:auto": "tsx scripts/automate-batch-24.ts",
     "queue1800:auto": "tsx scripts/automate-queue-1800.ts",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop silverstone-crm",
+    "pm2:restart": "pm2 restart silverstone-crm",
+    "pm2:status": "pm2 status",
+    "pm2:logs": "pm2 logs silverstone-crm",
     "test": "npm run build && node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@types/express": "^5.0.1",
     "@types/node": "^22.15.3",
+    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.23.1",
     "axios": "^1.8.4",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "node-cron": "^4.6.0",
     "pg": "^8.23.1",
+    "pm2": "^7.1.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
-  },
-  "devDependencies": {}
+  }
 }

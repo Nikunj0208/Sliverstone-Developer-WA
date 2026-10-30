@@ -51,10 +51,10 @@ export class MetaInsightsService {
   }
 
   /**
-   * Starts periodic automated sync with Meta Graph API (30 minutes)
+   * Starts periodic automated sync with Meta Graph API via node-cron (Daily & 30m)
    */
-  startPeriodicSync(repo: AnalyticsRepository, intervalMs = 30 * 60 * 1000): void {
-    metaSyncService.startPeriodicSync(repo, intervalMs);
+  startPeriodicSync(repo: AnalyticsRepository): void {
+    metaSyncService.startPeriodicSync(repo);
   }
 }
 

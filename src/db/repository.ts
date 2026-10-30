@@ -22,7 +22,10 @@ import type {
   MetaTemplateDailyMetric,
   MetaCampaignOverview,
   MetaSyncSnapshot,
-  BatchSummary
+  BatchSummary,
+  ChatMessage,
+  CrmContactItem,
+  CrmChatHistoryResult
 } from "./types.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
 import { writeFile, readFile, mkdir, rename } from "node:fs/promises";
@@ -144,6 +147,14 @@ export interface AnalyticsRepository {
   upsertMetaSyncSnapshot(snapshot: MetaSyncSnapshot): Promise<void>;
   getLatestMetaSyncSnapshot(): Promise<MetaSyncSnapshot | null>;
   listBatches(): Promise<BatchSummary[]>;
+
+  // WhatsApp Web Chat History & CRM
+  listChatMessagesByWaId(waId: string): Promise<ChatMessage[]>;
+  saveChatMessage(data: Partial<ChatMessage> & { wa_id: string; direction: "inbound" | "outbound" }): Promise<ChatMessage>;
+  updateChatMessageStatus(wamid: string, status: string, timestamp?: Date, errorCode?: string | null, errorTitle?: string | null): Promise<ChatMessage | null>;
+  getCrmContact(waId: string): Promise<CrmContactItem | null>;
+  listCrmContacts(query?: { search?: string; batch?: string; limit?: number; offset?: number }): Promise<{ contacts: CrmContactItem[]; total: number }>;
+  backfillChatMessages(): Promise<{ contactsUpdated: number; messagesMigrated: number; outboundCreated: number }>;
 }
 
 export class InMemoryAnalyticsRepository implements AnalyticsRepository {
@@ -154,6 +165,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
   private conversationEvents = new Map<string, ConversationEvent>();
   private auditLogs: AuditLog[] = [];
   private metaMetrics = new Map<string, MetaTemplateDailyMetric>();
+  private chatMessages = new Map<string, ChatMessage>();
   private persistentFilePath: string | null = null;
   private saveDebounceTimer: NodeJS.Timeout | null = null;
 
@@ -2054,6 +2066,102 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     });
   }
 
+  async listChatMessagesByWaId(waId: string): Promise<ChatMessage[]> {
+    const cleanWaId = waId.replace(/\D/g, "");
+    return Array.from(this.chatMessages.values())
+      .filter((m) => m.wa_id.replace(/\D/g, "") === cleanWaId)
+      .sort((a, b) => new Date(a.official_timestamp).getTime() - new Date(b.official_timestamp).getTime());
+  }
+
+  async saveChatMessage(data: Partial<ChatMessage> & { wa_id: string; direction: "inbound" | "outbound" }): Promise<ChatMessage> {
+    const id = data.id || `cmsg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const msg: ChatMessage = {
+      id,
+      wamid: data.wamid ?? null,
+      wa_id: data.wa_id,
+      direction: data.direction,
+      message_type: data.message_type || "text",
+      content_body: data.content_body ?? null,
+      template_name: data.template_name ?? null,
+      media_url: data.media_url ?? null,
+      status: data.status || "sent",
+      error_code: data.error_code ?? null,
+      error_title: data.error_title ?? null,
+      official_timestamp: data.official_timestamp ? new Date(data.official_timestamp) : new Date(),
+      created_at: data.created_at ? new Date(data.created_at) : new Date()
+    };
+    this.chatMessages.set(id, msg);
+    return msg;
+  }
+
+  async updateChatMessageStatus(wamid: string, status: string, timestamp?: Date, errorCode?: string | null, errorTitle?: string | null): Promise<ChatMessage | null> {
+    for (const msg of this.chatMessages.values()) {
+      if (msg.wamid === wamid) {
+        msg.status = status as any;
+        if (timestamp) msg.official_timestamp = new Date(timestamp);
+        if (errorCode) msg.error_code = errorCode;
+        if (errorTitle) msg.error_title = errorTitle;
+        return msg;
+      }
+    }
+    return null;
+  }
+
+  async getCrmContact(waId: string): Promise<CrmContactItem | null> {
+    const clean = waId.replace(/\D/g, "");
+    const contact = Array.from(this.contacts.values()).find(c => c.wa_id.replace(/\D/g, "") === clean);
+    if (!contact) return null;
+    const isWindowOpen = Boolean(contact.last_inbound_at && (Date.now() - new Date(contact.last_inbound_at).getTime()) < 24 * 3600 * 1000);
+    return {
+      id: contact.id,
+      wa_id: contact.wa_id,
+      phone: contact.phone,
+      name: contact.name || "Client",
+      profile_name: contact.profile_name || contact.name || "Client",
+      campaign_day: contact.campaign_day || contact.source_detail || "Batch 1",
+      last_inbound_at: contact.last_inbound_at ? contact.last_inbound_at.toISOString() : null,
+      last_outbound_at: contact.last_outbound_at ? contact.last_outbound_at.toISOString() : null,
+      window_24h_open: isWindowOpen,
+      latest_message_preview: contact.latest_message_preview ?? null,
+      latest_status: contact.latest_status || "sent",
+      unread_count: contact.unread_count || 0,
+      opt_out: contact.opt_out || contact.opted_out || false,
+      first_seen_at: contact.first_seen_at ? contact.first_seen_at.toISOString() : null,
+      last_seen_at: contact.last_seen_at ? contact.last_seen_at.toISOString() : null
+    };
+  }
+
+  async listCrmContacts(query: { search?: string; batch?: string; limit?: number; offset?: number } = {}): Promise<{ contacts: CrmContactItem[]; total: number }> {
+    const all = Array.from(this.contacts.values()).map(c => {
+      const isWindowOpen = Boolean(c.last_inbound_at && (Date.now() - new Date(c.last_inbound_at).getTime()) < 24 * 3600 * 1000);
+      return {
+        id: c.id,
+        wa_id: c.wa_id,
+        phone: c.phone,
+        name: c.name || "Client",
+        profile_name: c.profile_name || c.name || "Client",
+        campaign_day: c.campaign_day || c.source_detail || "Batch 1",
+        last_inbound_at: c.last_inbound_at ? c.last_inbound_at.toISOString() : null,
+        last_outbound_at: c.last_outbound_at ? c.last_outbound_at.toISOString() : null,
+        window_24h_open: isWindowOpen,
+        latest_message_preview: c.latest_message_preview ?? null,
+        latest_status: c.latest_status || "sent",
+        unread_count: c.unread_count || 0,
+        opt_out: c.opt_out || c.opted_out || false,
+        first_seen_at: c.first_seen_at ? c.first_seen_at.toISOString() : null,
+        last_seen_at: c.last_seen_at ? c.last_seen_at.toISOString() : null
+      };
+    });
+    const total = all.length;
+    const offset = query.offset || 0;
+    const limit = query.limit || 50;
+    return { contacts: all.slice(offset, offset + limit), total };
+  }
+
+  async backfillChatMessages(): Promise<{ contactsUpdated: number; messagesMigrated: number; outboundCreated: number }> {
+    return { contactsUpdated: this.contacts.size, messagesMigrated: this.chatMessages.size, outboundCreated: 0 };
+  }
+
   // Cleanup
   clear(): void {
     this.contacts.clear();
@@ -2063,6 +2171,7 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.conversationEvents.clear();
     this.auditLogs = [];
     this.metaMetrics.clear();
+    this.chatMessages.clear();
     this.latestSyncSnapshot = null;
   }
 }

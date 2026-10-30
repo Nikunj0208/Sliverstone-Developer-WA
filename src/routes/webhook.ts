@@ -47,152 +47,160 @@ webhookRouter.post("/webhook", async (request, response) => {
   }
 
   console.info("[WEBHOOK] SIGNATURE VALID");
-  const events = parseWebhookEvents(request.body);
+  // Immediately return HTTP 200 OK to Meta
+  response.sendStatus(200);
 
-  for (const event of events) {
-    console.info(`WHATSAPP EVENT TYPE: ${event.type}`);
-
-    if (event.type === "STATUS") {
-      try {
-        await analyticsService.recordStatusEvent(event);
-      } catch (err) {
-        console.error("Failed to record status event", err);
-      }
-      continue;
-    }
-
-    if (!acceptIncomingMessage(event.messageId)) {
-      console.info("[WEBHOOK] DUPLICATE MESSAGE IGNORED");
-      continue;
-    }
-
-    let inboundData: Awaited<ReturnType<typeof analyticsService.recordInboundMessage>> | undefined;
+  // Process events asynchronously
+  setImmediate(async () => {
     try {
-      inboundData = await analyticsService.recordInboundMessage({
-        waId: event.waId,
-        from: event.from || event.waId,
-        messageId: event.messageId,
-        type: event.type,
-        text: event.type === "TEXT" ? event.text : undefined,
-        buttonId: event.type === "BUTTON_REPLY" ? event.buttonId : undefined,
-        rowId: event.type === "LIST_REPLY" ? event.rowId : undefined,
-        timestamp: event.timestamp,
-        profileName: event.profileName
-      });
-    } catch (err) {
-      console.error("Failed to record inbound message", err);
-    }
+      const events = parseWebhookEvents(request.body);
 
-    if (inboundData?.isDuplicate) {
-      console.info("[WEBHOOK] DUPLICATE MESSAGE IGNORED");
-      continue;
-    }
+      for (const event of events) {
+        console.info(`WHATSAPP EVENT TYPE: ${event.type}`);
 
-    if (event.type === "TEXT") {
-      console.info("[WEBHOOK] TEXT EVENT RECEIVED");
-      console.info("[FLOW] TEXT ROUTED");
-
-      const trimmedText = event.text.trim().toUpperCase();
-      if (trimmedText === "STOP" || trimmedText === "UNSUBSCRIBE" || trimmedText === "OPT OUT") {
-        if (inboundData) {
-          await analyticsService.recordOptOut(inboundData.contact.id, inboundData.conversation.id);
-        }
-      }
-
-      try {
-        if (await enqueueConversationAction(event.waId, () => continueSiteVisitBooking(event.waId, event.text))) {
+        if (event.type === "STATUS") {
+          try {
+            await analyticsService.recordStatusEvent(event);
+          } catch (err) {
+            console.error("Failed to record status event", err);
+          }
           continue;
         }
-      } catch {
-        console.error("Site visit form response failed");
-        continue;
-      }
-      const projectId = projectIdFromTrigger(event.text);
-      if (projectId) {
-        console.info("[ACTION] PROJECT SELECTED");
-        console.info(`[ACTION] PROJECT:${projectId}`);
-        if (inboundData) {
-          await analyticsService.recordConversationEvent(
-            inboundData.conversation.id,
-            inboundData.contact.id,
-            "PROJECT_SELECTED",
-            projectId,
-            projectId
-          );
-        }
-        try {
-          await enqueueConversationAction(event.waId, () => sendProjectDetails(event.waId, projectId));
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : "Unknown project flow error.";
-          console.error("Project details flow failed", message);
-        }
-      } else {
-        if (inboundData) {
-          await analyticsService.recordConversationEvent(
-            inboundData.conversation.id,
-            inboundData.contact.id,
-            "MAIN_MENU_VIEWED"
-          );
-        }
-        try {
-          await enqueueConversationAction(event.waId, () => sendWelcomeFlow(event.waId));
-        } catch {
-          console.error("Welcome flow failed");
-        }
-      }
-      continue;
-    }
 
-    if (event.type === "BUTTON_REPLY") {
-      console.info("[WEBHOOK] BUTTON_REPLY RECEIVED");
-      console.info(`[LIVE] BUTTON ID: ${event.buttonId}`);
-      if (inboundData) {
-        await analyticsService.recordConversationEvent(
-          inboundData.conversation.id,
-          inboundData.contact.id,
-          "BUTTON_CLICKED",
-          event.buttonId,
-          inboundData.conversation.project_id || undefined
-        );
-      }
-      try {
-        await enqueueConversationAction(event.waId, () => routeButtonAction(event.waId, event.buttonId));
-      } catch {
-        console.error("Button action failed");
-      }
-      continue;
-    }
+        if (!acceptIncomingMessage(event.messageId)) {
+          console.info("[WEBHOOK] DUPLICATE MESSAGE IGNORED");
+          continue;
+        }
 
-    if (event.type === "LIST_REPLY") {
-      console.info("[WEBHOOK] LIST_REPLY RECEIVED");
-      console.info("[LIVE] PROJECT ACTION RECEIVED");
-      const projectId = projectIdFromTrigger(event.rowId);
-      if (projectId) {
-        console.info("[ACTION] PROJECT SELECTED");
-        console.info(`[ACTION] PROJECT:${projectId}`);
-        if (inboundData) {
-          await analyticsService.recordConversationEvent(
-            inboundData.conversation.id,
-            inboundData.contact.id,
-            "PROJECT_SELECTED",
-            projectId,
-            projectId
-          );
-        }
+        let inboundData: Awaited<ReturnType<typeof analyticsService.recordInboundMessage>> | undefined;
         try {
-          await enqueueConversationAction(event.waId, () => sendProjectDetails(event.waId, projectId));
-        } catch {
-          console.error("Project list action failed");
+          inboundData = await analyticsService.recordInboundMessage({
+            waId: event.waId,
+            from: event.from || event.waId,
+            messageId: event.messageId,
+            type: event.type,
+            text: event.type === "TEXT" ? event.text : undefined,
+            buttonId: event.type === "BUTTON_REPLY" ? event.buttonId : undefined,
+            rowId: event.type === "LIST_REPLY" ? event.rowId : undefined,
+            timestamp: event.timestamp,
+            profileName: event.profileName
+          });
+        } catch (err) {
+          console.error("Failed to record inbound message", err);
         }
-      } else {
-        try {
-          await enqueueConversationAction(event.waId, () => routeButtonAction(event.waId, event.rowId));
-        } catch {
-          console.error("List action failed");
+
+        if (inboundData?.isDuplicate) {
+          console.info("[WEBHOOK] DUPLICATE MESSAGE IGNORED");
+          continue;
+        }
+
+        if (event.type === "TEXT") {
+          console.info("[WEBHOOK] TEXT EVENT RECEIVED");
+          console.info("[FLOW] TEXT ROUTED");
+
+          const trimmedText = event.text.trim().toUpperCase();
+          if (trimmedText === "STOP" || trimmedText === "UNSUBSCRIBE" || trimmedText === "OPT OUT") {
+            if (inboundData) {
+              await analyticsService.recordOptOut(inboundData.contact.id, inboundData.conversation.id);
+            }
+          }
+
+          try {
+            if (await enqueueConversationAction(event.waId, () => continueSiteVisitBooking(event.waId, event.text))) {
+              continue;
+            }
+          } catch {
+            console.error("Site visit form response failed");
+            continue;
+          }
+          const projectId = projectIdFromTrigger(event.text);
+          if (projectId) {
+            console.info("[ACTION] PROJECT SELECTED");
+            console.info(`[ACTION] PROJECT:${projectId}`);
+            if (inboundData) {
+              await analyticsService.recordConversationEvent(
+                inboundData.conversation.id,
+                inboundData.contact.id,
+                "PROJECT_SELECTED",
+                projectId,
+                projectId
+              );
+            }
+            try {
+              await enqueueConversationAction(event.waId, () => sendProjectDetails(event.waId, projectId));
+            } catch (error: unknown) {
+              const message = error instanceof Error ? error.message : "Unknown project flow error.";
+              console.error("Project details flow failed", message);
+            }
+          } else {
+            if (inboundData) {
+              await analyticsService.recordConversationEvent(
+                inboundData.conversation.id,
+                inboundData.contact.id,
+                "MAIN_MENU_VIEWED"
+              );
+            }
+            try {
+              await enqueueConversationAction(event.waId, () => sendWelcomeFlow(event.waId));
+            } catch {
+              console.error("Welcome flow failed");
+            }
+          }
+          continue;
+        }
+
+        if (event.type === "BUTTON_REPLY") {
+          console.info("[WEBHOOK] BUTTON_REPLY RECEIVED");
+          console.info(`[LIVE] BUTTON ID: ${event.buttonId}`);
+          if (inboundData) {
+            await analyticsService.recordConversationEvent(
+              inboundData.conversation.id,
+              inboundData.contact.id,
+              "BUTTON_CLICKED",
+              event.buttonId,
+              inboundData.conversation.project_id || undefined
+            );
+          }
+          try {
+            await enqueueConversationAction(event.waId, () => routeButtonAction(event.waId, event.buttonId));
+          } catch {
+            console.error("Button action failed");
+          }
+          continue;
+        }
+
+        if (event.type === "LIST_REPLY") {
+          console.info("[WEBHOOK] LIST_REPLY RECEIVED");
+          console.info("[LIVE] PROJECT ACTION RECEIVED");
+          const projectId = projectIdFromTrigger(event.rowId);
+          if (projectId) {
+            console.info("[ACTION] PROJECT SELECTED");
+            console.info(`[ACTION] PROJECT:${projectId}`);
+            if (inboundData) {
+              await analyticsService.recordConversationEvent(
+                inboundData.conversation.id,
+                inboundData.contact.id,
+                "PROJECT_SELECTED",
+                projectId,
+                projectId
+              );
+            }
+            try {
+              await enqueueConversationAction(event.waId, () => sendProjectDetails(event.waId, projectId));
+            } catch {
+              console.error("Project list action failed");
+            }
+          } else {
+            try {
+              await enqueueConversationAction(event.waId, () => routeButtonAction(event.waId, event.rowId));
+            } catch {
+              console.error("List action failed");
+            }
+          }
         }
       }
+    } catch (err) {
+      console.error("[WEBHOOK] Error during async event processing:", err);
     }
-  }
-
-  response.sendStatus(200);
+  });
 });

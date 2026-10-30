@@ -406,6 +406,358 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       border-left: 3px solid #6366f1;
       background: rgba(99, 102, 241, 0.08);
     }
+
+    /* ==========================================================================
+       WHATSAPP WEB CHAT DRAWER & LIVE META SYNC STYLES
+       ========================================================================== */
+    .meta-top-status-bar {
+      background: linear-gradient(90deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 7px 24px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #ecfdf5;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 64px;
+      z-index: 49;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .meta-sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(52, 211, 153, 0.45);
+      border-radius: 12px;
+      padding: 3px 10px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulseGreen 2s infinite ease-in-out;
+    }
+    @keyframes pulseGreen {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    /* Slide-over WhatsApp Drawer Backdrop & Shell */
+    .wa-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(3px);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wa-drawer-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .wa-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 600px;
+      max-width: 95vw;
+      height: 100vh;
+      background: #111b21;
+      color: #e9edef;
+      z-index: 2001;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.75);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wa-drawer.active {
+      transform: translateX(0);
+    }
+
+    /* Drawer Header */
+    .wa-drawer-header {
+      background: #202c33;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(134, 150, 160, 0.15);
+      min-height: 68px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .wa-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+    .wa-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #00a884;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+    .wa-header-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: 3px;
+    }
+    .wa-header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e9edef;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wa-header-sub {
+      font-size: 12px;
+      color: #8696a0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .wa-window-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .wa-window-open {
+      background: rgba(37, 211, 102, 0.2);
+      color: #25d366;
+      border: 1px solid rgba(37, 211, 102, 0.4);
+    }
+    .wa-window-closed {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .wa-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wa-icon-btn {
+      background: transparent;
+      border: none;
+      color: #aebac1;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .wa-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    /* WhatsApp Chat Feed */
+    .wa-feed {
+      flex: 1;
+      background-color: #efeae2;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+        linear-gradient(rgba(239, 234, 226, 0.94), rgba(239, 234, 226, 0.94));
+      background-size: 24px 24px;
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .wa-date-divider {
+      align-self: center;
+      background: #ffffff;
+      color: #54656f;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(11, 20, 26, 0.14);
+      margin: 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .wa-bubble-row {
+      display: flex;
+      width: 100%;
+    }
+    .wa-bubble-row.inbound {
+      justify-content: flex-start;
+    }
+    .wa-bubble-row.outbound {
+      justify-content: flex-end;
+    }
+    .wa-bubble {
+      max-width: 82%;
+      min-width: 130px;
+      padding: 7px 11px 8px 12px;
+      position: relative;
+      font-size: 13.5px;
+      line-height: 1.45;
+      box-shadow: 0 1px 1.5px rgba(11, 20, 26, 0.14);
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .wa-bubble.inbound {
+      background: #ffffff;
+      color: #111b21;
+      border-radius: 8px 8px 8px 2px;
+    }
+    .wa-bubble.outbound {
+      background: #d9fdd3;
+      color: #111b21;
+      border-radius: 8px 8px 2px 8px;
+    }
+    .wa-template-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #075e54;
+      background: rgba(7, 94, 84, 0.12);
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .wa-meta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      font-size: 11px;
+      color: #667781;
+      margin-top: 4px;
+      float: right;
+      margin-left: 12px;
+    }
+    .wa-failed-box {
+      margin-top: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed rgba(234, 0, 56, 0.3);
+      font-size: 11px;
+      color: #ea0038;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* WhatsApp Composer */
+    .wa-composer {
+      background: #202c33;
+      border-top: 1px solid rgba(134, 150, 160, 0.15);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .wa-closed-warning {
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fde68a;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .wa-template-preview-card {
+      background: #d9fdd3;
+      color: #111b21;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+    .wa-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .wa-input {
+      flex: 1;
+      background: #2a3942;
+      border: 1px solid transparent;
+      color: #d1d7db;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .wa-input:focus {
+      border-color: #00a884;
+    }
+    .wa-input:disabled {
+      background: #182229;
+      color: #8696a0;
+      cursor: not-allowed;
+    }
+    .wa-send-btn {
+      background: #00a884;
+      color: #fff;
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .wa-send-btn:hover {
+      background: #02906f;
+      transform: scale(1.05);
+    }
+    .wa-send-btn:disabled {
+      background: #374248;
+      cursor: not-allowed;
+      transform: none;
+    }
   </style>
 </head>
 <body>
@@ -428,11 +780,115 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       <a href="/api/contacts/export?format=csv" class="btn" title="Export Contacts to CSV">📥 Export CSV</a>
     </div>
   </header>
+
+  <!-- Live Meta Official Sync: Verified Status Bar -->
+  <div id="metaSyncTopStatusBar" class="meta-top-status-bar">
+    <div style="display: flex; align-items: center; gap: 12px; font-weight: 600; flex-wrap: wrap;">
+      <span class="meta-sync-pill">
+        <span class="pulse-dot"></span>
+        <span style="color: #6ee7b7; font-weight: 700; letter-spacing: 0.3px;">Meta Official Sync: Verified</span>
+      </span>
+      <span style="opacity: 0.95;">Verified Phone: <strong id="topBarDisplayPhone">+91 88667 52222</strong> (Quality: <span id="topBarQuality" style="color: #6ee7b7; font-weight: 700;">GREEN</span> • Status: <span id="topBarStatus" style="color: #38bdf8; font-weight: 700;">CONNECTED</span>)</span>
+      <span style="opacity: 0.5;">|</span>
+      <span style="opacity: 0.95;">Messaging Limit: <strong id="topBarLimit">TIER 2K / day</strong></span>
+      <span style="opacity: 0.5;">|</span>
+      <span style="opacity: 0.95;">Approved Templates: <strong id="topBarTemplates">2 Active</strong></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; font-size: 11px;">
+      <span style="color: #a7f3d0;" id="topBarLastSyncTime">Autonomous node-cron (Daily &amp; 30m) • Live Direct</span>
+      <button onclick="triggerMetaSync()" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.25); color: #fff; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">⚡ Sync Now</button>
+    </div>
+  </div>
+
   <main>
     ${contentHtml}
   </main>
+
+  <!-- Interactive WhatsApp Web Chat History Slide-Over Drawer -->
+  <div id="waDrawerBackdrop" class="wa-drawer-backdrop" onclick="closeWhatsAppDrawer()"></div>
+  <aside id="waChatDrawer" class="wa-drawer" aria-label="WhatsApp Web Chat Drawer">
+    <!-- Header -->
+    <div class="wa-drawer-header">
+      <div class="wa-header-left">
+        <div class="wa-avatar" id="waDrawerAvatar">CL</div>
+        <div class="wa-header-info">
+          <div class="wa-header-title">
+            <span id="waDrawerName">Client Name</span>
+            <span id="waDrawerLeadStage" class="badge" style="font-size: 10px; background: rgba(99, 102, 241, 0.25); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4);">Batch 1</span>
+          </div>
+          <div class="wa-header-sub">
+            <span id="waDrawerPhone" class="code-text" style="color: #93c5fd; font-size: 12px; font-weight: 600;">+91 XXXXX XXXXX</span>
+            <span id="waDrawer24hBadge" class="wa-window-badge wa-window-closed">
+              <span>🔒 24h Window Closed — Template Only</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="wa-header-actions">
+        <a id="waDirectContactLink" href="#" class="wa-icon-btn" title="Open Full Contact 360 Profile">👤</a>
+        <button onclick="refreshCurrentChat()" class="wa-icon-btn" title="Refresh Chat">🔄</button>
+        <button onclick="closeWhatsAppDrawer()" class="wa-icon-btn" title="Close Drawer (Esc)">✕</button>
+      </div>
+    </div>
+
+    <!-- Feed Body -->
+    <div id="waDrawerFeed" class="wa-feed">
+      <div style="text-align: center; padding: 40px; color: #667781; font-size: 13px;">
+        Select a client to load chronological WhatsApp chat history...
+      </div>
+    </div>
+
+    <!-- Smart Bottom Composer Bar -->
+    <div id="waDrawerComposer" class="wa-composer">
+      <!-- State A: 24h Window Closed -->
+      <div id="waClosedComposerState" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="wa-closed-warning">
+          <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <span>🔒 24-Hour Customer Care Window is CLOSED</span>
+          </div>
+          <div>Meta prohibits sending free-form text outside the 24-hour window (Error 131047). Select an approved template below to initiate or re-engage conversation:</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 11px; font-weight: 700; color: #8696a0; text-transform: uppercase;">Select Approved Meta Template:</label>
+          <select id="waTemplateSelect" class="wa-input" style="padding: 8px 12px; font-size: 13px;" onchange="onTemplateSelectionChanged(this.value)">
+            <option value="silverstone_invitation">silverstone_invitation (Surat Landmarks Broadcast • Marketing)</option>
+            <option value="silverstone_call">silverstone_call (Sales Desk Direct Callback • Marketing)</option>
+          </select>
+        </div>
+        <div id="waTemplatePreviewContainer" class="wa-template-preview-card">
+          <!-- Dynamically populated live preview -->
+        </div>
+        <button id="waSendTemplateBtn" onclick="sendWhatsAppTemplate()" class="btn btn-primary" style="background: #00a884; border-color: #00a884; color: #fff; width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer;">
+          🚀 Send Approved Meta Template
+        </button>
+      </div>
+
+      <!-- State B: 24h Window Open -->
+      <div id="waOpenComposerState" style="display: none; flex-direction: column; gap: 8px;">
+        <div style="font-size: 11px; color: #25d366; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+          <span>🟢 24-Hour Customer Service Window is OPEN &bull; Free-form messaging active</span>
+        </div>
+        <div class="wa-input-row">
+          <input id="waTextInput" type="text" class="wa-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendWhatsAppText();" />
+          <button id="waSendTextBtn" onclick="sendWhatsAppText()" class="wa-send-btn" title="Send message via Meta Cloud API">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
   <div id="toastContainer" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px;"></div>
+  
   <script>
+    /* ==========================================================================
+       WHATSAPP WEB CHAT DRAWER & REAL-TIME SSE LOGIC
+       ========================================================================== */
+    let currentDrawerWaId = null;
+    let currentDrawerContact = null;
+    let currentDrawerTemplates = [];
+    let drawerCountdownTimer = null;
+
     function showToast(msg, isSuccess = true) {
       const container = document.getElementById("toastContainer");
       if (!container) return;
@@ -466,8 +922,10 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
         ]);
         showToast("✅ Successfully synced official Meta WhatsApp Analytics & live replies!");
         setTimeout(() => {
+          loadTopStatusBar();
           if (typeof fetchOverviewData === "function") fetchOverviewData();
           if (typeof fetchContacts === "function") fetchContacts();
+          if (currentDrawerWaId) openWhatsAppDrawer(currentDrawerWaId);
         }, 800);
       } catch (e) {
         showToast("Sync finished.");
@@ -478,6 +936,507 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
         }
       }
     }
+
+    // Load top status bar with verified Meta metrics
+    async function loadTopStatusBar() {
+      try {
+        const res = await fetch('/api/analytics/meta-insights');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data) {
+          const phoneEl = document.getElementById("topBarDisplayPhone");
+          if (phoneEl && data.phone?.displayPhoneNumber) phoneEl.textContent = data.phone.displayPhoneNumber;
+          const qualEl = document.getElementById("topBarQuality");
+          if (qualEl && data.phone?.qualityRating) qualEl.textContent = data.phone.qualityRating;
+          const statEl = document.getElementById("topBarStatus");
+          if (statEl && data.phone?.status) statEl.textContent = data.phone.status;
+          const limEl = document.getElementById("topBarLimit");
+          if (limEl && data.waba?.messagingLimit) limEl.textContent = data.waba.messagingLimit + " / day";
+          const tplEl = document.getElementById("topBarTemplates");
+          if (tplEl && Array.isArray(data.templates)) tplEl.textContent = data.templates.filter(t => t.status === "APPROVED").length + " Active";
+          const timeEl = document.getElementById("topBarLastSyncTime");
+          if (timeEl && data.lastSyncedAt) {
+            const dt = new Date(data.lastSyncedAt);
+            timeEl.textContent = "Last Sync: " + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) + " (node-cron Active)";
+          }
+        }
+      } catch (e) {
+        // silent fallback
+      }
+    }
+    loadTopStatusBar();
+
+    // Escape HTML helper
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Formats WhatsApp ticks (sent: single grey, delivered: double grey, read: double blue, failed: red warning)
+    function renderWhatsAppTick(status) {
+      const s = (status || '').toLowerCase();
+      if (s === 'read') {
+        return '<svg viewBox="0 0 16 15" width="16" height="15" fill="#53BDEB" title="Read (Blue Ticks)"><path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.055a.426.426 0 0 0-.064-.505zm-4.05 0l-.478-.372a.365.365 0 0 0-.51.063L4.616 9.879a.32.32 0 0 1-.484.033l-2.062-1.93a.418.418 0 0 0-.542.036l-.378.483a.319.319 0 0 0 .032.484l2.96 2.77c.143.14.361.125.484-.033l6.272-8.055a.426.426 0 0 0-.064-.505z"/></svg>';
+      }
+      if (s === 'delivered') {
+        return '<svg viewBox="0 0 16 15" width="16" height="15" fill="#8696A0" title="Delivered"><path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.055a.426.426 0 0 0-.064-.505zm-4.05 0l-.478-.372a.365.365 0 0 0-.51.063L4.616 9.879a.32.32 0 0 1-.484.033l-2.062-1.93a.418.418 0 0 0-.542.036l-.378.483a.319.319 0 0 0 .032.484l2.96 2.77c.143.14.361.125.484-.033l6.272-8.055a.426.426 0 0 0-.064-.505z"/></svg>';
+      }
+      if (s === 'failed') {
+        return '<svg viewBox="0 0 16 16" width="15" height="15" fill="#EA0038" title="Failed"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 4h1.5v4.5h-1.5V5zm.75 7a.875.875 0 1 1 0-1.75.875.875 0 0 1 0 1.75z"/></svg>';
+      }
+      // Single tick 'sent' (or queued)
+      return '<svg viewBox="0 0 16 15" width="16" height="15" fill="#8696A0" title="Sent"><path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.055a.426.426 0 0 0-.064-.505z"/></svg>';
+    }
+
+    // Helper: format message time
+    function formatWaTime(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    // Helper: format date divider group
+    function getWaDateKey(ts) {
+      const d = new Date(ts);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const msgDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffMs = today.getTime() - msgDate.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Yesterday";
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // Open WhatsApp Web Chat Drawer for a client phone number
+    async function openWhatsAppDrawer(waIdOrPhone) {
+      if (!waIdOrPhone) return;
+      const cleanWaId = String(waIdOrPhone).replace(/\D/g, "");
+      currentDrawerWaId = cleanWaId;
+
+      const backdrop = document.getElementById("waDrawerBackdrop");
+      const drawer = document.getElementById("waChatDrawer");
+      const feed = document.getElementById("waDrawerFeed");
+
+      if (backdrop) backdrop.classList.add("active");
+      if (drawer) drawer.classList.add("active");
+
+      // Show loader in feed
+      feed.innerHTML = '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #667781; gap: 12px;">' +
+        '<div style="font-size: 28px; animation: spin 1s infinite linear;">⏳</div>' +
+        '<div style="font-size: 13px; font-weight: 600;">Loading verified WhatsApp chat history...</div>' +
+      '</div>';
+
+      try {
+        const res = await fetch('/api/crm/chats/' + encodeURIComponent(cleanWaId));
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Failed to load chat history");
+
+        currentDrawerContact = data.contact;
+        currentDrawerTemplates = data.approvedTemplates || [];
+
+        renderWhatsAppDrawer(data);
+      } catch (err) {
+        console.error("Failed to load chat history:", err);
+        feed.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">' +
+          '<div style="font-size: 20px; margin-bottom: 8px;">⚠️</div>' +
+          '<div>' + escapeHtml(err.message) + '</div>' +
+        '</div>';
+      }
+    }
+
+    function closeWhatsAppDrawer() {
+      const backdrop = document.getElementById("waDrawerBackdrop");
+      const drawer = document.getElementById("waChatDrawer");
+      if (backdrop) backdrop.classList.remove("active");
+      if (drawer) drawer.classList.remove("active");
+      currentDrawerWaId = null;
+      if (drawerCountdownTimer) {
+        clearInterval(drawerCountdownTimer);
+        drawerCountdownTimer = null;
+      }
+    }
+
+    // Close on Escape key
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && currentDrawerWaId) {
+        closeWhatsAppDrawer();
+      }
+    });
+
+    function refreshCurrentChat() {
+      if (currentDrawerWaId) {
+        openWhatsAppDrawer(currentDrawerWaId);
+      }
+    }
+
+    // Renders chat drawer with full details
+    function renderWhatsAppDrawer(data) {
+      const c = data.contact;
+      const clean = c.wa_id.replace(/\D/g, "");
+      const formattedPhone = clean.startsWith('91') && clean.length === 12
+        ? '+91 ' + clean.slice(2, 7) + ' ' + clean.slice(7)
+        : '+' + clean;
+
+      // Header fields
+      document.getElementById("waDrawerName").textContent = c.profile_name || c.name || "Client";
+      document.getElementById("waDrawerPhone").textContent = formattedPhone;
+      document.getElementById("waDrawerLeadStage").textContent = c.campaign_day || "Batch 1";
+
+      const initials = (c.profile_name || c.name || "C").slice(0, 2).toUpperCase();
+      document.getElementById("waDrawerAvatar").textContent = initials;
+
+      const profileLink = document.getElementById("waDirectContactLink");
+      if (profileLink) profileLink.href = '/contacts/' + c.id;
+
+      // 24h Window Badge
+      update24hBadge(data.window24h);
+
+      // Render Messages grouped by Date
+      renderMessageFeed(data.messages || []);
+
+      // Setup Composer (Open vs Closed)
+      setupComposer(data.window24h, data.approvedTemplates || []);
+
+      // Start live countdown timer
+      if (drawerCountdownTimer) clearInterval(drawerCountdownTimer);
+      drawerCountdownTimer = setInterval(() => {
+        if (!currentDrawerContact || !currentDrawerContact.last_inbound_at) return;
+        const lastInbound = new Date(currentDrawerContact.last_inbound_at).getTime();
+        const expiresTime = lastInbound + 24 * 3600 * 1000;
+        const remainingMs = expiresTime - Date.now();
+        if (remainingMs > 0) {
+          const h = Math.floor(remainingMs / (3600 * 1000));
+          const m = Math.floor((remainingMs % (3600 * 1000)) / (60 * 1000));
+          update24hBadge({
+            isOpen: true,
+            badgeText: '24h Window Open — ' + h + 'h ' + m + 'm left',
+            badgeType: 'open'
+          });
+        } else {
+          update24hBadge({
+            isOpen: false,
+            badgeText: '24h Window Closed — Template Only',
+            badgeType: 'closed'
+          });
+          setupComposer({ isOpen: false }, currentDrawerTemplates);
+        }
+      }, 30000);
+    }
+
+    function update24hBadge(win) {
+      const badge = document.getElementById("waDrawer24hBadge");
+      if (!badge) return;
+      if (win && win.isOpen) {
+        badge.className = "wa-window-badge wa-window-open";
+        badge.innerHTML = '<span>🟢 ' + escapeHtml(win.badgeText) + '</span>';
+      } else {
+        badge.className = "wa-window-badge wa-window-closed";
+        badge.innerHTML = '<span>🔒 ' + escapeHtml(win ? win.badgeText : "24h Window Closed — Template Only") + '</span>';
+      }
+    }
+
+    function renderMessageFeed(messages) {
+      const feed = document.getElementById("waDrawerFeed");
+      if (!feed) return;
+
+      if (messages.length === 0) {
+        feed.innerHTML = '<div style="text-align: center; padding: 40px; color: #667781; font-size: 13px;">' +
+          'No messages exchanged with this client yet.' +
+        '</div>';
+        return;
+      }
+
+      let html = '';
+      let lastDateKey = '';
+
+      for (const msg of messages) {
+        const dateKey = getWaDateKey(msg.official_timestamp);
+        if (dateKey !== lastDateKey) {
+          html += '<div class="wa-date-divider">' + dateKey + '</div>';
+          lastDateKey = dateKey;
+        }
+
+        const isInbound = msg.direction === 'inbound';
+        const bubbleClass = isInbound ? 'inbound' : 'outbound';
+        const formattedTime = formatWaTime(msg.official_timestamp);
+
+        let templateTag = '';
+        if (msg.template_name) {
+          templateTag = '<div class="wa-template-tag">⚜️ Template: ' + escapeHtml(msg.template_name) + '</div>';
+        }
+
+        let tickHtml = '';
+        if (!isInbound) {
+          tickHtml = '<span class="wa-tick" id="tick-' + (msg.wamid || msg.id) + '">' + renderWhatsAppTick(msg.status) + '</span>';
+        }
+
+        let failedNotice = '';
+        if (msg.status === 'failed') {
+          failedNotice = '<div class="wa-failed-box">' +
+            '<span>⚠️ Meta Error ' + escapeHtml(msg.error_code || '131049') + ': ' + escapeHtml(msg.error_title || 'Message failed') + '</span>' +
+          '</div>';
+        }
+
+        // Format message body text (handling line breaks and WhatsApp bold)
+        const rawBody = msg.content_body || (msg.template_name ? 'Template: ' + msg.template_name : '[Message]');
+        const formattedBody = escapeHtml(rawBody)
+          .replace(/\\*([^\\*]+)\\*/g, '<strong>$1</strong>')
+          .replace(/\\n/g, '<br/>');
+
+        html += '<div class="wa-bubble-row ' + bubbleClass + '" id="msg-row-' + (msg.wamid || msg.id) + '">' +
+          '<div class="wa-bubble ' + bubbleClass + '">' +
+            templateTag +
+            '<div style="word-break: break-word;">' + formattedBody + '</div>' +
+            '<div class="wa-meta">' +
+              '<span>' + formattedTime + '</span>' +
+              tickHtml +
+            '</div>' +
+            failedNotice +
+          '</div>' +
+        '</div>';
+      }
+
+      feed.innerHTML = html;
+      // Scroll to bottom
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function setupComposer(windowStatus, approvedTemplates) {
+      const closedState = document.getElementById("waClosedComposerState");
+      const openState = document.getElementById("waOpenComposerState");
+      const select = document.getElementById("waTemplateSelect");
+
+      if (windowStatus && windowStatus.isOpen) {
+        if (closedState) closedState.style.display = "none";
+        if (openState) openState.style.display = "flex";
+        const input = document.getElementById("waTextInput");
+        if (input) {
+          input.disabled = false;
+          input.focus();
+        }
+      } else {
+        if (openState) openState.style.display = "none";
+        if (closedState) closedState.style.display = "flex";
+
+        // Populate template select dropdown
+        if (select && approvedTemplates && approvedTemplates.length > 0) {
+          select.innerHTML = approvedTemplates.map(t => {
+            const desc = t.name === 'silverstone_invitation' ? 'Surat Landmark Broadcast • Marketing' : (t.name === 'silverstone_call' ? 'Sales Desk Direct Callback • Marketing' : t.category);
+            return '<option value="' + escapeHtml(t.name) + '">' + escapeHtml(t.name) + ' (' + escapeHtml(desc) + ')</option>';
+          }).join('');
+        }
+        // Render initial template preview
+        const initialTpl = select ? select.value : 'silverstone_invitation';
+        onTemplateSelectionChanged(initialTpl);
+      }
+    }
+
+    function onTemplateSelectionChanged(templateName) {
+      const container = document.getElementById("waTemplatePreviewContainer");
+      if (!container) return;
+
+      const matched = currentDrawerTemplates.find(t => t.name === templateName);
+      let headerHtml = '';
+      let bodyText = '';
+      let footerText = '';
+      let buttonsHtml = '';
+
+      if (templateName === 'silverstone_invitation') {
+        headerHtml = '<div style="background: #128c7e; color: #fff; padding: 10px; border-radius: 6px 6px 0 0; text-align: center; font-size: 12px; font-weight: 700;">📷 [Surat Prime Landmark Luxury Image Header]</div>';
+        bodyText = "Greetings from <strong>Silverstone Developers</strong>! 🏡✨<br/><br/>Discover our luxury row houses, bungalow plots, and ready-to-move campuses in Surat's prime locations.<br/><br/>Tap the button below for full details, brochures, and layout plans!";
+        footerText = '<div style="font-size: 11px; color: #667781; margin-top: 6px;">Silverstone Developers • Live &amp; Ready Campuses</div>';
+        buttonsHtml = '<div style="margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 8px;"><div style="background: #fff; border: 1px solid #d1d7db; border-radius: 6px; padding: 7px; text-align: center; font-size: 13px; font-weight: 600; color: #00a884;">🔘 More Details</div></div>';
+      } else if (templateName === 'silverstone_call') {
+        bodyText = 'Tap Call Now to connect directly with Silverstone Developers sales team.';
+        buttonsHtml = '<div style="margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 8px;"><div style="background: #fff; border: 1px solid #d1d7db; border-radius: 6px; padding: 7px; text-align: center; font-size: 13px; font-weight: 600; color: #00a884;">📞 Call Now (+918866751322)</div></div>';
+      } else if (matched && Array.isArray(matched.components)) {
+        for (const comp of matched.components) {
+          if (comp.type === 'HEADER') {
+            headerHtml = '<div style="background: #128c7e; color: #fff; padding: 8px; border-radius: 6px 6px 0 0; text-align: center; font-size: 11px; font-weight: 700;">' + (comp.format === 'IMAGE' ? '📷 [Image Header]' : escapeHtml(comp.text || '')) + '</div>';
+          } else if (comp.type === 'BODY') {
+            bodyText = escapeHtml(comp.text || '').replace(/\\*([^\\*]+)\\*/g, '<strong>$1</strong>').replace(/\\n/g, '<br/>');
+          } else if (comp.type === 'FOOTER') {
+            footerText = '<div style="font-size: 11px; color: #667781; margin-top: 6px;">' + escapeHtml(comp.text || '') + '</div>';
+          } else if (comp.type === 'BUTTONS' && Array.isArray(comp.buttons)) {
+            buttonsHtml = '<div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 8px;">' +
+              comp.buttons.map(b => '<div style="background: #fff; border: 1px solid #d1d7db; border-radius: 6px; padding: 6px; text-align: center; font-size: 12px; font-weight: 600; color: #00a884;">' + (b.type === 'PHONE_NUMBER' ? '📞 ' : '🔘 ') + escapeHtml(b.text || '') + '</div>').join('') +
+            '</div>';
+          }
+        }
+      }
+
+      container.innerHTML = headerHtml +
+        '<div style="margin-top: ' + (headerHtml ? '8px' : '0') + ';">' + (bodyText || 'Approved Meta Template') + '</div>' +
+        footerText +
+        buttonsHtml;
+    }
+
+    // Sends free-form live message via Meta Cloud API
+    async function sendWhatsAppText() {
+      if (!currentDrawerWaId) return;
+      const input = document.getElementById("waTextInput");
+      const btn = document.getElementById("waSendTextBtn");
+      const text = input ? input.value.trim() : "";
+      if (!text) return;
+
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/crm/send-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wa_id: currentDrawerWaId, text })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to send text");
+        }
+
+        input.value = "";
+        appendMessageBubble(data.message);
+        showToast("✅ Message sent via Meta Cloud API!");
+      } catch (err) {
+        alert("❌ Failed to send message:\\n" + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+        if (input) input.focus();
+      }
+    }
+
+    // Sends approved template message
+    async function sendWhatsAppTemplate() {
+      if (!currentDrawerWaId) return;
+      const select = document.getElementById("waTemplateSelect");
+      const templateName = select ? select.value : 'silverstone_invitation';
+      const btn = document.getElementById("waSendTemplateBtn");
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Sending Meta Template...";
+      }
+
+      try {
+        const res = await fetch('/api/crm/send-template', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wa_id: currentDrawerWaId, template_name: templateName })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to send template");
+        }
+
+        appendMessageBubble(data.message);
+        showToast("✅ Approved Meta Template dispatched to " + currentDrawerWaId + "!");
+      } catch (err) {
+        alert("❌ Failed to send template:\\n" + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🚀 Send Approved Meta Template";
+        }
+      }
+    }
+
+    // Appends a single message bubble into feed
+    function appendMessageBubble(msg) {
+      if (!msg) return;
+      const feed = document.getElementById("waDrawerFeed");
+      if (!feed) return;
+
+      const isInbound = msg.direction === 'inbound';
+      const bubbleClass = isInbound ? 'inbound' : 'outbound';
+      const formattedTime = formatWaTime(msg.official_timestamp);
+
+      let templateTag = '';
+      if (msg.template_name) {
+        templateTag = '<div class="wa-template-tag">⚜️ Template: ' + escapeHtml(msg.template_name) + '</div>';
+      }
+
+      let tickHtml = '';
+      if (!isInbound) {
+        tickHtml = '<span class="wa-tick" id="tick-' + (msg.wamid || msg.id) + '">' + renderWhatsAppTick(msg.status) + '</span>';
+      }
+
+      const rawBody = msg.content_body || (msg.template_name ? 'Template: ' + msg.template_name : '[Message]');
+      const formattedBody = escapeHtml(rawBody)
+        .replace(/\\*([^\\*]+)\\*/g, '<strong>$1</strong>')
+        .replace(/\\n/g, '<br/>');
+
+      const el = document.createElement("div");
+      el.className = "wa-bubble-row " + bubbleClass;
+      el.id = "msg-row-" + (msg.wamid || msg.id);
+      el.innerHTML = '<div class="wa-bubble ' + bubbleClass + '">' +
+        templateTag +
+        '<div style="word-break: break-word;">' + formattedBody + '</div>' +
+        '<div class="wa-meta">' +
+          '<span>' + formattedTime + '</span>' +
+          tickHtml +
+        '</div>' +
+      '</div>';
+
+      feed.appendChild(el);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    // Connect to Server-Sent Events stream for instant real-time updates
+    function connectCrmRealtimeStream() {
+      try {
+        const evtSource = new EventSource('/api/crm/stream');
+
+        evtSource.addEventListener("crm_message", (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data && data.message && currentDrawerWaId) {
+              const cleanMsgWaId = String(data.waId || data.message.wa_id).replace(/\D/g, "");
+              if (cleanMsgWaId === currentDrawerWaId) {
+                appendMessageBubble(data.message);
+                if (data.message.direction === 'inbound') {
+                  update24hBadge({
+                    isOpen: true,
+                    badgeText: '24h Window Open — 24h 0m left',
+                    badgeType: 'open'
+                  });
+                  setupComposer({ isOpen: true }, currentDrawerTemplates);
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Error handling crm_message event:", err);
+          }
+        });
+
+        evtSource.addEventListener("crm_status_updated", (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data && data.wamid) {
+              const tickEl = document.getElementById("tick-" + data.wamid);
+              if (tickEl) {
+                tickEl.innerHTML = renderWhatsAppTick(data.status);
+              }
+            }
+          } catch (err) {
+            console.error("Error handling crm_status_updated event:", err);
+          }
+        });
+
+        evtSource.addEventListener("meta_synced", (e) => {
+          try {
+            loadTopStatusBar();
+          } catch (err) {}
+        });
+
+        evtSource.onerror = () => {
+          // Automatic reconnect handled by EventSource
+        };
+      } catch (e) {
+        console.warn("SSE stream registration error:", e);
+      }
+    }
+    connectCrmRealtimeStream();
   </script>
 </body>
 </html>`;
@@ -1178,14 +2137,14 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
         const chipsContainer = document.getElementById("quickBatchChips");
         if (chipsContainer) {
           let html = '<span style="font-size: 11px; color: var(--text-dim); font-weight: 600;">Quick Batches:</span>';
-          html += '<button class="date-chip ' + (!selectedBatch ? 'active' : '') + '" id="chip-all" onclick="selectBatchChip(\'\')">All Batches</button>';
+          html += '<button class="date-chip ' + (!selectedBatch ? 'active' : '') + '" id="chip-all" onclick="selectBatchChip(null)">All Batches</button>';
           batches.forEach(b => {
             const statusIcon = b.status === "COMPLETED" ? "✓" : (b.status === "TODAY" ? "⚡" : "⏳");
             const chipStyle = b.status === "TODAY"
               ? "background: rgba(99, 102, 241, 0.25); border-color: #818cf8; color: #fff;"
               : "";
             const isActive = String(selectedBatch) === String(b.batchNumber) ? "active" : "";
-            html += '<button class="date-chip ' + isActive + '" id="chip-batch-' + b.batchNumber + '" style="' + chipStyle + '" onclick="selectBatchChip(\'' + b.batchNumber + '\')" title="' + b.formattedDate + ' • ' + b.status + ' • ' + b.totalLeads + ' leads">Batch ' + b.batchNumber + ' <span style="font-size: 10px; opacity: 0.85;">(' + b.formattedDate.slice(0, 6) + ' • ' + statusIcon + ')</span></button>';
+            html += '<button class="date-chip ' + isActive + '" id="chip-batch-' + b.batchNumber + '" style="' + chipStyle + '" onclick="selectBatchChip(' + b.batchNumber + ')" title="' + b.formattedDate + ' • ' + b.status + ' • ' + b.totalLeads + ' leads">Batch ' + b.batchNumber + ' <span style="font-size: 10px; opacity: 0.85;">(' + b.formattedDate.slice(0, 6) + ' • ' + statusIcon + ')</span></button>';
           });
           chipsContainer.innerHTML = html;
         }
@@ -1254,11 +2213,11 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
       }
 
       function selectBatchChip(batchVal) {
-        selectedBatch = batchVal;
+        selectedBatch = batchVal ? String(batchVal) : "";
         const bSelect = document.getElementById("batchFilter");
-        if (bSelect) bSelect.value = batchVal;
+        if (bSelect) bSelect.value = selectedBatch;
         
-        selectedDate = BATCH_DATE_MAP[batchVal] || "";
+        selectedDate = (batchVal ? BATCH_DATE_MAP[batchVal] : "") || "";
         const dInput = document.getElementById("dateFilterInput");
         if (dInput) dInput.value = selectedDate;
 
@@ -1503,9 +2462,10 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
         return Math.floor(hr / 24) + 'd ago';
       }
 
-      function formatFullPhone(phone, wamid) {
+      function formatFullPhone(phone, wamid, waId) {
         if (!phone) return '<span style="color: var(--text-dim);">—</span>';
         const clean = phone.replace(/\D/g, '');
+        const targetId = waId || clean;
         const display = clean.startsWith('91') && clean.length === 12
           ? '+91 ' + clean.slice(2, 7) + ' ' + clean.slice(7)
           : '+' + clean;
@@ -1514,8 +2474,8 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
           : '';
         return '<div>' +
           '<div style="display: inline-flex; align-items: center; gap: 6px;">' +
-            '<span class="code-text" style="font-weight: 700; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px;">' + display + '</span>' +
-            '<a href="https://wa.me/' + clean + '" target="_blank" onclick="event.stopPropagation();" title="Open WhatsApp Chat directly" style="text-decoration: none; font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; color: #34d399; font-weight: 700;">💬 WA</a>' +
+            '<span class="code-text" data-waid="' + targetId + '" onclick="event.stopPropagation(); openWhatsAppDrawer(this.dataset.waid)" style="font-weight: 700; font-size: 13px; color: #38bdf8; letter-spacing: 0.3px; cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" title="Click client phone to open WhatsApp Web Chat Drawer">' + display + '</span>' +
+            '<button type="button" data-waid="' + targetId + '" onclick="event.stopPropagation(); openWhatsAppDrawer(this.dataset.waid)" title="Open WhatsApp Web Chat Drawer" style="font-size: 11px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 7px; color: #34d399; font-weight: 700; cursor: pointer;">💬 WA</button>' +
             '<a href="tel:+' + clean + '" onclick="event.stopPropagation();" title="Call directly" style="text-decoration: none; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; padding: 2px 7px; color: #60a5fa; font-weight: 700;">📞 Call</a>' +
           '</div>' +
           wamidHtml +
@@ -1645,16 +2605,17 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
               escapeHtml(c.currentJourneyStep || ('Step ' + stepNum + ': Dispatched')) +
             '</span>';
 
-            return '<tr class="clickable" data-href="/contacts/' + c.id + '">' +
+            const targetWaId = (c.waId || c.phone || c.id || '').replace(/\D/g, '') || c.phone || c.id;
+            return '<tr class="clickable" data-waid="' + targetWaId + '" onclick="openWhatsAppDrawer(this.dataset.waid)" style="cursor: pointer;" title="Click row or phone to open WhatsApp Web Chat">' +
               '<td style="font-weight: 600; color: #f8fafc;">' + escapeHtml(c.name || 'Unnamed Prospect') + '</td>' +
-              '<td>' + formatFullPhone(c.phone, c.lastWaMessageId) + '</td>' +
+              '<td>' + formatFullPhone(c.phone, c.lastWaMessageId, c.waId || c.phone) + '</td>' +
               '<td>' + batchBadge + '</td>' +
               '<td>' + deliveryBadge + '</td>' +
               '<td>' + replyHtml + '</td>' +
               '<td>' +
                 '<div style="display: flex; align-items: center; gap: 6px;">' +
                   journeyBadge +
-                  '<button type="button" class="btn btn-journey-map" data-id="' + c.id + '" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" title="View Automation Journey Flow">🗺️</button>' +
+                  '<button type="button" class="btn btn-journey-map" data-id="' + c.id + '" onclick="event.stopPropagation(); openJourneyModal(this.dataset.id);" style="padding: 2px 6px; font-size: 10px; background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #818cf8;" title="View Automation Journey Flow">🗺️</button>' +
                 '</div>' +
               '</td>' +
               '<td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">' + projectName + '</span></td>' +
@@ -1662,14 +2623,16 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
               '<td>' + statusBadge + '<div style="margin-top: 2px;">' + unreadBadge + '</div></td>' +
               '<td>' +
                 '<div style="display: flex; gap: 6px;">' +
-                  '<a href="/contacts/' + c.id + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
-                  '<button type="button" class="btn btn-send-invite" data-id="' + c.id + '" data-name="' + escapeHtml(c.name || 'Lead') + '" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
+                  '<button type="button" data-waid="' + targetWaId + '" onclick="event.stopPropagation(); openWhatsAppDrawer(this.dataset.waid)" class="btn" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399; font-weight: 700;" title="Open WhatsApp Web chat history drawer">💬 Chat</button>' +
+                  '<a href="/contacts/' + c.id + '" onclick="event.stopPropagation()" class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Open 360</a>' +
+                  '<button type="button" class="btn btn-send-invite" data-id="' + c.id + '" data-name="' + escapeHtml(c.name || 'Lead') + '" onclick="event.stopPropagation(); sendMetaInvitation(this.dataset.id, this.dataset.name, this)" style="padding: 4px 8px; font-size: 11px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;" title="Send official Meta WhatsApp invitation">🚀 Send</button>' +
                 '</div>' +
               '</td>' +
             '</tr>';
           } catch (rowErr) {
             console.error("Error formatting contact row:", rowErr, c);
-            return '<tr class="clickable" data-href="/contacts/' + (c.id || '') + '">' +
+            const fallbackId = (c.waId || c.phone || c.id || '').replace(/\D/g, '') || c.phone || c.id;
+            return '<tr class="clickable" data-waid="' + fallbackId + '" onclick="openWhatsAppDrawer(this.dataset.waid)">' +
               '<td colspan="10" style="padding: 10px; color: #94a3b8;">Lead: ' + escapeHtml(c.name || c.phone || 'Unknown') + '</td>' +
             '</tr>';
           }

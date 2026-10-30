@@ -19,8 +19,9 @@ export type TemplateComponent = Record<string, unknown>;
 export async function sendTemplate(
   to: string,
   name: string,
-  components: TemplateComponent[],
-  client: MetaClient = createMetaClient()
+  components: TemplateComponent[] = [],
+  client: MetaClient = createMetaClient(),
+  languageCode: string = (name === "silverstone_invitation" ? "en" : "en_US")
 ): Promise<SendTextResult> {
   try {
     const response = await client.post<TemplateResponse>(
@@ -32,7 +33,7 @@ export async function sendTemplate(
         type: "template",
         template: {
           name,
-          language: { code: "en_US" },
+          language: { code: languageCode },
           components
         }
       }

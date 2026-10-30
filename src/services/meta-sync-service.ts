@@ -1,4 +1,5 @@
 import axios from "axios";
+import cron, { type ScheduledTask } from "node-cron";
 import { env } from "../config/env.js";
 import type { AnalyticsRepository } from "../db/repository.js";
 import type { MetaSyncSnapshot, MetaTemplateDailyMetric, MetaTemplateItem } from "../db/types.js";
@@ -20,6 +21,7 @@ export interface MetaSyncStatusResponse {
     healthStatus: Record<string, unknown> | null;
   };
   analytics30d: Record<string, unknown> | null;
+  analytics7d?: Record<string, unknown> | null;
   templates: MetaTemplateItem[];
   lastSyncedAt: string;
   syncedDays: number;
@@ -27,7 +29,7 @@ export interface MetaSyncStatusResponse {
 }
 
 export class MetaSyncService {
-  private syncTimer: NodeJS.Timeout | null = null;
+  private cronTasks: ScheduledTask[] = [];
   private primaryTemplateId = "1409540194136378"; // silverstone_invitation
   private primaryTemplateName = "silverstone_invitation";
   private latestSnapshot: MetaSyncSnapshot | null = null;
@@ -84,7 +86,7 @@ export class MetaSyncService {
     const token = env.metaAccessToken;
     const phoneId = env.whatsappPhoneNumberId;
     const wabaId = env.whatsappWabaId;
-    const version = env.metaGraphApiVersion || "v26.0";
+    const version = "v23.0";
 
     if (!token || !phoneId || !wabaId) {
       const msg = "Missing META_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, or WHATSAPP_WABA_ID";
@@ -96,23 +98,24 @@ export class MetaSyncService {
 
     const headers = { Authorization: `Bearer ${token}` };
     const nowUnix = Math.floor(Date.now() / 1000);
+    const sevenDaysAgoUnix = nowUnix - 7 * 86400;
     const thirtyDaysAgoUnix = nowUnix - 30 * 86400;
 
     try {
-      // 1. Phone Number Health & Quality
+      // 1. Phone Number Health & Quality: GET https://graph.facebook.com/v23.0/${PHONE_NUMBER_ID}?fields=display_phone_number,verified_name,quality_rating,status
       const phoneUrl = `https://graph.facebook.com/${version}/${phoneId}?fields=display_phone_number,verified_name,quality_rating,status`;
       const phoneReq = axios.get(phoneUrl, { headers, timeout: 10000 });
 
-      // 2. Messaging Limit Tier & WABA Health
-      const wabaUrl = `https://graph.facebook.com/${version}/${wabaId}?fields=name,whatsapp_business_manager_messaging_limit,health_status`;
-      const wabaReq = axios.get(wabaUrl, { headers, timeout: 10000 });
+      // 2. Messaging Limit Tier & 7-Day Analytics: GET https://graph.facebook.com/v23.0/${WABA_ID}?fields=whatsapp_business_manager_messaging_limit,analytics.start(${SEVEN_DAYS_AGO}).end(${NOW}).granularity(DAY)
+      const wabaUrl = `https://graph.facebook.com/${version}/${wabaId}?fields=name,whatsapp_business_manager_messaging_limit,health_status,analytics.start(${sevenDaysAgoUnix}).end(${nowUnix}).granularity(DAY)`;
+      const wabaReq = axios.get(wabaUrl, { headers, timeout: 12000 });
 
       // 3. Official Daily Sent/Delivered Analytics (Last 30 Days)
       const analyticsUrl = `https://graph.facebook.com/${version}/${wabaId}?fields=analytics.start(${thirtyDaysAgoUnix}).end(${nowUnix}).granularity(DAY)`;
       const analyticsReq = axios.get(analyticsUrl, { headers, timeout: 12000 });
 
-      // 4. Official Message Templates & Approval Status
-      const templatesUrl = `https://graph.facebook.com/${version}/${wabaId}/message_templates?fields=id,name,language,status,category,quality_score&limit=100`;
+      // 4. Official Message Templates & Approval Status: GET https://graph.facebook.com/v23.0/${WABA_ID}/message_templates?fields=name,status,language,components
+      const templatesUrl = `https://graph.facebook.com/${version}/${wabaId}/message_templates?fields=id,name,language,status,components,category,quality_score&limit=100`;
       const templatesReq = axios.get(templatesUrl, { headers, timeout: 10000 });
 
       // 5. Template Daily Insights (Clicks, Reads, Replies, Spend)
@@ -287,26 +290,41 @@ export class MetaSyncService {
   }
 
   /**
-   * Starts periodic sync (startup + every 30 minutes)
+   * Starts periodic sync via node-cron (immediate startup + every 30 minutes + daily midnight)
    */
-  startPeriodicSync(repo: AnalyticsRepository, intervalMs = 30 * 60 * 1000): void {
-    if (this.syncTimer) {
-      clearInterval(this.syncTimer);
-    }
+  startPeriodicSync(repo: AnalyticsRepository): void {
+    this.stopPeriodicSync();
 
-    // Startup sync
+    // 1. Autonomous Startup Sync immediately
     this.syncAll(repo).catch(err => {
       console.warn("[META-SYNC] Startup sync warning:", err.message);
     });
 
-    // 30-minute periodic cron
-    this.syncTimer = setInterval(() => {
+    // 2. Autonomous 30-Minute Sync Worker (node-cron: */30 * * * *)
+    const cron30m = cron.schedule("*/30 * * * *", () => {
+      console.info("[META-SYNC] ⏰ Triggering scheduled 30-minute Meta verification worker...");
       this.syncAll(repo).catch(err => {
         console.warn("[META-SYNC] Scheduled 30m sync warning:", err.message);
       });
-    }, intervalMs);
+    });
 
-    console.info(`[META-SYNC] Dedicated 30-minute automated cron registered and running.`);
+    // 3. Autonomous Daily Sync Worker (node-cron: 0 0 * * * - midnight daily)
+    const cronDaily = cron.schedule("0 0 * * *", () => {
+      console.info("[META-SYNC] 🌅 Triggering scheduled daily midnight Meta verification worker...");
+      this.syncAll(repo).catch(err => {
+        console.warn("[META-SYNC] Scheduled daily midnight sync warning:", err.message);
+      });
+    });
+
+    this.cronTasks = [cron30m, cronDaily];
+    console.info(`[META-SYNC] ✅ Autonomous node-cron background workers registered: 30-minute ('*/30 * * * *') & Daily ('0 0 * * *').`);
+  }
+
+  stopPeriodicSync(): void {
+    for (const task of this.cronTasks) {
+      task.stop();
+    }
+    this.cronTasks = [];
   }
 
   getSnapshot(): MetaSyncSnapshot | null {

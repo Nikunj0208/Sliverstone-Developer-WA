@@ -5,7 +5,7 @@ import { metaSyncService } from "./services/meta-sync-service.js";
 
 assertEnvironment();
 const repo = await initDatabase();
-metaSyncService.startPeriodicSync(repo, 30 * 60 * 1000);
+metaSyncService.startPeriodicSync(repo);
 
 const app = createApp();
 

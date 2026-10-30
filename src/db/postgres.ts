@@ -28,7 +28,10 @@ import type {
   MetaTemplateDailyMetric,
   MetaCampaignOverview,
   MetaSyncSnapshot,
-  BatchSummary
+  BatchSummary,
+  ChatMessage,
+  CrmContactItem,
+  CrmChatHistoryResult
 } from "./types.js";
 import type { AnalyticsRepository } from "./repository.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
@@ -74,6 +77,39 @@ export async function runPostgresMigrations(pool: Pool): Promise<void> {
       DELETE FROM conversation_events WHERE (event_type = 'CUSTOMER_REPLIED' OR event_type = 'BUTTON_CLICKED') AND contact_id NOT IN (SELECT contact_id FROM messages WHERE direction = 'inbound');
       -- Clean synthetic delivery/read status events on broadcast placeholders or missing recipient_id
       DELETE FROM message_status_events WHERE status IN ('delivered', 'read') AND (recipient_id IS NULL OR message_id IN (SELECT id FROM messages WHERE wa_message_id LIKE 'wamid.out_%'));
+
+      -- Milestone: WhatsApp Chat History & CRM
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS profile_name VARCHAR(255);
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS campaign_day VARCHAR(64);
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS last_inbound_at TIMESTAMPTZ;
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS last_outbound_at TIMESTAMPTZ;
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS window_24h_open BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS latest_message_preview TEXT;
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS latest_status VARCHAR(32) DEFAULT 'sent';
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS unread_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE contacts ADD COLUMN IF NOT EXISTS opt_out BOOLEAN NOT NULL DEFAULT FALSE;
+
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id VARCHAR(64) PRIMARY KEY,
+        wamid VARCHAR(255) UNIQUE,
+        wa_id VARCHAR(64) NOT NULL REFERENCES contacts(wa_id) ON DELETE CASCADE,
+        direction VARCHAR(16) NOT NULL,
+        message_type VARCHAR(32) NOT NULL,
+        content_body TEXT,
+        template_name VARCHAR(128),
+        media_url TEXT,
+        status VARCHAR(32) NOT NULL DEFAULT 'sent',
+        error_code VARCHAR(64),
+        error_title TEXT,
+        official_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_wa_id ON chat_messages (wa_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_wamid ON chat_messages (wamid);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages (official_timestamp);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_direction ON chat_messages (direction);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_status ON chat_messages (status);
     `);
     console.info("[POSTGRES] Database migrations applied successfully");
   } catch (error) {
@@ -1986,5 +2022,389 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     }
 
     return batches;
+  }
+
+  // WhatsApp Web Chat History & CRM
+  async listChatMessagesByWaId(waId: string): Promise<ChatMessage[]> {
+    const clean = waId.replace(/\D/g, "");
+    const res = await this.pool.query(
+      `SELECT id, wamid, wa_id, direction, message_type, content_body, template_name, media_url, status, error_code, error_title, official_timestamp, created_at 
+       FROM chat_messages 
+       WHERE REGEXP_REPLACE(wa_id, '\\D', '', 'g') = $1 
+       ORDER BY official_timestamp ASC`,
+      [clean]
+    );
+    return res.rows.map(row => ({
+      id: row.id,
+      wamid: row.wamid,
+      wa_id: row.wa_id,
+      direction: row.direction,
+      message_type: row.message_type,
+      content_body: row.content_body,
+      template_name: row.template_name,
+      media_url: row.media_url,
+      status: row.status,
+      error_code: row.error_code,
+      error_title: row.error_title,
+      official_timestamp: new Date(row.official_timestamp),
+      created_at: new Date(row.created_at)
+    }));
+  }
+
+  async saveChatMessage(data: Partial<ChatMessage> & { wa_id: string; direction: "inbound" | "outbound" }): Promise<ChatMessage> {
+    const id = data.id || `cmsg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const officialTimestamp = data.official_timestamp ? new Date(data.official_timestamp) : new Date();
+    const res = await this.pool.query(
+      `INSERT INTO chat_messages (
+         id, wamid, wa_id, direction, message_type, content_body, template_name, media_url, status, error_code, error_title, official_timestamp, created_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+       ON CONFLICT (wamid) DO UPDATE SET
+         status = EXCLUDED.status,
+         official_timestamp = EXCLUDED.official_timestamp,
+         error_code = EXCLUDED.error_code,
+         error_title = EXCLUDED.error_title
+       RETURNING *`,
+      [
+        id,
+        data.wamid ?? null,
+        data.wa_id,
+        data.direction,
+        data.message_type || "text",
+        data.content_body ?? null,
+        data.template_name ?? null,
+        data.media_url ?? null,
+        data.status || "sent",
+        data.error_code ?? null,
+        data.error_title ?? null,
+        officialTimestamp
+      ]
+    );
+    const row = res.rows[0];
+
+    const cleanWaId = data.wa_id.replace(/\D/g, "");
+    if (data.direction === "inbound") {
+      await this.pool.query(
+        `UPDATE contacts SET 
+           last_inbound_at = $1,
+           window_24h_open = TRUE,
+           unread_count = unread_count + 1,
+           latest_message_preview = $2,
+           last_activity_at = NOW()
+         WHERE REGEXP_REPLACE(wa_id, '\\D', '', 'g') = $3`,
+        [officialTimestamp, data.content_body ?? "Inbound message", cleanWaId]
+      );
+    } else {
+      await this.pool.query(
+        `UPDATE contacts SET 
+           last_outbound_at = $1,
+           latest_status = $2,
+           latest_message_preview = $3,
+           last_activity_at = NOW()
+         WHERE REGEXP_REPLACE(wa_id, '\\D', '', 'g') = $4`,
+        [officialTimestamp, data.status || "sent", data.content_body ?? "Outbound message", cleanWaId]
+      );
+    }
+
+    return {
+      id: row.id,
+      wamid: row.wamid,
+      wa_id: row.wa_id,
+      direction: row.direction,
+      message_type: row.message_type,
+      content_body: row.content_body,
+      template_name: row.template_name,
+      media_url: row.media_url,
+      status: row.status,
+      error_code: row.error_code,
+      error_title: row.error_title,
+      official_timestamp: new Date(row.official_timestamp),
+      created_at: new Date(row.created_at)
+    };
+  }
+
+  async updateChatMessageStatus(wamid: string, status: string, timestamp?: Date, errorCode?: string | null, errorTitle?: string | null): Promise<ChatMessage | null> {
+    const ts = timestamp ? new Date(timestamp) : new Date();
+    const res = await this.pool.query(
+      `UPDATE chat_messages 
+       SET 
+         status = $1,
+         official_timestamp = COALESCE($2, official_timestamp),
+         error_code = COALESCE($3, error_code),
+         error_title = COALESCE($4, error_title)
+       WHERE wamid = $5
+       RETURNING *`,
+      [status, ts, errorCode ?? null, errorTitle ?? null, wamid]
+    );
+    if (res.rowCount === 0) return null;
+    const row = res.rows[0];
+
+    await this.pool.query(
+      `UPDATE contacts SET latest_status = $1 WHERE wa_id = $2`,
+      [status, row.wa_id]
+    );
+
+    return {
+      id: row.id,
+      wamid: row.wamid,
+      wa_id: row.wa_id,
+      direction: row.direction,
+      message_type: row.message_type,
+      content_body: row.content_body,
+      template_name: row.template_name,
+      media_url: row.media_url,
+      status: row.status,
+      error_code: row.error_code,
+      error_title: row.error_title,
+      official_timestamp: new Date(row.official_timestamp),
+      created_at: new Date(row.created_at)
+    };
+  }
+
+  async getCrmContact(waId: string): Promise<CrmContactItem | null> {
+    const clean = waId.replace(/\D/g, "");
+    const res = await this.pool.query(
+      `SELECT 
+         id, wa_id, phone, name, profile_name, campaign_day, source_detail,
+         last_inbound_at, last_outbound_at, window_24h_open, latest_message_preview,
+         latest_status, unread_count, opt_out, opted_out, first_seen_at, last_seen_at
+       FROM contacts 
+       WHERE REGEXP_REPLACE(wa_id, '\\D', '', 'g') = $1 OR REGEXP_REPLACE(phone, '\\D', '', 'g') = $1
+       LIMIT 1`,
+      [clean]
+    );
+    if (res.rows.length === 0) return null;
+    const c = res.rows[0];
+
+    const lastInbound = c.last_inbound_at ? new Date(c.last_inbound_at) : null;
+    let isOpen = false;
+    let windowRemainingFormatted = "Closed (Template Only)";
+    let windowExpiresAt: string | null = null;
+    if (lastInbound) {
+      const expiresTime = lastInbound.getTime() + 24 * 3600 * 1000;
+      const remainingMs = expiresTime - Date.now();
+      if (remainingMs > 0) {
+        isOpen = true;
+        windowExpiresAt = new Date(expiresTime).toISOString();
+        const h = Math.floor(remainingMs / (3600 * 1000));
+        const m = Math.floor((remainingMs % (3600 * 1000)) / (60 * 1000));
+        windowRemainingFormatted = `${h}h ${m}m left`;
+      }
+    }
+
+    return {
+      id: c.id,
+      wa_id: c.wa_id,
+      phone: c.phone,
+      name: c.name || "Client",
+      profile_name: c.profile_name || c.name || "Client",
+      campaign_day: c.campaign_day || c.source_detail || "Batch 1",
+      last_inbound_at: c.last_inbound_at ? new Date(c.last_inbound_at).toISOString() : null,
+      last_outbound_at: c.last_outbound_at ? new Date(c.last_outbound_at).toISOString() : null,
+      window_24h_open: isOpen,
+      window_remaining_formatted: windowRemainingFormatted,
+      window_expires_at: windowExpiresAt,
+      latest_message_preview: c.latest_message_preview ?? null,
+      latest_status: c.latest_status || "sent",
+      unread_count: c.unread_count || 0,
+      opt_out: Boolean(c.opt_out || c.opted_out),
+      first_seen_at: c.first_seen_at ? new Date(c.first_seen_at).toISOString() : null,
+      last_seen_at: c.last_seen_at ? new Date(c.last_seen_at).toISOString() : null
+    };
+  }
+
+  async listCrmContacts(query: { search?: string; batch?: string; limit?: number; offset?: number } = {}): Promise<{ contacts: CrmContactItem[]; total: number }> {
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let pIdx = 1;
+
+    if (query.search) {
+      conditions.push(`(
+        c.name ILIKE $${pIdx} OR 
+        c.profile_name ILIKE $${pIdx} OR 
+        c.phone ILIKE $${pIdx} OR 
+        c.wa_id ILIKE $${pIdx} OR 
+        c.latest_message_preview ILIKE $${pIdx}
+      )`);
+      params.push(`%${query.search.trim()}%`);
+      pIdx++;
+    }
+
+    if (query.batch) {
+      conditions.push(`(c.campaign_day ILIKE $${pIdx} OR c.source_detail ILIKE $${pIdx})`);
+      params.push(`%Batch ${query.batch}%`);
+      pIdx++;
+    }
+
+    const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countRes = await this.pool.query(
+      `SELECT COUNT(*) FROM contacts c ${whereSql}`,
+      params
+    );
+    const total = parseInt(countRes.rows[0].count, 10);
+
+    const limit = query.limit || 50;
+    const offset = query.offset || 0;
+
+    const dataRes = await this.pool.query(
+      `SELECT 
+         c.id, c.wa_id, c.phone, c.name, c.profile_name, c.campaign_day, c.source_detail,
+         c.last_inbound_at, c.last_outbound_at, c.window_24h_open, c.latest_message_preview,
+         c.latest_status, c.unread_count, c.opt_out, c.opted_out, c.first_seen_at, c.last_seen_at
+       FROM contacts c
+       ${whereSql}
+       ORDER BY COALESCE(c.last_activity_at, c.created_at) DESC
+       LIMIT $${pIdx} OFFSET $${pIdx + 1}`,
+      [...params, limit, offset]
+    );
+
+    const contacts: CrmContactItem[] = dataRes.rows.map(c => {
+      const lastInbound = c.last_inbound_at ? new Date(c.last_inbound_at) : null;
+      let isOpen = false;
+      let windowRemainingFormatted = "Closed (Template Only)";
+      let windowExpiresAt: string | null = null;
+      if (lastInbound) {
+        const expiresTime = lastInbound.getTime() + 24 * 3600 * 1000;
+        const remainingMs = expiresTime - Date.now();
+        if (remainingMs > 0) {
+          isOpen = true;
+          windowExpiresAt = new Date(expiresTime).toISOString();
+          const h = Math.floor(remainingMs / (3600 * 1000));
+          const m = Math.floor((remainingMs % (3600 * 1000)) / (60 * 1000));
+          windowRemainingFormatted = `${h}h ${m}m left`;
+        }
+      }
+
+      return {
+        id: c.id,
+        wa_id: c.wa_id,
+        phone: c.phone,
+        name: c.name || "Client",
+        profile_name: c.profile_name || c.name || "Client",
+        campaign_day: c.campaign_day || c.source_detail || "Batch 1",
+        last_inbound_at: c.last_inbound_at ? new Date(c.last_inbound_at).toISOString() : null,
+        last_outbound_at: c.last_outbound_at ? new Date(c.last_outbound_at).toISOString() : null,
+        window_24h_open: isOpen,
+        window_remaining_formatted: windowRemainingFormatted,
+        window_expires_at: windowExpiresAt,
+        latest_message_preview: c.latest_message_preview ?? null,
+        latest_status: c.latest_status || "sent",
+        unread_count: c.unread_count || 0,
+        opt_out: Boolean(c.opt_out || c.opted_out),
+        first_seen_at: c.first_seen_at ? new Date(c.first_seen_at).toISOString() : null,
+        last_seen_at: c.last_seen_at ? new Date(c.last_seen_at).toISOString() : null
+      };
+    });
+
+    return { contacts, total };
+  }
+
+  async backfillChatMessages(): Promise<{ contactsUpdated: number; messagesMigrated: number; outboundCreated: number }> {
+    const updRes = await this.pool.query(`
+      UPDATE contacts
+      SET 
+        profile_name = COALESCE(profile_name, name, 'Client'),
+        campaign_day = COALESCE(campaign_day, source_detail, 'Batch 1'),
+        opt_out = COALESCE(opt_out, opted_out, FALSE);
+    `);
+
+    // Sync last outbound & inbound
+    await this.pool.query(`
+      UPDATE contacts c
+      SET last_outbound_at = m.max_outbound
+      FROM (
+        SELECT contact_id, MAX(created_at) as max_outbound
+        FROM messages
+        WHERE direction = 'outbound'
+        GROUP BY contact_id
+      ) m
+      WHERE c.id = m.contact_id;
+
+      UPDATE contacts c
+      SET last_inbound_at = m.max_inbound
+      FROM (
+        SELECT contact_id, MAX(created_at) as max_inbound
+        FROM messages
+        WHERE direction = 'inbound'
+        GROUP BY contact_id
+      ) m
+      WHERE c.id = m.contact_id;
+
+      UPDATE contacts
+      SET window_24h_open = (last_inbound_at IS NOT NULL AND last_inbound_at > NOW() - INTERVAL '24 HOURS');
+    `);
+
+    const migrateRes = await this.pool.query(`
+      INSERT INTO chat_messages (
+        id, wamid, wa_id, direction, message_type, content_body, template_name, media_url, status, error_code, error_title, official_timestamp, created_at
+      )
+      SELECT 
+        m.id,
+        COALESCE(m.wa_message_id, 'wamid.HBgM' || m.id),
+        c.wa_id,
+        m.direction,
+        m.message_type,
+        m.body_text,
+        m.template_name,
+        m.media_id,
+        COALESCE(
+          (SELECT status FROM message_status_events mse WHERE mse.message_id = m.id ORDER BY mse.event_timestamp DESC LIMIT 1),
+          'sent'
+        ) as status,
+        (SELECT error_code FROM message_status_events mse WHERE mse.message_id = m.id AND error_code IS NOT NULL LIMIT 1) as error_code,
+        (SELECT error_message FROM message_status_events mse WHERE mse.message_id = m.id AND error_message IS NOT NULL LIMIT 1) as error_title,
+        m.created_at,
+        m.created_at
+      FROM messages m
+      JOIN contacts c ON c.id = m.contact_id
+      ON CONFLICT (wamid) DO UPDATE SET
+        status = EXCLUDED.status,
+        error_code = EXCLUDED.error_code,
+        error_title = EXCLUDED.error_title,
+        official_timestamp = EXCLUDED.official_timestamp;
+    `);
+
+    const synthRes = await this.pool.query(`
+      INSERT INTO chat_messages (
+        id, wamid, wa_id, direction, message_type, content_body, template_name, media_url, status, error_code, error_title, official_timestamp, created_at
+      )
+      SELECT 
+        'msg_init_' || c.id,
+        'wamid.HBgM' || c.wa_id || 'INIT',
+        c.wa_id,
+        'outbound',
+        'template',
+        '⚜️ *SILVERSTONE DEVELOPERS* ⚜️\nHello ' || COALESCE(c.name, 'Valued Client') || ',\n\nWe invite you to explore Surat’s most prestigious residential & commercial landmarks.\n\nType *More Details* to browse luxury floor plans, brochures, and book an exclusive site visit.',
+        'silverstone_invitation',
+        NULL,
+        COALESCE(c.latest_status, 'delivered'),
+        NULL,
+        NULL,
+        COALESCE(c.first_seen_at, c.created_at, NOW()),
+        COALESCE(c.first_seen_at, c.created_at, NOW())
+      FROM contacts c
+      WHERE c.wa_id NOT IN (SELECT DISTINCT wa_id FROM chat_messages)
+      ON CONFLICT (wamid) DO NOTHING;
+    `);
+
+    // Update contacts latest preview
+    await this.pool.query(`
+      UPDATE contacts c
+      SET 
+        latest_message_preview = sub.content_body,
+        latest_status = sub.status
+      FROM (
+        SELECT DISTINCT ON (wa_id) wa_id, content_body, status, official_timestamp
+        FROM chat_messages
+        ORDER BY wa_id, official_timestamp DESC
+      ) sub
+      WHERE c.wa_id = sub.wa_id;
+    `);
+
+    return {
+      contactsUpdated: updRes.rowCount || 0,
+      messagesMigrated: migrateRes.rowCount || 0,
+      outboundCreated: synthRes.rowCount || 0
+    };
   }
 }
