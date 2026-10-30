@@ -20,7 +20,9 @@ import type {
   AuditLog,
   DuplicateContactCandidate,
   MetaTemplateDailyMetric,
-  MetaCampaignOverview
+  MetaCampaignOverview,
+  MetaSyncSnapshot,
+  BatchSummary
 } from "./types.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
 import { writeFile, readFile, mkdir, rename } from "node:fs/promises";
@@ -137,6 +139,11 @@ export interface AnalyticsRepository {
   getMetaDailyMetrics(): Promise<MetaTemplateDailyMetric[]>;
   getMetaMetricForDateOrBatch(dateOrBatch: string): Promise<MetaTemplateDailyMetric | null>;
   getMetaCampaignOverview(): Promise<MetaCampaignOverview>;
+
+  // Meta Sync Snapshots & Batches
+  upsertMetaSyncSnapshot(snapshot: MetaSyncSnapshot): Promise<void>;
+  getLatestMetaSyncSnapshot(): Promise<MetaSyncSnapshot | null>;
+  listBatches(): Promise<BatchSummary[]>;
 }
 
 export class InMemoryAnalyticsRepository implements AnalyticsRepository {
@@ -2010,6 +2017,43 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     };
   }
 
+  private latestSyncSnapshot: MetaSyncSnapshot | null = null;
+
+  async upsertMetaSyncSnapshot(snapshot: MetaSyncSnapshot): Promise<void> {
+    this.latestSyncSnapshot = snapshot;
+  }
+
+  async getLatestMetaSyncSnapshot(): Promise<MetaSyncSnapshot | null> {
+    return this.latestSyncSnapshot;
+  }
+
+  async listBatches(): Promise<BatchSummary[]> {
+    const daily = await this.getMetaDailyMetrics();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return daily.map((d, idx) => {
+      const parts = d.dateStr.split("-").map(Number);
+      const formattedDate = parts.length === 3 ? `${parts[2] < 10 ? "0" + parts[2] : parts[2]} ${months[parts[1] - 1]} ${parts[0]}` : d.dateStr;
+      return {
+        batchNumber: d.batchNumber || (idx + 1),
+        batchName: `Batch ${d.batchNumber || (idx + 1)}`,
+        dateStr: d.dateStr,
+        formattedDate,
+        count: d.sent || 200,
+        status: d.dateStr === todayStr ? "TODAY" : "COMPLETED",
+        sent: d.sent,
+        delivered: d.delivered,
+        deliveryRatePercent: d.deliveryRatePercent,
+        read: d.read,
+        readRatePercent: d.readRatePercent,
+        replied: d.replied,
+        replyRatePercent: d.replyRatePercent,
+        buttonClicks: d.buttonClicks,
+        amountSpent: d.amountSpent
+      };
+    });
+  }
+
   // Cleanup
   clear(): void {
     this.contacts.clear();
@@ -2019,5 +2063,6 @@ export class InMemoryAnalyticsRepository implements AnalyticsRepository {
     this.conversationEvents.clear();
     this.auditLogs = [];
     this.metaMetrics.clear();
+    this.latestSyncSnapshot = null;
   }
 }

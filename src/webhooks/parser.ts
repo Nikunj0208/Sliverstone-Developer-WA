@@ -110,6 +110,35 @@ function parseMessages(value: RecordValue, events: NormalizedWebhookEvent[]): vo
       continue;
     }
 
+    if (message.type === "image" && isRecord(message.image)) {
+      const caption = stringValue(message.image.caption) || "[Photo]";
+      events.push({ type: "TEXT", waId, messageId, text: caption, ...extra });
+      continue;
+    }
+
+    if (message.type === "video" && isRecord(message.video)) {
+      const caption = stringValue(message.video.caption) || "[Video]";
+      events.push({ type: "TEXT", waId, messageId, text: caption, ...extra });
+      continue;
+    }
+
+    if (message.type === "audio" && isRecord(message.audio)) {
+      events.push({ type: "TEXT", waId, messageId, text: "[Voice Note/Audio]", ...extra });
+      continue;
+    }
+
+    if (message.type === "document" && isRecord(message.document)) {
+      const filename = stringValue(message.document.filename) || "[Document]";
+      events.push({ type: "TEXT", waId, messageId, text: filename, ...extra });
+      continue;
+    }
+
+    if (message.type === "location" && isRecord(message.location)) {
+      const locName = stringValue(message.location.name) || `[Location: ${message.location.latitude}, ${message.location.longitude}]`;
+      events.push({ type: "TEXT", waId, messageId, text: locName, ...extra });
+      continue;
+    }
+
     if (message.type === "button" && isRecord(message.button)) {
       const buttonId = stringValue(message.button.payload) || stringValue(message.button.text);
       if (buttonId) {

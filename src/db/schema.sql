@@ -159,3 +159,22 @@ CREATE TABLE IF NOT EXISTS meta_template_analytics (
 CREATE INDEX IF NOT EXISTS idx_meta_template_date ON meta_template_analytics (date_str);
 CREATE INDEX IF NOT EXISTS idx_meta_batch ON meta_template_analytics (batch_number);
 
+-- 8. META SYNC SNAPSHOTS (Official Phone Health, WABA Limit, Templates & 30d Analytics)
+CREATE TABLE IF NOT EXISTS meta_sync_snapshots (
+  id VARCHAR(64) PRIMARY KEY,
+  phone_number_id VARCHAR(64),
+  display_phone_number VARCHAR(64),
+  verified_name VARCHAR(255),
+  quality_rating VARCHAR(32),
+  phone_status VARCHAR(32),
+  waba_id VARCHAR(64),
+  waba_name VARCHAR(255),
+  messaging_limit VARCHAR(64),
+  health_status JSONB,
+  analytics_30d JSONB,
+  templates JSONB,
+  synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_meta_sync_synced_at ON meta_sync_snapshots (synced_at);
+

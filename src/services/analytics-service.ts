@@ -18,6 +18,7 @@ import type {
   DuplicateContactCandidate
 } from "../db/types.js";
 import { normalizePhoneNumber, maskPhoneNumber } from "../utils/phone.js";
+import { realtimeHub } from "./realtime-hub.js";
 
 export interface InboundMessageEventInput {
   waId: string;
@@ -175,13 +176,20 @@ export class AnalyticsService {
       created_at: createdAt
     });
 
-    // Update conversation timestamps & CRM unread
+    // Update conversation: open 24-hr customer service window & update timestamps
     await repo.updateConversation(conversation.id, {
+      status: "OPEN",
       last_inbound_at: createdAt,
       last_message_at: createdAt,
       last_customer_message_id: message.id,
       last_customer_message_at: createdAt,
       unread_count: (conversation.unread_count || 0) + 1
+    });
+
+    // Update contact activity
+    await repo.updateContact(contact.id, {
+      last_activity_at: createdAt,
+      last_seen_at: createdAt
     });
 
     // Record CUSTOMER_REPLIED event
@@ -191,6 +199,15 @@ export class AnalyticsService {
       event_type: "CUSTOMER_REPLIED",
       event_value: input.text || input.buttonId || input.rowId || input.type,
       project_id: conversation.project_id
+    });
+
+    // Broadcast real-time event to CRM frontend
+    realtimeHub.broadcast("inbound_message", {
+      contactId: contact.id,
+      contactName: contact.name,
+      phone: contact.phone,
+      messageText: input.text || input.buttonId || input.rowId || `[${input.type}]`,
+      timestamp: createdAt.toISOString()
     });
 
     return {
@@ -264,25 +281,73 @@ export class AnalyticsService {
 
   /**
    * Records a WhatsApp status receipt (sent, delivered, read, failed).
+   * Matches by wamid or recipient_id, updates contact activity, and broadcasts real-time update.
    */
   async recordStatusReceipt(input: StatusWebhookInput): Promise<MessageStatusEvent | null> {
     const repo = this.repo();
-    const message = await repo.findMessageByWaMessageId(input.messageId);
+    const eventTimestamp = input.timestamp ? new Date(input.timestamp * 1000) : new Date();
+    const statusLower = input.status.toLowerCase();
+
+    // 1. Try resolving message by wamid
+    let message = await repo.findMessageByWaMessageId(input.messageId);
+    let contact: Contact | null = null;
+
+    if (message) {
+      contact = await repo.findContactById(message.contact_id);
+    } else if (input.recipientId) {
+      // 2. Fallback to resolving by recipient_id
+      const cleanPhone = normalizePhoneNumber(input.recipientId);
+      contact = (await repo.findContactByPhone(cleanPhone)) || (await repo.findContactByWaId(input.recipientId));
+      if (contact) {
+        const conversation = await repo.findOpenConversationByContactId(contact.id);
+        if (conversation) {
+          message = await repo.createMessage({
+            contact_id: contact.id,
+            conversation_id: conversation.id,
+            wa_message_id: input.messageId,
+            direction: "outbound",
+            message_type: "template",
+            template_name: "silverstone_invitation",
+            template_language: "en_US",
+            body_text: "Silverstone Invitation Broadcast",
+            created_at: eventTimestamp
+          });
+        }
+      }
+    }
+
     if (!message) {
-      console.warn(`[ANALYTICS] Status receipt for unknown message ${input.messageId}`);
+      console.warn(`[ANALYTICS] Status receipt for unknown message ${input.messageId} (recipient: ${input.recipientId || "none"})`);
       return null;
     }
 
-    const eventTimestamp = input.timestamp ? new Date(input.timestamp * 1000) : new Date();
+    // Update contact activity timestamp in CRM
+    if (contact) {
+      await repo.updateContact(contact.id, {
+        last_activity_at: eventTimestamp,
+        last_seen_at: eventTimestamp
+      });
+    }
 
-    return repo.createStatusEvent({
+    const event = await repo.createStatusEvent({
       message_id: message.id,
-      status: input.status.toLowerCase(),
+      status: statusLower,
       recipient_id: input.recipientId ?? null,
       event_timestamp: eventTimestamp,
       error_code: input.errorCode ?? null,
       error_message: input.errorMessage ?? null
     });
+
+    // Broadcast real-time status update to connected CRM clients
+    realtimeHub.broadcast("status_update", {
+      messageId: input.messageId,
+      status: statusLower,
+      recipientId: input.recipientId,
+      timestamp: eventTimestamp.toISOString(),
+      errorCode: input.errorCode
+    });
+
+    return event;
   }
 
   /**

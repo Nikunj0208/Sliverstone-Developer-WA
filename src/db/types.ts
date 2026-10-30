@@ -381,3 +381,46 @@ export interface MetaCampaignOverview {
   dailyBreakdown: MetaTemplateDailyMetric[];
 }
 
+export interface MetaTemplateItem {
+  id: string;
+  name: string;
+  language: string;
+  status: string;
+  category: string;
+  quality_score?: { score: string };
+}
+
+export interface MetaSyncSnapshot {
+  id: string;
+  phoneNumberId: string;
+  displayPhoneNumber: string;
+  verifiedName: string;
+  qualityRating: string;
+  phoneStatus: string;
+  wabaId: string;
+  wabaName: string;
+  messagingLimit: string;
+  healthStatus: Record<string, unknown> | null;
+  analytics30d: Record<string, unknown> | null;
+  templates: MetaTemplateItem[] | null;
+  syncedAt: Date;
+}
+
+export interface BatchSummary {
+  batchNumber: number;
+  batchName: string;
+  dateStr: string;
+  formattedDate: string;
+  count: number;
+  status: "COMPLETED" | "SCHEDULED" | "TODAY";
+  sent: number;
+  delivered: number;
+  deliveryRatePercent: number;
+  read: number;
+  readRatePercent: number;
+  replied: number;
+  replyRatePercent: number;
+  buttonClicks: number;
+  amountSpent: number;
+}
+
