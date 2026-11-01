@@ -51,6 +51,89 @@ export async function createPostgresPool(connectionString: string): Promise<Pool
   return pool;
 }
 
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export function formatBatchDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const parts = dateStr.slice(0, 10).split("-").map(Number);
+  if (parts.length !== 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) {
+    return dateStr;
+  }
+  const [y, m, d] = parts;
+  const monthName = MONTHS_SHORT[m - 1] || "";
+  return `${d < 10 ? "0" + d : d} ${monthName} ${y}`;
+}
+
+export function parseFormattedDateToIso(formatted: string): string | null {
+  if (!formatted) return null;
+  const match = formatted.trim().match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+  if (!match) return null;
+  const d = parseInt(match[1], 10);
+  const mStr = match[2].toLowerCase();
+  const y = parseInt(match[3], 10);
+  const mIndex = MONTHS_SHORT.findIndex((m) => m.toLowerCase() === mStr);
+  if (mIndex === -1) return null;
+  const m = mIndex + 1;
+  return `${y}-${m < 10 ? "0" + m : m}-${d < 10 ? "0" + d : d}`;
+}
+
+export function getIstDateString(dateInput?: Date | string | null): string {
+  if (!dateInput) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  }
+  const dateObj = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(dateObj.getTime())) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  }
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(dateObj);
+}
+
+export function getContactBatchName(
+  campaignDay?: string | null,
+  sourceDetail?: string | null,
+  firstSeen?: Date | string | null,
+  createdAt?: Date | string | null
+): string {
+  if (campaignDay && (campaignDay.includes("Nov") || campaignDay.includes("Dec") || campaignDay.match(/\d{4}/))) {
+    return campaignDay;
+  }
+  const sourceStr = sourceDetail || "";
+  const contactIstDate = getIstDateString(firstSeen || createdAt);
+
+  if (contactIstDate >= "2026-11-01" || sourceStr.includes("2026-11-01")) {
+    return formatBatchDate(contactIstDate >= "2026-11-01" ? contactIstDate : "2026-11-01");
+  }
+
+  // Historical Batches 1 to 27 (STRICTLY PRESERVED)
+  if (sourceStr.includes("2026-10-30") || contactIstDate === "2026-10-30") return "Batch 27";
+  if (sourceStr.includes("2026-10-29") || contactIstDate === "2026-10-29") return "Batch 26";
+  if (sourceStr.includes("2026-10-28") || contactIstDate === "2026-10-28") return "Batch 25";
+  if (sourceStr.includes("2026-10-27") || contactIstDate === "2026-10-27") return "Batch 24";
+  if (sourceStr.includes("2026-10-26") || contactIstDate === "2026-10-26") return "Batch 23";
+  if (sourceStr.includes("2026-10-25") || contactIstDate === "2026-10-25") return "Batch 22";
+  if (sourceStr.includes("2026-10-24") || contactIstDate === "2026-10-24") return "Batch 21";
+  if (sourceStr.includes("2026-10-23") || contactIstDate === "2026-10-23") return "Batch 20";
+  if (sourceStr.includes("2026-10-22") || contactIstDate === "2026-10-22") return "Batch 19";
+  if (sourceStr.includes("2026-10-21") || contactIstDate === "2026-10-21") return "Batch 18";
+  if (sourceStr.includes("2026-10-20") || contactIstDate === "2026-10-20") return "Batch 17";
+  if (sourceStr.includes("2026-10-19") || contactIstDate === "2026-10-19") return "Batch 16";
+  if (sourceStr.includes("2026-10-18") || contactIstDate === "2026-10-18") return "Batch 15";
+  if (sourceStr.includes("2026-10-17") || contactIstDate === "2026-10-17") return "Batch 14";
+  if (sourceStr.includes("2026-10-16") || contactIstDate === "2026-10-16") return "Batch 13";
+  if (sourceStr.includes("2026-10-15") || contactIstDate === "2026-10-15") return "Batch 12";
+  if (sourceStr.includes("2026-10-14") || contactIstDate === "2026-10-14") return "Batch 11";
+  if (sourceStr.includes("2026-10-13") || contactIstDate === "2026-10-13") return "Batch 10";
+  if (sourceStr.includes("2026-10-12") || contactIstDate === "2026-10-12") return "Batch 9";
+  if (sourceStr.includes("2026-10-11") || contactIstDate === "2026-10-11") return "Batch 8";
+  if (sourceStr.includes("2026-10-10") || contactIstDate === "2026-10-10") return "Batch 7";
+  if (sourceStr.includes("2026-10-09") || contactIstDate === "2026-10-09") return "Batch 6";
+  if (sourceStr.includes("2026-10-08") || contactIstDate === "2026-10-08") return "Batch 5";
+  if (sourceStr.includes("2026-10-06") || contactIstDate === "2026-10-06") return "Batch 4";
+  if (sourceStr.includes("2026-10-05") || contactIstDate === "2026-10-05") return "Batch 3";
+  if (sourceStr.includes("2026-10-04") || contactIstDate === "2026-10-04") return "Batch 2";
+  return "Batch 1";
+}
+
 export async function runPostgresMigrations(pool: Pool): Promise<void> {
   const __dirname = dirname(fileURLToPath(import.meta.url));
   let schemaPath = join(__dirname, "schema.sql");
@@ -296,13 +379,8 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     }
 
     if (query.batch) {
-      const batchNum = query.batch.replace(/[^0-9]/g, "") || query.batch.trim();
-      const batchDateMap: Record<string, string> = {
-        "32": "2026-11-04",
-        "31": "2026-11-03",
-        "30": "2026-11-02",
-        "29": "2026-11-01",
-        "28": "2026-10-31",
+      const rawBatch = query.batch.trim();
+      const historicalBatchMap: Record<string, string> = {
         "27": "2026-10-30",
         "26": "2026-10-29",
         "25": "2026-10-28",
@@ -331,18 +409,43 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         "2": "2026-10-04",
         "1": "2026-10-03"
       };
-      const targetDate = batchDateMap[batchNum];
-      if (targetDate) {
+
+      const isoDateMatch = rawBatch.match(/^(\d{4}-\d{2}-\d{2})$/);
+      const parsedDateFromFormatted = parseFormattedDateToIso(rawBatch);
+      const isDateBatch = isoDateMatch || parsedDateFromFormatted || rawBatch.includes("Nov") || rawBatch.includes("Dec") || rawBatch === "2026-11-01" || rawBatch === "28" || rawBatch === "29";
+
+      if (isDateBatch && !historicalBatchMap[rawBatch]) {
+        const targetDate = isoDateMatch ? isoDateMatch[1] : (parsedDateFromFormatted || (rawBatch === "28" || rawBatch === "29" ? "2026-11-01" : rawBatch.slice(0, 10)));
+        const formattedTarget = formatBatchDate(targetDate);
         conditions.push(`(
-          c.source_detail LIKE $${idx} OR
-          ((c.source_detail IS NULL OR c.source_detail = '') AND (
-            (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx + 1}::date OR
-            c.first_seen_at::date = $${idx + 1}::date
-          ))
+          c.campaign_day = $${idx} OR
+          c.campaign_day LIKE $${idx + 1} OR
+          c.source_detail LIKE $${idx + 2} OR
+          (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx + 3}::date OR
+          c.first_seen_at::date = $${idx + 3}::date OR
+          (c.created_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx + 3}::date OR
+          c.created_at::date = $${idx + 3}::date
         )`);
+        values.push(formattedTarget);
+        values.push(`%${targetDate}%`);
         values.push(`%${targetDate}%`);
         values.push(targetDate);
-        idx += 2;
+        idx += 4;
+      } else {
+        const batchNum = rawBatch.replace(/[^0-9]/g, "") || rawBatch;
+        const targetDate = historicalBatchMap[batchNum];
+        if (targetDate) {
+          conditions.push(`(
+            c.source_detail LIKE $${idx} OR
+            ((c.source_detail IS NULL OR c.source_detail = '') AND (
+              (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date = $${idx + 1}::date OR
+              c.first_seen_at::date = $${idx + 1}::date
+            ))
+          )`);
+          values.push(`%${targetDate}%`);
+          values.push(targetDate);
+          idx += 2;
+        }
       }
     }
 
@@ -457,138 +560,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       const totalMessages = parseInt(row.total_messages || "0", 10);
       const hasReplied = inboundCount > 0;
 
-      let batchName = "Batch 1";
-      const sourceStr = row.source_detail || "";
-      const firstSeenStr = row.first_seen_at ? new Date(row.first_seen_at).toISOString() : (row.created_at ? new Date(row.created_at).toISOString() : "");
-      if (sourceStr.includes("2026-11-04")) {
-        batchName = "Batch 32";
-      } else if (sourceStr.includes("2026-11-03")) {
-        batchName = "Batch 31";
-      } else if (sourceStr.includes("2026-11-02")) {
-        batchName = "Batch 30";
-      } else if (sourceStr.includes("2026-11-01")) {
-        batchName = "Batch 29";
-      } else if (sourceStr.includes("2026-10-31")) {
-        batchName = "Batch 28";
-      } else if (sourceStr.includes("2026-10-30")) {
-        batchName = "Batch 27";
-      } else if (sourceStr.includes("2026-10-29")) {
-        batchName = "Batch 26";
-      } else if (sourceStr.includes("2026-10-28")) {
-        batchName = "Batch 25";
-      } else if (sourceStr.includes("2026-10-27")) {
-        batchName = "Batch 24";
-      } else if (sourceStr.includes("2026-10-26")) {
-        batchName = "Batch 23";
-      } else if (sourceStr.includes("2026-10-25")) {
-        batchName = "Batch 22";
-      } else if (sourceStr.includes("2026-10-24")) {
-        batchName = "Batch 21";
-      } else if (sourceStr.includes("2026-10-23")) {
-        batchName = "Batch 20";
-      } else if (sourceStr.includes("2026-10-22")) {
-        batchName = "Batch 19";
-      } else if (sourceStr.includes("2026-10-21")) {
-        batchName = "Batch 18";
-      } else if (sourceStr.includes("2026-10-20")) {
-        batchName = "Batch 17";
-      } else if (sourceStr.includes("2026-10-19")) {
-        batchName = "Batch 16";
-      } else if (sourceStr.includes("2026-10-18")) {
-        batchName = "Batch 15";
-      } else if (sourceStr.includes("2026-10-17")) {
-        batchName = "Batch 14";
-      } else if (sourceStr.includes("2026-10-16")) {
-        batchName = "Batch 13";
-      } else if (sourceStr.includes("2026-10-15")) {
-        batchName = "Batch 12";
-      } else if (sourceStr.includes("2026-10-14")) {
-        batchName = "Batch 11";
-      } else if (sourceStr.includes("2026-10-13")) {
-        batchName = "Batch 10";
-      } else if (sourceStr.includes("2026-10-12")) {
-        batchName = "Batch 9";
-      } else if (sourceStr.includes("2026-10-11")) {
-        batchName = "Batch 8";
-      } else if (sourceStr.includes("2026-10-10")) {
-        batchName = "Batch 7";
-      } else if (sourceStr.includes("2026-10-09")) {
-        batchName = "Batch 6";
-      } else if (sourceStr.includes("2026-10-08")) {
-        batchName = "Batch 5";
-      } else if (sourceStr.includes("2026-10-06")) {
-        batchName = "Batch 4";
-      } else if (sourceStr.includes("2026-10-05")) {
-        batchName = "Batch 3";
-      } else if (sourceStr.includes("2026-10-04")) {
-        batchName = "Batch 2";
-      } else if (sourceStr.includes("2026-10-03")) {
-        batchName = "Batch 1";
-      } else if (firstSeenStr.startsWith("2026-11-04")) {
-        batchName = "Batch 32";
-      } else if (firstSeenStr.startsWith("2026-11-03")) {
-        batchName = "Batch 31";
-      } else if (firstSeenStr.startsWith("2026-11-02")) {
-        batchName = "Batch 30";
-      } else if (firstSeenStr.startsWith("2026-11-01")) {
-        batchName = "Batch 29";
-      } else if (firstSeenStr.startsWith("2026-10-31")) {
-        batchName = "Batch 28";
-      } else if (firstSeenStr.startsWith("2026-10-30")) {
-        batchName = "Batch 27";
-      } else if (firstSeenStr.startsWith("2026-10-29")) {
-        batchName = "Batch 26";
-      } else if (firstSeenStr.startsWith("2026-10-28")) {
-        batchName = "Batch 25";
-      } else if (firstSeenStr.startsWith("2026-10-27")) {
-        batchName = "Batch 24";
-      } else if (firstSeenStr.startsWith("2026-10-26")) {
-        batchName = "Batch 23";
-      } else if (firstSeenStr.startsWith("2026-10-25")) {
-        batchName = "Batch 22";
-      } else if (firstSeenStr.startsWith("2026-10-24")) {
-        batchName = "Batch 21";
-      } else if (firstSeenStr.startsWith("2026-10-23")) {
-        batchName = "Batch 20";
-      } else if (firstSeenStr.startsWith("2026-10-22")) {
-        batchName = "Batch 19";
-      } else if (firstSeenStr.startsWith("2026-10-21")) {
-        batchName = "Batch 18";
-      } else if (firstSeenStr.startsWith("2026-10-20")) {
-        batchName = "Batch 17";
-      } else if (firstSeenStr.startsWith("2026-10-19")) {
-        batchName = "Batch 16";
-      } else if (firstSeenStr.startsWith("2026-10-18")) {
-        batchName = "Batch 15";
-      } else if (firstSeenStr.startsWith("2026-10-17")) {
-        batchName = "Batch 14";
-      } else if (firstSeenStr.startsWith("2026-10-16")) {
-        batchName = "Batch 13";
-      } else if (firstSeenStr.startsWith("2026-10-15")) {
-        batchName = "Batch 12";
-      } else if (firstSeenStr.startsWith("2026-10-14")) {
-        batchName = "Batch 11";
-      } else if (firstSeenStr.startsWith("2026-10-13")) {
-        batchName = "Batch 10";
-      } else if (firstSeenStr.startsWith("2026-10-12")) {
-        batchName = "Batch 9";
-      } else if (firstSeenStr.startsWith("2026-10-11")) {
-        batchName = "Batch 8";
-      } else if (firstSeenStr.startsWith("2026-10-10")) {
-        batchName = "Batch 7";
-      } else if (firstSeenStr.startsWith("2026-10-09")) {
-        batchName = "Batch 6";
-      } else if (firstSeenStr.startsWith("2026-10-08")) {
-        batchName = "Batch 5";
-      } else if (firstSeenStr.startsWith("2026-10-06")) {
-        batchName = "Batch 4";
-      } else if (firstSeenStr.startsWith("2026-10-05")) {
-        batchName = "Batch 3";
-      } else if (firstSeenStr.startsWith("2026-10-04")) {
-        batchName = "Batch 2";
-      } else if (firstSeenStr.startsWith("2026-10-03")) {
-        batchName = "Batch 1";
-      }
+      const batchName = getContactBatchName(row.campaign_day, row.source_detail, row.first_seen_at, row.created_at);
 
       return {
         id: row.id,
@@ -1556,74 +1528,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     };
 
     // Batch Name derivation
-    let batchName = "Batch 1";
-    const sourceStr = contact.source_detail || "";
-    const firstSeenStr = contact.first_seen_at ? new Date(contact.first_seen_at).toISOString() : (contact.created_at ? new Date(contact.created_at).toISOString() : "");
-    if (sourceStr.includes("2026-11-04") || firstSeenStr.startsWith("2026-11-04")) {
-      batchName = "Batch 32";
-    } else if (sourceStr.includes("2026-11-03") || firstSeenStr.startsWith("2026-11-03")) {
-      batchName = "Batch 31";
-    } else if (sourceStr.includes("2026-11-02") || firstSeenStr.startsWith("2026-11-02")) {
-      batchName = "Batch 30";
-    } else if (sourceStr.includes("2026-11-01") || firstSeenStr.startsWith("2026-11-01")) {
-      batchName = "Batch 29";
-    } else if (sourceStr.includes("2026-10-31") || firstSeenStr.startsWith("2026-10-31")) {
-      batchName = "Batch 28";
-    } else if (sourceStr.includes("2026-10-30") || firstSeenStr.startsWith("2026-10-30")) {
-      batchName = "Batch 27";
-    } else if (sourceStr.includes("2026-10-29") || firstSeenStr.startsWith("2026-10-29")) {
-      batchName = "Batch 26";
-    } else if (sourceStr.includes("2026-10-28") || firstSeenStr.startsWith("2026-10-28")) {
-      batchName = "Batch 25";
-    } else if (sourceStr.includes("2026-10-27") || firstSeenStr.startsWith("2026-10-27")) {
-      batchName = "Batch 24";
-    } else if (sourceStr.includes("2026-10-26") || firstSeenStr.startsWith("2026-10-26")) {
-      batchName = "Batch 23";
-    } else if (sourceStr.includes("2026-10-25") || firstSeenStr.startsWith("2026-10-25")) {
-      batchName = "Batch 22";
-    } else if (sourceStr.includes("2026-10-24") || firstSeenStr.startsWith("2026-10-24")) {
-      batchName = "Batch 21";
-    } else if (sourceStr.includes("2026-10-23") || firstSeenStr.startsWith("2026-10-23")) {
-      batchName = "Batch 20";
-    } else if (sourceStr.includes("2026-10-22") || firstSeenStr.startsWith("2026-10-22")) {
-      batchName = "Batch 19";
-    } else if (sourceStr.includes("2026-10-21") || firstSeenStr.startsWith("2026-10-21")) {
-      batchName = "Batch 18";
-    } else if (sourceStr.includes("2026-10-20") || firstSeenStr.startsWith("2026-10-20")) {
-      batchName = "Batch 17";
-    } else if (sourceStr.includes("2026-10-19") || firstSeenStr.startsWith("2026-10-19")) {
-      batchName = "Batch 16";
-    } else if (sourceStr.includes("2026-10-18") || firstSeenStr.startsWith("2026-10-18")) {
-      batchName = "Batch 15";
-    } else if (sourceStr.includes("2026-10-17") || firstSeenStr.startsWith("2026-10-17")) {
-      batchName = "Batch 14";
-    } else if (sourceStr.includes("2026-10-16") || firstSeenStr.startsWith("2026-10-16")) {
-      batchName = "Batch 13";
-    } else if (sourceStr.includes("2026-10-15") || firstSeenStr.startsWith("2026-10-15")) {
-      batchName = "Batch 12";
-    } else if (sourceStr.includes("2026-10-14") || firstSeenStr.startsWith("2026-10-14")) {
-      batchName = "Batch 11";
-    } else if (sourceStr.includes("2026-10-13") || firstSeenStr.startsWith("2026-10-13")) {
-      batchName = "Batch 10";
-    } else if (sourceStr.includes("2026-10-12") || firstSeenStr.startsWith("2026-10-12")) {
-      batchName = "Batch 9";
-    } else if (sourceStr.includes("2026-10-11") || firstSeenStr.startsWith("2026-10-11")) {
-      batchName = "Batch 8";
-    } else if (sourceStr.includes("2026-10-10") || firstSeenStr.startsWith("2026-10-10")) {
-      batchName = "Batch 7";
-    } else if (sourceStr.includes("2026-10-09") || firstSeenStr.startsWith("2026-10-09")) {
-      batchName = "Batch 6";
-    } else if (sourceStr.includes("2026-10-08") || firstSeenStr.startsWith("2026-10-08")) {
-      batchName = "Batch 5";
-    } else if (sourceStr.includes("2026-10-06") || firstSeenStr.startsWith("2026-10-06")) {
-      batchName = "Batch 4";
-    } else if (sourceStr.includes("2026-10-05") || firstSeenStr.startsWith("2026-10-05")) {
-      batchName = "Batch 3";
-    } else if (sourceStr.includes("2026-10-04") || firstSeenStr.startsWith("2026-10-04")) {
-      batchName = "Batch 2";
-    } else if (sourceStr.includes("2026-10-03") || firstSeenStr.startsWith("2026-10-03")) {
-      batchName = "Batch 1";
-    }
+    const batchName = getContactBatchName(contact.campaign_day, contact.source_detail, contact.first_seen_at, contact.created_at);
 
     const campaignSummary: Contact360CampaignSummary = {
       campaignsReceived,
@@ -1884,7 +1789,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
   }
 
   async listBatches(): Promise<BatchSummary[]> {
-    const KNOWN_BATCH_SCHEDULE: Array<{ batchNumber: number; dateStr: string }> = [
+    const HISTORICAL_BATCH_SCHEDULE: Array<{ batchNumber: number; dateStr: string }> = [
       { batchNumber: 1, dateStr: "2026-10-03" },
       { batchNumber: 2, dateStr: "2026-10-04" },
       { batchNumber: 3, dateStr: "2026-10-05" },
@@ -1912,20 +1817,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       { batchNumber: 25, dateStr: "2026-10-28" },
       { batchNumber: 26, dateStr: "2026-10-29" },
       { batchNumber: 27, dateStr: "2026-10-30" },
-      { batchNumber: 28, dateStr: "2026-10-31" },
-      { batchNumber: 29, dateStr: "2026-11-01" },
-      { batchNumber: 30, dateStr: "2026-11-02" },
-      { batchNumber: 31, dateStr: "2026-11-03" },
-      { batchNumber: 32, dateStr: "2026-11-04" },
     ];
-
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    function formatDate(dateStr: string): string {
-      const parts = dateStr.split("-").map(Number);
-      if (parts.length !== 3) return dateStr;
-      const [y, m, d] = parts;
-      return `${d < 10 ? "0" + d : d} ${months[m - 1]} ${y}`;
-    }
 
     // 1. Fetch Meta template analytics
     const metaRes = await this.pool.query(
@@ -1939,7 +1831,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     // 2. Fetch contacts count by date (IST)
     const contactRes = await this.pool.query(`
       SELECT 
-        (first_seen_at AT TIME ZONE 'Asia/Kolkata')::date as b_date,
+        (first_seen_at AT TIME ZONE 'Asia/Kolkata')::date::text as b_date,
         COUNT(*) as count
       FROM contacts
       GROUP BY b_date
@@ -1947,22 +1839,41 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     const contactMap = new Map<string, number>();
     for (const row of contactRes.rows) {
       if (row.b_date) {
-        const ds = new Date(row.b_date).toISOString().slice(0, 10);
+        const ds = String(row.b_date).slice(0, 10);
         contactMap.set(ds, Number(row.count));
       }
     }
 
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const batches: BatchSummary[] = [];
-    const processedDates = new Set<string>();
+    // 3. Live chat message & status event counters by date (IST)
+    const liveCountersRes = await this.pool.query(`
+      SELECT 
+        (c.first_seen_at AT TIME ZONE 'Asia/Kolkata')::date::text as b_date,
+        COUNT(DISTINCT c.id) as total_contacts,
+        COUNT(DISTINCT CASE WHEN cm.status IN ('sent', 'delivered', 'read') THEN c.id END) as sent_count,
+        COUNT(DISTINCT CASE WHEN cm.status IN ('delivered', 'read') THEN c.id END) as delivered_count,
+        COUNT(DISTINCT CASE WHEN cm.status = 'read' THEN c.id END) as read_count,
+        COUNT(DISTINCT CASE WHEN c.unread_count > 0 OR c.last_inbound_at IS NOT NULL THEN c.id END) as replied_count
+      FROM contacts c
+      LEFT JOIN chat_messages cm ON cm.wa_id = c.wa_id
+      GROUP BY b_date
+    `);
+    const liveMap = new Map<string, any>();
+    for (const row of liveCountersRes.rows) {
+      if (row.b_date) {
+        const ds = String(row.b_date).slice(0, 10);
+        liveMap.set(ds, row);
+      }
+    }
 
-    for (const kb of KNOWN_BATCH_SCHEDULE) {
-      processedDates.add(kb.dateStr);
+    const todayIstStr = getIstDateString(); // e.g. "2026-11-01"
+    const batches: BatchSummary[] = [];
+
+    // Historical Batches 1 to 27 (STRICTLY PRESERVED)
+    for (const kb of HISTORICAL_BATCH_SCHEDULE) {
       const m = metaMap.get(kb.dateStr);
       const hasContacts = contactMap.has(kb.dateStr);
       const leadCount = contactMap.get(kb.dateStr) || (m ? Number(m.sent_count) : 200);
       const isCompleted = hasContacts || !!m;
-      const isToday = kb.dateStr === todayStr;
 
       const sent = m ? Number(m.sent_count) : (isCompleted ? leadCount : 0);
       const delivered = m ? Number(m.delivered_count) : (isCompleted ? Math.round(sent * 0.88) : 0);
@@ -1975,9 +1886,9 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
         batchNumber: kb.batchNumber,
         batchName: `Batch ${kb.batchNumber}`,
         dateStr: kb.dateStr,
-        formattedDate: formatDate(kb.dateStr),
+        formattedDate: formatBatchDate(kb.dateStr),
         count: leadCount,
-        status: isToday ? "TODAY" : isCompleted ? "COMPLETED" : "SCHEDULED",
+        status: isCompleted ? "COMPLETED" : "SCHEDULED",
         sent,
         delivered,
         deliveryRatePercent: sent > 0 ? Number(((delivered / sent) * 100).toFixed(1)) : 0,
@@ -1990,35 +1901,61 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       });
     }
 
-    // Dynamic discovery of any future batches
-    for (const [dateStr, count] of contactMap.entries()) {
-      if (!processedDates.has(dateStr)) {
-        const nextBatchNum = batches.length + 1;
-        const m = metaMap.get(dateStr);
-        const isToday = dateStr === todayStr;
-        const sent = m ? Number(m.sent_count) : count;
-        const delivered = m ? Number(m.delivered_count) : 0;
-        const read = m ? Number(m.read_count) : 0;
-        const replied = m ? Number(m.replied_count) : 0;
+    // Dynamic Discovery for Date-Wise Batches (2026-11-01 ONWARDS)
+    // Gather all distinct dates >= 2026-11-01
+    const dateBatchDates = new Set<string>();
+    dateBatchDates.add(todayIstStr); // Always ensure today is present
+    for (const ds of contactMap.keys()) {
+      if (ds >= "2026-11-01") dateBatchDates.add(ds);
+    }
+    for (const ds of metaMap.keys()) {
+      if (ds >= "2026-11-01") dateBatchDates.add(ds);
+    }
 
-        batches.push({
-          batchNumber: nextBatchNum,
-          batchName: `Batch ${nextBatchNum}`,
-          dateStr,
-          formattedDate: formatDate(dateStr),
-          count,
-          status: isToday ? "TODAY" : "COMPLETED",
-          sent,
-          delivered,
-          deliveryRatePercent: sent > 0 ? Number(((delivered / sent) * 100).toFixed(1)) : 0,
-          read,
-          readRatePercent: delivered > 0 ? Number(((read / delivered) * 100).toFixed(1)) : 0,
-          replied,
-          replyRatePercent: delivered > 0 ? Number(((replied / delivered) * 100).toFixed(1)) : 0,
-          buttonClicks: m ? Number(m.button_clicks) : 0,
-          amountSpent: m ? Number(m.amount_spent) : 0
-        });
-      }
+    const sortedDates = Array.from(dateBatchDates).sort();
+
+    for (const dateStr of sortedDates) {
+      const m = metaMap.get(dateStr);
+      const live = liveMap.get(dateStr);
+      const contactCount = contactMap.get(dateStr) || (live ? Number(live.total_contacts) : 0);
+
+      const isToday = dateStr === todayIstStr;
+      const mSent = m ? Number(m.sent_count) : 0;
+      const liveSent = live ? Number(live.sent_count) : 0;
+      const sent = Math.max(mSent, liveSent, contactCount);
+
+      const mDelivered = m ? Number(m.delivered_count) : 0;
+      const liveDelivered = live ? Number(live.delivered_count) : 0;
+      const delivered = Math.max(mDelivered, liveDelivered);
+
+      const mRead = m ? Number(m.read_count) : 0;
+      const liveRead = live ? Number(live.read_count) : 0;
+      const read = Math.max(mRead, liveRead);
+
+      const mReplied = m ? Number(m.replied_count) : 0;
+      const liveReplied = live ? Number(live.replied_count) : 0;
+      const replied = Math.max(mReplied, liveReplied);
+
+      const buttonClicks = m ? Number(m.button_clicks) : 0;
+      const amountSpent = m ? Number(m.amount_spent) : 0;
+
+      batches.push({
+        batchNumber: dateStr,
+        batchName: formatBatchDate(dateStr),
+        dateStr,
+        formattedDate: formatBatchDate(dateStr),
+        count: contactCount,
+        status: isToday ? "TODAY" : "COMPLETED",
+        sent,
+        delivered,
+        deliveryRatePercent: sent > 0 ? Number(((delivered / sent) * 100).toFixed(1)) : 0,
+        read,
+        readRatePercent: delivered > 0 ? Number(((read / delivered) * 100).toFixed(1)) : 0,
+        replied,
+        replyRatePercent: delivered > 0 ? Number(((replied / delivered) * 100).toFixed(1)) : 0,
+        buttonClicks,
+        amountSpent
+      });
     }
 
     return batches;

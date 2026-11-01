@@ -126,7 +126,7 @@ async function main() {
       console.log(`Scheduled wait-until argument: ${waitUntilArg.split("=")[1]}`);
     }
     console.log(`To send for real, run: npm run broadcast -- --offset=${offset} --limit=${limit} --min-delay=${minDelay} --max-delay=${maxDelay}`);
-    return;
+    process.exit(0);
   }
 
   // Scheduled execution handler
@@ -170,43 +170,42 @@ async function main() {
     }
   }
 
-  // Meta Rolling 24-Hour Safeguard Check
+  // Meta Rolling 24-Hour Safeguard Check (TIER_2K Aware)
   if (existsSync("logs")) {
     const logFiles = (await readdir("logs")).filter((f) => f.startsWith("broadcast-") && f.endsWith(".json")).sort();
     if (logFiles.length > 0) {
-      const lastFile = logFiles[logFiles.length - 1];
-      const match = /broadcast-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.json/.exec(lastFile);
-      if (match) {
-        const iso = match[1].replace(/-/g, (m, offset) => (offset > 10 ? ":" : "-")).replace(/:(\d{3}Z)$/, ".$1");
-        const lastRunTime = new Date(iso).getTime();
-        if (!isNaN(lastRunTime)) {
-          const diffMs = (lastRunTime + 24 * 60 * 60 * 1000) - Date.now();
-          if (diffMs > 0) {
-            const minutesLeft = Math.ceil(diffMs / 60000);
-            console.log(`\n⚠️  [META TIER_250 SAFEGUARD NOTICE]`);
-            console.log(`Last broadcast finished at: ${new Date(lastRunTime).toLocaleString()}`);
-            console.log(`Meta rolling 24-hour conversation window clears in: ~${minutesLeft} minute(s).`);
-            console.log(`To ensure Meta does not flag your account or hit rate limits, wait ${minutesLeft} minute(s).`);
-            if (!isDryRun && !process.argv.includes("--force")) {
-              if (process.argv.includes("--wait-safeguard")) {
-                console.log(`\n⏳ Waiting ${minutesLeft} minute(s) until 24-hour window clears...`);
-                while (Date.now() < lastRunTime + 24 * 60 * 60 * 1000) {
-                  const rem = (lastRunTime + 24 * 60 * 60 * 1000) - Date.now();
-                  if (rem <= 0) break;
-                  await sleep(Math.min(rem, 30000));
-                  const sec = Math.ceil(((lastRunTime + 24 * 60 * 60 * 1000) - Date.now()) / 1000);
-                  if (sec > 0) {
-                    console.log(`[SAFEGUARD HEARTBEAT] ~${Math.ceil(sec / 60)} min (${sec}s) remaining before 24-hour window clears...`);
-                  }
-                }
-                console.log(`\n✅ 24-hour window cleared! Safe to proceed.\n`);
-              } else {
-                console.log(`\nStopping safely to protect account health. Run again in ${minutesLeft} minute(s) or pass --wait-safeguard / --force.`);
-                process.exit(0);
+      const now = Date.now();
+      const rollingWindowMs = 24 * 60 * 60 * 1000;
+      let sentInLast24h = 0;
+      for (const f of logFiles) {
+        const m = /broadcast-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.json/.exec(f);
+        if (m) {
+          const iso = m[1].replace(/-/g, (match, offset) => (offset > 10 ? ":" : "-")).replace(/:(\d{3}Z)$/, ".$1");
+          const t = new Date(iso).getTime();
+          if (now - t < rollingWindowMs) {
+            try {
+              const raw = await readFile(`logs/${f}`, "utf-8");
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) {
+                sentInLast24h += parsed.filter((r) => r.status === "SENT").length;
               }
-            }
+            } catch {}
           }
         }
+      }
+
+      const tierLimit = 2000;
+      console.log(`\n📊 [META TIER_2K CAPACITY CHECK]`);
+      console.log(`Total sent in rolling 24-hr window: ${sentInLast24h} / ${tierLimit}`);
+      console.log(`Current batch size: ${targetContacts.length}`);
+
+      if (sentInLast24h + targetContacts.length > tierLimit && !process.argv.includes("--force")) {
+        const excess = (sentInLast24h + targetContacts.length) - tierLimit;
+        console.error(`\n🚨 [SAFETY HALT] Current batch (${targetContacts.length}) exceeds rolling 24h limit by ${excess}.`);
+        console.error(`Meta rolling 24-hour capacity available: ${Math.max(0, tierLimit - sentInLast24h)}`);
+        process.exit(1);
+      } else {
+        console.log(`✅ Safe to proceed: ${tierLimit - sentInLast24h - targetContacts.length} recipient headroom remaining in 24h window.`);
       }
     }
   }
@@ -342,6 +341,36 @@ async function main() {
   await writeFile(logFile, serialized);
   await writeFile(dataFile, serialized);
   console.log(`\nBroadcast complete! Detailed log saved to: ${logFile} and ${dataFile}`);
+
+  // Starting 01 Nov 2026 onwards: maintain unified 1-batch-per-date file
+  const istDateStr = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  if (istDateStr >= "2026-11-01") {
+    const dailyDataFile = `data/broadcasts/broadcast-${istDateStr}.json`;
+    const dailyLogFile = `logs/broadcast-${istDateStr}.json`;
+    let mergedResults = [...results];
+    if (existsSync(dailyDataFile)) {
+      try {
+        const existingRaw = await readFile(dailyDataFile, "utf-8");
+        const existingList = JSON.parse(existingRaw);
+        if (Array.isArray(existingList)) {
+          const phoneMap = new Map<string, any>();
+          for (const item of existingList) {
+            if (item.phone) phoneMap.set(item.phone, item);
+          }
+          for (const item of results) {
+            if (item.phone) phoneMap.set(item.phone, item);
+          }
+          mergedResults = Array.from(phoneMap.values());
+        }
+      } catch (err: any) {
+        console.warn("[DAILY-LOG] Note merging daily broadcast log:", err.message);
+      }
+    }
+    const dailySerialized = JSON.stringify(mergedResults, null, 2);
+    await writeFile(dailyDataFile, dailySerialized);
+    await writeFile(dailyLogFile, dailySerialized);
+    console.log(`[DAILY-BATCH] Unified single date batch for ${istDateStr} updated (${mergedResults.length} total contacts): ${dailyDataFile}`);
+  }
 
   const sentCount = results.filter((r) => r.status === "SENT").length;
   const failCount = results.filter((r) => r.status === "FAILED").length;

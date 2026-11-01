@@ -10,3 +10,4 @@ Contact list  - contacts (6).csv
 *.tmp*
 data/crm-store.json
 .playwright-mcp/
+scratch/

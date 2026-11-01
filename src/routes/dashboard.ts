@@ -1710,12 +1710,13 @@ dashboardRouter.get("/dashboard", async (_req: Request, res: Response) => {
         const tbody = document.getElementById("batchesTableBody");
         if (!tbody || !breakdown) return;
 
-        const activeBatches = breakdown.filter(b => b.sent > 0 || b.delivered > 0 || b.read > 0 || b.batchNumber);
+        const activeBatches = breakdown.filter(b => b.sent > 0 || b.delivered > 0 || b.read > 0 || b.batchNumber || b.batchName);
         tbody.innerHTML = activeBatches.slice().reverse().map(b => {
-          const batchLabel = b.batchNumber ? 'Batch ' + b.batchNumber : 'Activity';
-          const batchLink = b.batchNumber ? '/contacts?batch=' + b.batchNumber : '/contacts?date=' + b.dateStr;
+          const isDateBatch = (b.dateStr && b.dateStr >= '2026-11-01') || (typeof b.batchNumber === 'string' && b.batchNumber.includes('-'));
+          const batchLabel = b.batchName || (isDateBatch ? (b.formattedDate || b.dateStr) : (b.batchNumber ? 'Batch ' + b.batchNumber : 'Activity'));
+          const batchLink = b.batchNumber ? '/contacts?batch=' + encodeURIComponent(b.batchNumber) : '/contacts?date=' + b.dateStr;
           return '<tr>' +
-            '<td style="font-weight: 700; color: #fff;">' + batchLabel + '</td>' +
+            '<td style="font-weight: 700; color: #fff;">' + (b.status === "TODAY" ? "🟢 " : "") + batchLabel + '</td>' +
             '<td><span class="code-text" style="color: #38bdf8; font-weight: 600;">' + b.dateStr + '</span></td>' +
             '<td><strong style="font-family: monospace;">' + b.sent + '</strong></td>' +
             '<td><span style="color: #38bdf8; font-weight: 600;">' + b.delivered + '</span> <span style="font-size: 11px; color: var(--text-dim);">(' + b.deliveryRatePercent + '%)</span></td>' +
@@ -1790,15 +1791,17 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
 
   const batchOptionsHtml = batches.map(b => {
     const statusIcon = b.status === "COMPLETED" ? "✅ Completed" : (b.status === "TODAY" ? "⚡ Running Today" : "⏳ Scheduled");
-    return `<option value="${b.batchNumber}">Batch ${b.batchNumber} — ${b.formattedDate} (${b.count} Leads • ${statusIcon})</option>`;
+    const label = typeof b.batchNumber === "number" && b.batchNumber <= 27 ? `Batch ${b.batchNumber} — ${b.formattedDate}` : `${b.batchName}`;
+    return `<option value="${b.batchNumber}">${label} (${b.count} Leads • ${statusIcon})</option>`;
   }).join("\n            ");
 
   const batchChipsHtml = batches.map(b => {
     const statusIcon = b.status === "COMPLETED" ? "✓" : (b.status === "TODAY" ? "⚡" : "⏳");
     const chipStyle = b.status === "TODAY"
-      ? "background: rgba(99, 102, 241, 0.25); border-color: #818cf8; color: #fff;"
+      ? "background: rgba(99, 102, 241, 0.25); border-color: #818cf8; color: #fff; font-weight: 700;"
       : "";
-    return `<button class="date-chip" id="chip-batch-${b.batchNumber}" style="${chipStyle}" onclick="selectBatchChip('${b.batchNumber}')" title="${b.formattedDate} • ${b.status} • ${b.count} leads">Batch ${b.batchNumber} <span style="font-size: 10px; opacity: 0.85;">(${b.formattedDate.slice(0, 6)} • ${statusIcon})</span></button>`;
+    const label = b.batchName;
+    return `<button class="date-chip" id="chip-batch-${b.batchNumber}" style="${chipStyle}" onclick="selectBatchChip('${b.batchNumber}')" title="${b.formattedDate} • ${b.status} • ${b.count} leads">${label} <span style="font-size: 10px; opacity: 0.85;">(${b.count} leads • ${statusIcon})</span></button>`;
   }).join("\n        ");
 
   const content = `
@@ -1827,7 +1830,7 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
           <span>🟢 META CLOUD API & CRM DATABASE RECONCILIATION</span>
         </div>
         <div style="font-size: 13px; color: #cbd5e1; margin-top: 3px;">
-          Master Lead List: <strong style="color: #fff; font-size: 15px;">13,742 Total Prospects</strong> &bull; Verified Split: <strong style="color: #34d399;">5,418 Sent (Batches 1–27)</strong> + <strong style="color: #fbbf24;">8,324 Queued (Batches 28–32+)</strong>
+          Master Lead List: <strong style="color: #fff; font-size: 15px;">13,742 Total Prospects</strong> &bull; Verified Split: <strong style="color: #34d399;">5,419 Sent (Batches 1–27)</strong> + <strong style="color: #fbbf24;">Today: 01 Nov 2026</strong>
         </div>
       </div>
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -1948,9 +1951,11 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
         <select id="limitFilter" onchange="fetchContacts()">
           <option value="50">50 per page</option>
           <option value="100">100 per page</option>
-          <option value="200" selected>200 per page (Full Batch)</option>
+          <option value="200">200 per page</option>
           <option value="500">500 per page</option>
-          <option value="1000">1,000 (All)</option>
+          <option value="1000">1,000 per page</option>
+          <option value="2000" selected>2,000 (Full Daily Batch)</option>
+          <option value="5000">5,000 (All Leads)</option>
         </select>
         <select id="sortFilter" onchange="fetchContacts()">
           <option value="latest_activity">Sort: Latest Activity</option>
@@ -2128,7 +2133,9 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
           let opts = '<option value="">All Batches (' + batches.length + ' Batches • 13,742 Leads)</option>';
           batches.forEach(b => {
             const statusIcon = b.status === "COMPLETED" ? "✅ Completed" : (b.status === "TODAY" ? "⚡ Running Today" : "⏳ Scheduled");
-            opts += '<option value="' + b.batchNumber + '">Batch ' + b.batchNumber + ' — ' + b.formattedDate + ' (' + b.totalLeads + ' Leads • ' + statusIcon + ')</option>';
+            const label = b.batchName || ('Batch ' + b.batchNumber);
+            const leadCount = b.count !== undefined ? b.count : (b.totalLeads || 0);
+            opts += '<option value="' + b.batchNumber + '">' + label + ' (' + leadCount + ' Leads • ' + statusIcon + ')</option>';
           });
           bSelect.innerHTML = opts;
           bSelect.value = curVal;
@@ -2141,10 +2148,12 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
           batches.forEach(b => {
             const statusIcon = b.status === "COMPLETED" ? "✓" : (b.status === "TODAY" ? "⚡" : "⏳");
             const chipStyle = b.status === "TODAY"
-              ? "background: rgba(99, 102, 241, 0.25); border-color: #818cf8; color: #fff;"
+              ? "background: rgba(99, 102, 241, 0.25); border-color: #818cf8; color: #fff; font-weight: 700;"
               : "";
             const isActive = String(selectedBatch) === String(b.batchNumber) ? "active" : "";
-            html += '<button class="date-chip ' + isActive + '" id="chip-batch-' + b.batchNumber + '" style="' + chipStyle + '" onclick="selectBatchChip(' + b.batchNumber + ')" title="' + b.formattedDate + ' • ' + b.status + ' • ' + b.totalLeads + ' leads">Batch ' + b.batchNumber + ' <span style="font-size: 10px; opacity: 0.85;">(' + b.formattedDate.slice(0, 6) + ' • ' + statusIcon + ')</span></button>';
+            const label = b.batchName || ('Batch ' + b.batchNumber);
+            const leadCount = b.count !== undefined ? b.count : (b.totalLeads || 0);
+            html += '<button class="date-chip ' + isActive + '" id="chip-batch-' + b.batchNumber + '" style="' + chipStyle + '" onclick="selectBatchChip(\'' + b.batchNumber + '\')" title="' + b.formattedDate + ' • ' + b.status + ' • ' + leadCount + ' leads">' + label + ' <span style="font-size: 10px; opacity: 0.85;">(' + leadCount + ' leads • ' + statusIcon + ')</span></button>';
           });
           chipsContainer.innerHTML = html;
         }
@@ -2164,7 +2173,11 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
         let title = 'Total Campaign Overview';
 
         if (selectedBatch && Array.isArray(cachedMetaOverview.dailyBreakdown)) {
-          const matched = cachedMetaOverview.dailyBreakdown.find(d => String(d.batchNumber) === String(selectedBatch));
+          const matched = cachedMetaOverview.dailyBreakdown.find(d => 
+            String(d.batchNumber) === String(selectedBatch) || 
+            d.dateStr === String(selectedBatch) || 
+            d.batchName === String(selectedBatch)
+          );
           if (matched) {
             sent = matched.sent;
             delivered = matched.delivered;
@@ -2174,7 +2187,7 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
             clicks = matched.buttonClicks;
             replied = matched.replied;
             spend = '₹' + Number(matched.amountSpent || 0).toFixed(2);
-            title = 'Batch ' + selectedBatch + ' (' + matched.dateStr + ')';
+            title = (matched.batchName || ('Batch ' + selectedBatch)) + ' (' + matched.dateStr + ')';
           }
         } else if (selectedDate && Array.isArray(cachedMetaOverview.dailyBreakdown)) {
           const matched = cachedMetaOverview.dailyBreakdown.find(d => d.dateStr === selectedDate);
@@ -2187,7 +2200,7 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
             clicks = matched.buttonClicks;
             replied = matched.replied;
             spend = '₹' + Number(matched.amountSpent || 0).toFixed(2);
-            title = 'Date: ' + selectedDate + (matched.batchNumber ? ' (Batch ' + matched.batchNumber + ')' : '');
+            title = (matched.batchName || ('Date: ' + selectedDate));
           }
         }
 
@@ -2217,7 +2230,7 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
         const bSelect = document.getElementById("batchFilter");
         if (bSelect) bSelect.value = selectedBatch;
         
-        selectedDate = (batchVal ? BATCH_DATE_MAP[batchVal] : "") || "";
+        selectedDate = (batchVal ? (BATCH_DATE_MAP[batchVal] || (batchVal.includes("-") ? batchVal : "")) : "") || "";
         const dInput = document.getElementById("dateFilterInput");
         if (dInput) dInput.value = selectedDate;
 
@@ -2232,8 +2245,8 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
       }
 
       function onBatchSelect(batchVal) {
-        selectedBatch = batchVal;
-        selectedDate = BATCH_DATE_MAP[batchVal] || "";
+        selectedBatch = batchVal ? String(batchVal) : "";
+        selectedDate = (batchVal ? (BATCH_DATE_MAP[batchVal] || (batchVal.includes("-") ? batchVal : "")) : "") || "";
         const dInput = document.getElementById("dateFilterInput");
         if (dInput) dInput.value = selectedDate;
 
@@ -2503,11 +2516,10 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
         }
 
         const batchColorMap = {
-          'Batch 32': { bg: 'rgba(236, 72, 153, 0.25)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.5)' },
-          'Batch 31': { bg: 'rgba(168, 85, 247, 0.25)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.5)' },
-          'Batch 30': { bg: 'rgba(129, 140, 248, 0.25)', text: '#a5b4fc', border: 'rgba(129, 140, 248, 0.5)' },
-          'Batch 29': { bg: 'rgba(56, 189, 248, 0.25)', text: '#38bdf8', border: 'rgba(56, 189, 248, 0.5)' },
-          'Batch 28': { bg: 'rgba(45, 212, 191, 0.25)', text: '#2dd4bf', border: 'rgba(45, 212, 191, 0.5)' },
+          '01 Nov 2026': { bg: 'rgba(16, 185, 129, 0.25)', text: '#34d399', border: 'rgba(16, 185, 129, 0.5)' },
+          '02 Nov 2026': { bg: 'rgba(56, 189, 248, 0.25)', text: '#38bdf8', border: 'rgba(56, 189, 248, 0.5)' },
+          '03 Nov 2026': { bg: 'rgba(168, 85, 247, 0.25)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.5)' },
+          '04 Nov 2026': { bg: 'rgba(236, 72, 153, 0.25)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.5)' },
           'Batch 27': { bg: 'rgba(52, 211, 153, 0.25)', text: '#34d399', border: 'rgba(52, 211, 153, 0.5)' },
           'Batch 26': { bg: 'rgba(250, 204, 21, 0.25)', text: '#facc15', border: 'rgba(250, 204, 21, 0.5)' },
           'Batch 25': { bg: 'rgba(251, 146, 60, 0.25)', text: '#fb923c', border: 'rgba(251, 146, 60, 0.5)' },
@@ -2550,7 +2562,8 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
             const projectName = c.project ? escapeHtml(c.project.toUpperCase()) : 'GENERAL';
 
             // Batch Badge
-            const batchInfo = batchColorMap[c.batchName] || { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' };
+            const isDateBatchName = c.batchName && (c.batchName.includes('Nov') || c.batchName.includes('Dec') || c.batchName.includes('2026') || c.batchName.includes('-'));
+            const batchInfo = batchColorMap[c.batchName] || (isDateBatchName ? { bg: 'rgba(16, 185, 129, 0.2)', text: '#34d399', border: 'rgba(16, 185, 129, 0.4)' } : { bg: 'rgba(99, 102, 241, 0.2)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.4)' });
             const batchBadge = '<span class="badge" style="background: ' + batchInfo.bg + '; color: ' + batchInfo.text + '; border: 1px solid ' + batchInfo.border + '; font-weight: 700;">' + escapeHtml(c.batchName || 'Batch 1') + '</span>';
 
             // Delivery / Seen Status Badge (Sent, Delivered, Read with blue tick)

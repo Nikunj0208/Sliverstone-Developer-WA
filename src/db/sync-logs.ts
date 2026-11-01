@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { AnalyticsRepository } from "./repository.js";
+import { formatBatchDate } from "./postgres.js";
 
 type BroadcastLogItem = {
   phone: string;
@@ -56,12 +57,20 @@ export async function syncBroadcastLogsToRepository(repo: AnalyticsRepository): 
 
   for (const file of logFiles) {
     const filePath = foundFiles.get(file)!;
-    const match = /broadcast-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.json/.exec(file);
+    const match = /broadcast-(\d{4}-\d{2}-\d{2})(?:T(\d{2}-\d{2}-\d{2}-\d{3}Z))?\.json/.exec(file);
     if (!match) continue;
 
-    const iso = match[1].replace(/-/g, (m, offset) => (offset > 10 ? ":" : "-")).replace(/:(\d{3}Z)$/, ".$1");
+    const dateStr = match[1];
+    const timePart = match[2];
+    const iso = timePart
+      ? `${dateStr}T${timePart.replace(/-/g, (m, offset) => (offset > 7 ? ":" : "-")).replace(/:(\d{3}Z)$/, ".$1")}`
+      : `${dateStr}T00:00:00.000Z`;
     const batchDate = new Date(iso);
     if (isNaN(batchDate.getTime())) continue;
+
+    const isTodayOnwards = dateStr >= "2026-11-01";
+    const campaignDay = isTodayOnwards ? formatBatchDate(dateStr) : undefined;
+    const campaignId = isTodayOnwards ? `broadcast-${dateStr}` : file.replace(".json", "");
 
     try {
       const raw = await readFile(filePath, "utf-8");
@@ -82,17 +91,19 @@ export async function syncBroadcastLogsToRepository(repo: AnalyticsRepository): 
             name: item.name ? item.name.trim() : undefined,
             lead_source: "broadcast_invitation",
             source_detail: file,
+            campaign_day: campaignDay,
             first_seen_at: batchDate,
             last_seen_at: batchDate,
             last_activity_at: batchDate,
             created_at: batchDate,
             updated_at: batchDate
           });
-        } else if (!contact.source_detail || !contact.name) {
+        } else if (!contact.source_detail || !contact.name || (isTodayOnwards && !contact.campaign_day)) {
           await repo.updateContact(contact.id, {
             source_detail: contact.source_detail || file,
             name: contact.name || (item.name ? item.name.trim() : undefined),
-            lead_source: contact.lead_source || "broadcast_invitation"
+            lead_source: contact.lead_source || "broadcast_invitation",
+            campaign_day: contact.campaign_day || campaignDay
           });
         }
 
@@ -101,7 +112,7 @@ export async function syncBroadcastLogsToRepository(repo: AnalyticsRepository): 
           conversation = await repo.createConversation({
             contact_id: contact.id,
             status: "OPEN",
-            campaign_id: file.replace(".json", ""),
+            campaign_id: campaignId,
             opened_at: batchDate,
             last_message_at: batchDate,
             last_outbound_at: batchDate,
@@ -134,6 +145,21 @@ export async function syncBroadcastLogsToRepository(repo: AnalyticsRepository): 
               error_message: item.error,
               event_timestamp: batchDate
             });
+
+            try {
+              await repo.saveChatMessage({
+                id: outboundMsg.id,
+                wamid: msgId,
+                wa_id: cleanPhone,
+                direction: "outbound",
+                message_type: "template",
+                content_body: `Invitation to ${item.name || "Customer"}`,
+                template_name: "silverstone_invitation",
+                status: isSent ? "sent" : "failed",
+                error_title: item.error,
+                official_timestamp: batchDate
+              });
+            } catch {}
           }
         }
 

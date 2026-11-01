@@ -417,7 +417,7 @@ export interface MetaSyncSnapshot {
 }
 
 export interface BatchSummary {
-  batchNumber: number;
+  batchNumber: number | string;
   batchName: string;
   dateStr: string;
   formattedDate: string;
