@@ -133,17 +133,39 @@ webhookRouter.post("/webhook", async (request, response) => {
               console.error("Project details flow failed", message);
             }
           } else {
-            if (inboundData) {
-              await analyticsService.recordConversationEvent(
-                inboundData.conversation.id,
-                inboundData.contact.id,
-                "MAIN_MENU_VIEWED"
+            // Automation Rule:
+            // ONLY trigger automated welcome flow in two explicit cases:
+            // 1. User explicitly types a navigation command: MENU, START, MAIN MENU, HELP
+            // 2. User is an organic first-time inbound lead (never messaged before, no prior outbound campaign, no prior welcome flow)
+            //
+            // FOR ALL OTHER TEXT MESSAGES (e.g. asking for price, details, location, chatting):
+            // The bot remains COMPLETELY SILENT to allow natural 1-on-1 human conversations via CRM / Meta Business Suite!
+            const isExplicitMenuCommand = ["MENU", "START", "MAIN MENU", "HELP"].includes(trimmedText);
+            const isOrganicFirstInbound =
+              Boolean(inboundData?.isFirstInbound) &&
+              !inboundData?.hasPriorOutbound &&
+              !inboundData?.hasReceivedWelcome;
+
+            if (isExplicitMenuCommand || isOrganicFirstInbound) {
+              console.info(
+                `[FLOW] TRIGGERING WELCOME AUTOMATION (explicitCommand=${isExplicitMenuCommand}, isFirstInbound=${isOrganicFirstInbound}) for ${event.waId}`
               );
-            }
-            try {
-              await enqueueConversationAction(event.waId, () => sendWelcomeFlow(event.waId));
-            } catch {
-              console.error("Welcome flow failed");
+              if (inboundData) {
+                await analyticsService.recordConversationEvent(
+                  inboundData.conversation.id,
+                  inboundData.contact.id,
+                  "MAIN_MENU_VIEWED"
+                );
+              }
+              try {
+                await enqueueConversationAction(event.waId, () => sendWelcomeFlow(event.waId));
+              } catch (flowErr: any) {
+                console.error("Welcome flow failed:", flowErr.message);
+              }
+            } else {
+              console.info(
+                `[FLOW] BOT SILENT: Message from ${event.waId} ("${event.text.substring(0, 30)}...") preserved for human agent reply.`
+              );
             }
           }
           continue;

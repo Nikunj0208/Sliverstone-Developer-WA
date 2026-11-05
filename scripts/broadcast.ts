@@ -194,8 +194,17 @@ async function main() {
         }
       }
 
-      const tierLimit = 2000;
-      console.log(`\n📊 [META TIER_2K CAPACITY CHECK]`);
+      let tierLimit = 10000; // Meta officially upgraded to TIER_10K (10,000 allowance / day)
+      try {
+        const repo = getAnalyticsRepository();
+        const snapshot = await repo?.getLatestMetaSyncSnapshot();
+        if (snapshot?.messagingLimit === "TIER_10K") {
+          tierLimit = 10000;
+        } else if (snapshot?.messagingLimit === "TIER_2K") {
+          tierLimit = 2000;
+        }
+      } catch {}
+      console.log(`\n📊 [META CAPACITY CHECK: ${tierLimit >= 10000 ? "TIER_10K (10,000 / day)" : "TIER_2K"}]`);
       console.log(`Total sent in rolling 24-hr window: ${sentInLast24h} / ${tierLimit}`);
       console.log(`Current batch size: ${targetContacts.length}`);
 
@@ -289,14 +298,35 @@ async function main() {
 
       if (msgId) {
         try {
-          await analyticsService.trackOutboundMessage({
+          const trackRes = await analyticsService.trackOutboundMessage({
             to: contact.phone,
+            profileName: contact.name,
             waMessageId: msgId,
             messageType: "template",
             templateName: "silverstone_invitation",
             bodyText: `Invitation to ${contact.name || "Customer"}`
           });
-        } catch { }
+
+          // Starting 01 Nov 2026 onwards: associate with unified single date batch immediately
+          const istToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+          if (istToday >= "2026-11-01") {
+            const dateParts = istToday.split("-");
+            const day = dateParts[2];
+            const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const month = monthNames[parseInt(dateParts[1], 10) - 1];
+            const formattedDay = `${day} ${month} ${dateParts[0]}`;
+            
+            const repo = getAnalyticsRepository();
+            if (repo) {
+              await (repo as any).pool?.query(
+                `UPDATE contacts SET campaign_day = $1, source_detail = COALESCE(source_detail, $2), name = COALESCE(NULLIF($3, ''), name) WHERE id = $4`,
+                [formattedDay, `broadcast-${istToday}.json`, contact.name || null, trackRes.contact_id]
+              );
+            }
+          }
+        } catch (trackErr: any) {
+          console.warn("[CRM-TRACK] Note recording outbound message:", trackErr.message);
+        }
       }
     } catch (err: any) {
       const errMsg = err.response?.data?.error?.message || err.message;

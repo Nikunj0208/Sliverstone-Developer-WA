@@ -143,6 +143,10 @@ export class AnalyticsService {
     conversation: Conversation;
     message: Message;
     isDuplicate: boolean;
+    isFirstInbound: boolean;
+    hasPriorOutbound: boolean;
+    hasReceivedWelcome: boolean;
+    priorInboundCount: number;
   }> {
     const repo = this.repo();
 
@@ -155,12 +159,31 @@ export class AnalyticsService {
         contact,
         conversation,
         message: existingMessage,
-        isDuplicate: true
+        isDuplicate: true,
+        isFirstInbound: false,
+        hasPriorOutbound: false,
+        hasReceivedWelcome: true,
+        priorInboundCount: 1
       };
     }
 
     const contact = await this.resolveContact(input.waId, input.profileName);
     const conversation = await this.getOrCreateConversation(contact.id);
+
+    // Inspect prior message history to differentiate first-time inquiries from ongoing human chat
+    const existingMessages = await repo.listMessagesByContact(contact.id);
+    const priorInbound = existingMessages.filter(
+      (m) => m.direction === "inbound" && m.wa_message_id !== input.messageId
+    );
+    const priorOutbound = existingMessages.filter((m) => m.direction === "outbound");
+    const isFirstInbound = priorInbound.length === 0;
+    const hasPriorOutbound = priorOutbound.length > 0;
+
+    // Check if welcome flow or main menu was ever delivered to this contact previously
+    const existingEvents = await repo.listConversationEventsByContact(contact.id);
+    const hasReceivedWelcome = existingEvents.some(
+      (e) => e.event_type === "MAIN_MENU_VIEWED" || e.event_type === "WELCOME_SENT"
+    );
 
     const createdAt = input.timestamp ? new Date(input.timestamp * 1000) : new Date();
 
@@ -241,7 +264,11 @@ export class AnalyticsService {
       contact,
       conversation,
       message,
-      isDuplicate: false
+      isDuplicate: false,
+      isFirstInbound,
+      hasPriorOutbound,
+      hasReceivedWelcome,
+      priorInboundCount: priorInbound.length
     };
   }
 
