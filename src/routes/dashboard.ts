@@ -2192,7 +2192,7 @@ dashboardRouter.get("/contacts", async (_req: Request, res: Response) => {
             const isActive = String(selectedBatch) === String(b.batchNumber) ? "active" : "";
             const label = b.batchName || ('Batch ' + b.batchNumber);
             const leadCount = b.count !== undefined ? b.count : (b.totalLeads || 0);
-            html += '<button class="date-chip ' + isActive + '" id="chip-batch-' + b.batchNumber + '" style="' + chipStyle + '" onclick="selectBatchChip(\'' + b.batchNumber + '\')" title="' + b.formattedDate + ' • ' + b.status + ' • ' + leadCount + ' leads">' + label + ' <span style="font-size: 10px; opacity: 0.85;">(' + leadCount + ' leads • ' + statusIcon + ')</span></button>';
+            html += '<button class="date-chip ' + isActive + '" id="chip-batch-' + b.batchNumber + '" style="' + chipStyle + '" data-batch="' + b.batchNumber + '" onclick="selectBatchChip(this.dataset.batch)" title="' + b.formattedDate + ' • ' + b.status + ' • ' + leadCount + ' leads">' + label + ' <span style="font-size: 10px; opacity: 0.85;">(' + leadCount + ' leads • ' + statusIcon + ')</span></button>';
           });
           chipsContainer.innerHTML = html;
         }
@@ -3971,7 +3971,7 @@ dashboardRouter.get("/conversations", (_req: Request, res: Response) => {
             '<td><span class="code-text">' + (c.currentState || 'INIT') + '</span></td>' +
             '<td>' + statusBadge + '</td>' +
             '<td>' + followUpBadge + '</td>' +
-            '<td><div style="display: inline-flex; gap: 6px;"><button type="button" class="btn" style="padding: 4px 10px; font-size: 12px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; font-weight: 700; cursor: pointer;" onclick="event.stopPropagation(); openWhatsAppDrawer(\'\' + (c.phone || c.contactPhone || \'\'));">💬 Chat</button><a href="/contacts/' + c.contactId + '" class="btn" style="padding: 4px 8px; font-size: 12px;" onclick="event.stopPropagation();">360</a></div></td>' +
+            '<td><div style="display: inline-flex; gap: 6px;"><button type="button" class="btn" style="padding: 4px 10px; font-size: 12px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; font-weight: 700; cursor: pointer;" data-phone="' + escapeHtml(c.phone || c.contactPhone || '') + '" onclick="event.stopPropagation(); openWhatsAppDrawer(this.dataset.phone);">💬 Chat</button><a href="/contacts/' + c.contactId + '" class="btn" style="padding: 4px 8px; font-size: 12px;" onclick="event.stopPropagation();">360</a></div></td>' +
           '</tr>';
         }).join('');
       }
