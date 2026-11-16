@@ -758,6 +758,45 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       cursor: not-allowed;
       transform: none;
     }
+
+    /* Mobile Responsive Optimizations for Phones */
+    @media (max-width: 768px) {
+      header {
+        padding: 8px 14px;
+        height: auto;
+        min-height: 52px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      nav {
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 4px;
+        display: flex;
+        -webkit-overflow-scrolling: touch;
+      }
+      nav a {
+        padding: 6px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .nav-actions {
+        display: none;
+      }
+      main {
+        padding: 12px 8px;
+      }
+      .wa-drawer {
+        width: 100vw;
+        max-width: 100vw;
+      }
+      .meta-top-status-bar {
+        display: none;
+      }
+      .table-container {
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -3932,7 +3971,7 @@ dashboardRouter.get("/conversations", (_req: Request, res: Response) => {
             '<td><span class="code-text">' + (c.currentState || 'INIT') + '</span></td>' +
             '<td>' + statusBadge + '</td>' +
             '<td>' + followUpBadge + '</td>' +
-            '<td><a href="/contacts/' + c.contactId + '" class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation();">Open 360</a></td>' +
+            '<td><div style="display: inline-flex; gap: 6px;"><button type="button" class="btn" style="padding: 4px 10px; font-size: 12px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; font-weight: 700; cursor: pointer;" onclick="event.stopPropagation(); openWhatsAppDrawer(\'\' + (c.phone || c.contactPhone || \'\'));">💬 Chat</button><a href="/contacts/' + c.contactId + '" class="btn" style="padding: 4px 8px; font-size: 12px;" onclick="event.stopPropagation();">360</a></div></td>' +
           '</tr>';
         }).join('');
       }
