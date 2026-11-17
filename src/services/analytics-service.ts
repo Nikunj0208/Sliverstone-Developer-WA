@@ -209,11 +209,15 @@ export class AnalyticsService {
       unread_count: (conversation.unread_count || 0) + 1
     });
 
-    // Update contact activity
+    // Update contact activity, 24h customer care window, and preview
     await repo.updateContact(contact.id, {
       last_activity_at: createdAt,
-      last_seen_at: createdAt
-    });
+      last_seen_at: createdAt,
+      last_inbound_at: createdAt,
+      window_24h_open: true,
+      latest_message_preview: input.text || (input.buttonId ? `Button: ${input.buttonId}` : (input.rowId ? `Selection: ${input.rowId}` : `[${input.type}]`)),
+      unread_count: ((contact as any).unread_count || 0) + 1
+    } as any);
 
     // Record CUSTOMER_REPLIED event
     await repo.createConversationEvent({

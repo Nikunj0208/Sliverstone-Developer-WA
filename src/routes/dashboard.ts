@@ -758,6 +758,40 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       cursor: not-allowed;
       transform: none;
     }
+    .wa-action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .wa-action-pill:hover, .wa-action-pill:active {
+      opacity: 0.9;
+      transform: scale(1.03);
+    }
+    .wa-quick-chip {
+      background: #202c33;
+      border: 1px solid rgba(134, 150, 160, 0.25);
+      color: #8696a0;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .wa-quick-chip:hover, .wa-quick-chip:active {
+      background: #00a884;
+      color: #fff;
+      border-color: #00a884;
+    }
 
     /* Mobile Responsive Optimizations for Phones */
     @media (max-width: 768px) {
@@ -789,6 +823,11 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       .wa-drawer {
         width: 100vw;
         max-width: 100vw;
+        height: 100dvh;
+      }
+      .wa-drawer-header {
+        padding: 8px 12px;
+        min-height: 60px;
       }
       .meta-top-status-bar {
         display: none;
@@ -863,7 +902,9 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
           </div>
         </div>
       </div>
-      <div class="wa-header-actions">
+      <div class="wa-header-actions" style="display: flex; align-items: center; gap: 6px;">
+        <a id="waDirectWaAppBtn" href="#" target="_blank" class="wa-action-pill" style="background: #25d366; color: #fff;" title="Open directly in WhatsApp App (Anytime, No 24h limit)">💬 WA</a>
+        <a id="waDirectCallBtn" href="#" class="wa-action-pill" style="background: #0284c7; color: #fff;" title="Call customer directly from phone">📞 Call</a>
         <a id="waDirectContactLink" href="#" class="wa-icon-btn" title="Open Full Contact 360 Profile">👤</a>
         <button onclick="refreshCurrentChat()" class="wa-icon-btn" title="Refresh Chat">🔄</button>
         <button onclick="closeWhatsAppDrawer()" class="wa-icon-btn" title="Close Drawer (Esc)">✕</button>
@@ -879,36 +920,53 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
 
     <!-- Smart Bottom Composer Bar -->
     <div id="waDrawerComposer" class="wa-composer">
+      <!-- Quick Reply Templates for Quick Tapping on Mobile -->
+      <div id="waQuickRepliesBar" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch;">
+        <button type="button" class="wa-quick-chip" onclick="applyQuickReply('price')">🏡 Price &amp; Size</button>
+        <button type="button" class="wa-quick-chip" onclick="applyQuickReply('visit')">🤝 Site Visit</button>
+        <button type="button" class="wa-quick-chip" onclick="applyQuickReply('brochure')">📑 Brochure</button>
+        <button type="button" class="wa-quick-chip" onclick="applyQuickReply('call')">📞 Call Desk</button>
+      </div>
+
       <!-- State A: 24h Window Closed -->
-      <div id="waClosedComposerState" style="display: flex; flex-direction: column; gap: 10px;">
-        <div class="wa-closed-warning">
-          <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
-            <span>🔒 24-Hour Customer Care Window is CLOSED</span>
+      <div id="waClosedComposerState" style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="wa-closed-warning" style="padding: 8px 12px; font-size: 12px;">
+          <div style="font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+            <span>🔒 24h Window Closed (Meta Policy)</span>
+            <span style="font-size: 10px; opacity: 0.8;">Template Required</span>
           </div>
-          <div>Meta prohibits sending free-form text outside the 24-hour window (Error 131047). Select an approved template below to initiate or re-engage conversation:</div>
+          <div style="margin-top: 3px; font-size: 11px; line-height: 1.3;">Meta Cloud API requires an approved template to re-engage after 24h. Send an official template below or open Direct WhatsApp:</div>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 11px; font-weight: 700; color: #8696a0; text-transform: uppercase;">Select Approved Meta Template:</label>
-          <select id="waTemplateSelect" class="wa-input" style="padding: 8px 12px; font-size: 13px;" onchange="onTemplateSelectionChanged(this.value)">
-            <option value="silverstone_invitation">silverstone_invitation (Surat Landmarks Broadcast • Marketing)</option>
-            <option value="silverstone_call">silverstone_call (Sales Desk Direct Callback • Marketing)</option>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <select id="waTemplateSelect" class="wa-input" style="padding: 8px 10px; font-size: 12px; flex: 1;" onchange="onTemplateSelectionChanged(this.value)">
+            <option value="silverstone_invitation">silverstone_invitation (Marketing Invitation)</option>
+            <option value="silverstone_call">silverstone_call (Sales Callback)</option>
           </select>
+          <button id="waSendTemplateBtn" onclick="sendWhatsAppTemplate()" class="btn btn-primary" style="background: #00a884; border-color: #00a884; color: #fff; padding: 8px 14px; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer;">
+            🚀 Send Template
+          </button>
         </div>
-        <div id="waTemplatePreviewContainer" class="wa-template-preview-card">
+        <div style="display: flex; gap: 6px; align-items: center; justify-content: space-between; font-size: 11px;">
+          <button type="button" onclick="toggleTemplatePreview()" style="background: transparent; border: none; color: #8696a0; cursor: pointer; text-decoration: underline; font-size: 11px;">
+            👁️ <span id="togglePreviewText">Show Template Preview</span>
+          </button>
+          <a id="waDirectWaFallback" href="#" target="_blank" style="color: #25d366; font-weight: 700; text-decoration: none;">
+            💬 Open in WA App (Anytime) ↗
+          </a>
+        </div>
+        <div id="waTemplatePreviewContainer" class="wa-template-preview-card" style="display: none; max-height: 140px; overflow-y: auto;">
           <!-- Dynamically populated live preview -->
         </div>
-        <button id="waSendTemplateBtn" onclick="sendWhatsAppTemplate()" class="btn btn-primary" style="background: #00a884; border-color: #00a884; color: #fff; width: 100%; justify-content: center; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer;">
-          🚀 Send Approved Meta Template
-        </button>
       </div>
 
       <!-- State B: 24h Window Open -->
-      <div id="waOpenComposerState" style="display: none; flex-direction: column; gap: 8px;">
-        <div style="font-size: 11px; color: #25d366; font-weight: 700; display: flex; align-items: center; gap: 5px;">
-          <span>🟢 24-Hour Customer Service Window is OPEN &bull; Free-form messaging active</span>
+      <div id="waOpenComposerState" style="display: none; flex-direction: column; gap: 6px;">
+        <div style="font-size: 11px; color: #25d366; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+          <span>🟢 24h Window OPEN &bull; Live Customer Care Active</span>
+          <span id="waOpenCountdownText" style="font-size: 10px; color: #8696a0;"></span>
         </div>
         <div class="wa-input-row">
-          <input id="waTextInput" type="text" class="wa-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendWhatsAppText();" />
+          <input id="waTextInput" type="text" class="wa-input" placeholder="Type a WhatsApp message or tap quick reply above..." onkeydown="if(event.key==='Enter') sendWhatsAppText();" />
           <button id="waSendTextBtn" onclick="sendWhatsAppText()" class="wa-send-btn" title="Send message via Meta Cloud API">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/></svg>
           </button>
@@ -1130,6 +1188,14 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
       const profileLink = document.getElementById("waDirectContactLink");
       if (profileLink) profileLink.href = '/contacts/' + c.id;
 
+      const rawDigits = (c.wa_id || c.phone || '').replace(/\D/g, "");
+      const waAppBtn = document.getElementById("waDirectWaAppBtn");
+      if (waAppBtn) waAppBtn.href = "https://wa.me/" + rawDigits;
+      const callBtn = document.getElementById("waDirectCallBtn");
+      if (callBtn) callBtn.href = "tel:+" + rawDigits;
+      const waFallback = document.getElementById("waDirectWaFallback");
+      if (waFallback) waFallback.href = "https://wa.me/" + rawDigits;
+
       // 24h Window Badge
       update24hBadge(data.window24h);
 
@@ -1331,6 +1397,20 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
         });
         const data = await res.json();
         if (!res.ok) {
+          if (data.code === 'WINDOW_CLOSED') {
+            const confirmMsg = [
+              "🔒 24-Hour Window Closed",
+              "",
+              "Meta Cloud API requires an approved template after 24 hours of inactivity.",
+              "",
+              "Would you like to open direct WhatsApp App to send this message directly to the customer?"
+            ].join(String.fromCharCode(10));
+            if (confirm(confirmMsg)) {
+              const cleanDigits = (currentDrawerWaId || '').replace(/\D/g, '');
+              window.open("https://wa.me/" + cleanDigits + "?text=" + encodeURIComponent(text), "_blank");
+              return;
+            }
+          }
           throw new Error(data.error || "Failed to send text");
         }
 
@@ -1376,6 +1456,58 @@ function renderDashboardLayout(title: string, activeTab: string, contentHtml: st
         if (btn) {
           btn.disabled = false;
           btn.textContent = "🚀 Send Approved Meta Template";
+        }
+      }
+    }
+
+
+    function toggleTemplatePreview() {
+      const container = document.getElementById("waTemplatePreviewContainer");
+      const text = document.getElementById("togglePreviewText");
+      if (!container) return;
+      if (container.style.display === "none") {
+        container.style.display = "block";
+        if (text) text.textContent = "Hide Template Preview";
+      } else {
+        container.style.display = "none";
+        if (text) text.textContent = "Show Template Preview";
+      }
+    }
+
+    function applyQuickReply(type) {
+      const input = document.getElementById("waTextInput");
+      const clientName = (currentDrawerContact && (currentDrawerContact.profile_name || currentDrawerContact.name)) || "Sir/Madam";
+      let replyText = "";
+
+      if (type === 'price') {
+        replyText = "Hello " + clientName + "! We have luxury row houses and premium bungalow plots available at Silverstone. May I know your preferred budget and BHK requirement?";
+      } else if (type === 'visit') {
+        replyText = "Hello " + clientName + "! Would you like to schedule an exclusive VIP site visit to Silverstone Developers this week? Please let us know your preferred day and time.";
+      } else if (type === 'brochure') {
+        replyText = "Hello " + clientName + "! I would be delighted to share our comprehensive project brochure, master layout, and floor plans. Shall I send it right here?";
+      } else if (type === 'call') {
+        replyText = "Hello " + clientName + "! Our senior relationship manager is available to assist you with all details. Can we connect on a quick 2-minute phone call?";
+      }
+
+      if (input) {
+        input.value = replyText;
+        input.focus();
+      }
+
+      const closedState = document.getElementById("waClosedComposerState");
+      if (closedState && closedState.style.display !== "none") {
+        const cleanDigits = (currentDrawerWaId || "").replace(/\D/g, "");
+        const confirmMsg = [
+          "🔒 24-hr customer care window on Cloud API is closed.",
+          "",
+          "You can:",
+          "1. Send an Approved Meta Template (Click Cancel, then 'Send Template')",
+          "2. OR Send this reply directly via WhatsApp App now (Click OK)",
+          "",
+          "Open WhatsApp App now?"
+        ].join(String.fromCharCode(10));
+        if (confirm(confirmMsg)) {
+          window.open("https://wa.me/" + cleanDigits + "?text=" + encodeURIComponent(replyText), "_blank");
         }
       }
     }
@@ -3751,7 +3883,7 @@ dashboardRouter.get("/contacts/:contactId", (req: Request, res: Response) => {
             ? '<span style="color: #34d399; font-weight: 600; font-size: 11px;">Customer</span>'
             : '<span style="color: #a5b4fc; font-weight: 600; font-size: 11px;">Silverstone Bot</span>';
 
-          return '<div style="' + bubbleStyle + ' padding: 10px 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" onclick="openMsgModal(\\'' + m.id + '\\')">' +
+          return '<div style="' + bubbleStyle + ' padding: 10px 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" data-msg-id="' + m.id + '" onclick="openMsgModal(this.dataset.msgId)">' +
             '<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 4px;">' +
               senderLabel +
               '<span style="font-size: 10px; color: var(--text-dim);">' + timeStr + '</span>' +
@@ -3962,7 +4094,7 @@ dashboardRouter.get("/conversations", (_req: Request, res: Response) => {
             ? '<span class="badge badge-active">🟢 OPEN</span>'
             : '<span class="badge badge-closed">🔵 CLOSED</span>';
 
-          return '<tr class="clickable" onclick="window.location.href=\\'/contacts/' + c.contactId + '\\'">' +
+          return '<tr class="clickable" data-phone="' + escapeHtml(c.phone || c.contactPhone || '') + '" onclick="openWhatsAppDrawer(this.dataset.phone)" title="Tap to open WhatsApp chat">' +
             '<td style="font-weight: 600; color: #f8fafc;">' + (c.contactName || 'Unnamed Prospect') + '</td>' +
             '<td>' + formatFullPhone(c.phone || c.contactPhone || c.phoneMasked) + '</td>' +
             '<td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(c.latestMessageText || '—') + '</td>' +

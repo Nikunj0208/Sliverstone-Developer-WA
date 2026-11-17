@@ -146,6 +146,13 @@ crmRouter.post("/send-text", async (req: Request, res: Response) => {
       official_timestamp: new Date()
     });
 
+    try {
+      await repo.updateContact(contact.id, {
+        last_outbound_at: new Date(),
+        last_activity_at: new Date()
+      } as any);
+    } catch {}
+
     // Broadcast SSE update
     realtimeHub.broadcast("crm_message", {
       waId: cleanWaId,
@@ -212,6 +219,13 @@ crmRouter.post("/send-template", async (req: Request, res: Response) => {
       status: "sent",
       official_timestamp: new Date()
     });
+
+    try {
+      await repo.updateContact(contact.id, {
+        last_outbound_at: new Date(),
+        last_activity_at: new Date()
+      } as any);
+    } catch {}
 
     // Broadcast SSE update
     realtimeHub.broadcast("crm_message", {

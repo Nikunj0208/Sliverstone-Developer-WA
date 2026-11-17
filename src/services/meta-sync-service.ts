@@ -86,7 +86,7 @@ export class MetaSyncService {
     const token = env.metaAccessToken;
     const phoneId = env.whatsappPhoneNumberId;
     const wabaId = env.whatsappWabaId;
-    const version = "v23.0";
+    const version = env.metaGraphApiVersion || "v26.0";
 
     if (!token || !phoneId || !wabaId) {
       const msg = "Missing META_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, or WHATSAPP_WABA_ID";

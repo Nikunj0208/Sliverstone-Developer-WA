@@ -1697,7 +1697,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     let totalReplied = 0;
     let totalButtonClicks = 0;
     let totalSpent = 0;
-    let lastSyncedAt = new Date();
+    let lastSyncedAt: Date | null = null;
 
     for (const d of daily) {
       totalSent += d.sent;
@@ -1706,7 +1706,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       totalReplied += d.replied;
       totalButtonClicks += d.buttonClicks;
       totalSpent += d.amountSpent;
-      if (d.syncedAt && d.syncedAt > lastSyncedAt) {
+      if (d.syncedAt && (!lastSyncedAt || d.syncedAt > lastSyncedAt)) {
         lastSyncedAt = d.syncedAt;
       }
     }
@@ -1722,7 +1722,7 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
       totalButtonClicks,
       totalSpent: Number(totalSpent.toFixed(2)),
       currency: "INR",
-      lastSyncedAt,
+      lastSyncedAt: lastSyncedAt || new Date(),
       dailyBreakdown: daily
     };
   }
@@ -2101,11 +2101,21 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     const clean = waId.replace(/\D/g, "");
     const res = await this.pool.query(
       `SELECT 
-         id, wa_id, phone, name, profile_name, campaign_day, source_detail,
-         last_inbound_at, last_outbound_at, window_24h_open, latest_message_preview,
-         latest_status, unread_count, opt_out, opted_out, first_seen_at, last_seen_at
-       FROM contacts 
-       WHERE REGEXP_REPLACE(wa_id, '\\D', '', 'g') = $1 OR REGEXP_REPLACE(phone, '\\D', '', 'g') = $1
+         c.id, c.wa_id, c.phone, c.name, c.profile_name, c.campaign_day, c.source_detail,
+         COALESCE(
+           c.last_inbound_at,
+           (SELECT MAX(cm.official_timestamp) FROM chat_messages cm WHERE cm.wa_id = c.wa_id AND cm.direction = 'inbound'),
+           (SELECT MAX(m.created_at) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'inbound')
+         ) as last_inbound_at,
+         COALESCE(
+           c.last_outbound_at,
+           (SELECT MAX(cm.official_timestamp) FROM chat_messages cm WHERE cm.wa_id = c.wa_id AND cm.direction = 'outbound'),
+           (SELECT MAX(m.created_at) FROM messages m WHERE m.contact_id = c.id AND m.direction = 'outbound')
+         ) as last_outbound_at,
+         c.window_24h_open, c.latest_message_preview,
+         c.latest_status, c.unread_count, c.opt_out, c.opted_out, c.first_seen_at, c.last_seen_at
+       FROM contacts c
+       WHERE REGEXP_REPLACE(c.wa_id, '\\D', '', 'g') = $1 OR REGEXP_REPLACE(c.phone, '\\D', '', 'g') = $1
        LIMIT 1`,
       [clean]
     );
@@ -2186,7 +2196,15 @@ export class PostgresAnalyticsRepository implements AnalyticsRepository {
     const dataRes = await this.pool.query(
       `SELECT 
          c.id, c.wa_id, c.phone, c.name, c.profile_name, c.campaign_day, c.source_detail,
-         c.last_inbound_at, c.last_outbound_at, c.window_24h_open, c.latest_message_preview,
+         COALESCE(
+           c.last_inbound_at,
+           (SELECT MAX(cm.official_timestamp) FROM chat_messages cm WHERE cm.wa_id = c.wa_id AND cm.direction = 'inbound')
+         ) as last_inbound_at,
+         COALESCE(
+           c.last_outbound_at,
+           (SELECT MAX(cm.official_timestamp) FROM chat_messages cm WHERE cm.wa_id = c.wa_id AND cm.direction = 'outbound')
+         ) as last_outbound_at,
+         c.window_24h_open, c.latest_message_preview,
          c.latest_status, c.unread_count, c.opt_out, c.opted_out, c.first_seen_at, c.last_seen_at
        FROM contacts c
        ${whereSql}
